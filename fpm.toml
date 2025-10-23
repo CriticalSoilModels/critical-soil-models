@@ -1,0 +1,30 @@
+name = "critical-soil-models"
+version = "0.1.0"
+license = "BSD"
+author = "Jonathan Moore"
+maintainer = "jonathanm@vt.edu"
+copyright = "Copyright 2025, Jonathan Moore"
+[build]
+auto-executables = true
+auto-tests = true
+auto-examples = true
+module-naming = false
+# external-modules = ["stdlib"]
+
+[dependencies]
+
+# stdlib = { git = "https://github.com/fortran-lang/stdlib", branch = "stdlib-fpm" }
+stdlib = {path = "../../stdlib"}
+# fortplot = { git = "https://github.com/krystophny/fortplot" }
+
+[dev-dependencies]
+# fortplot = { git = "https://github.com/krystophny/fortplot/" }
+
+[install]
+library = false
+test = false
+[fortran]
+implicit-typing = false
+implicit-external = false
+source-form = "free"
+
