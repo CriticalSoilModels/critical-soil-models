@@ -26,8 +26,8 @@ As pointed out in (*Kayenta Paper Add Here*) it is extremly difficult to figure 
   - [ ] Unit Tested
   - [ ] Abstracted
 
-- [ ] **Bingham**
-  - [ ] Paper
+- [x] **Bingham**
+  - [ ] Paper: Taken from Anura3D
   - [ ] Unit Tested
   - [ ] Abstracted
 
@@ -43,7 +43,7 @@ As pointed out in (*Kayenta Paper Add Here*) it is extremly difficult to figure 
   - [ ] Abstracted
 
 - [x] **Mohr-Coulomb with strain rate effects**
-  - [ ] Paper: 
+  - [x] Paper: [Constitutive modelling of non-cohesive soils under high-strain rates: a consistency approach](https://doi.org/10.1680/jgeot.21.00192)
   - [ ] Unit Tested
   - [ ] Abstracted
   
