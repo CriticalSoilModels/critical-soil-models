@@ -63,5 +63,5 @@ The latest API documentation can be found [here (Not Made yet)](). This was gene
 
 ## License
 
-The finterp source code and related files and documentation are distributed under a permissive free software [license](https://github.com/CriticalSoilModels/Incremental_Driver/LICENSE) (BSD-style).
+The critical-soil-models source code and related files and documentation are distributed under a permissive free software [license](https://github.com/CriticalSoilModels/Incremental_Driver/LICENSE) (BSD-style).
 
