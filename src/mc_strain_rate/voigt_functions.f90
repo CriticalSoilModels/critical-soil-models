@@ -1,5 +1,5 @@
 module mod_voigt_functions
-   use kind_precision_module, only: dp, i32
+   use stdlib_kinds, only: dp, i32 => int32
    implicit none
 
 contains

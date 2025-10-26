@@ -1,6 +1,6 @@
 module mod_test_yield_function
     ! Local imports
-    use kind_precision_module, only: real_type => dp, i32
+    use stdlib_kinds, only: dp, i32 => int32
     use mod_yield_function, only : Get_dF_to_dSigma, Get_dF_to_dSigma_3
     use mod_shape_checker , only : check_matrix_shape
     use mod_tensor_value_checker, only: check_tensor_values

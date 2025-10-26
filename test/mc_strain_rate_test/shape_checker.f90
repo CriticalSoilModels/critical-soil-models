@@ -1,5 +1,5 @@
 module mod_shape_checker
-    use kind_precision_module, only: dp
+    use stdlib_kinds, only: dp
     implicit none
     private
     public :: check_matrix_shape

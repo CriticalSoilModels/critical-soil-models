@@ -1,6 +1,6 @@
 module mod_test_strain_invariants_suite
     ! Local imports
-    use kind_precision_module, only : dp, i32
+    use stdlib_kinds, only: dp, i32 => int32
     use mod_strain_invariants, only : Get_strain_invariants
     
     ! Testdrive imports
