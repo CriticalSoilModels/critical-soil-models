@@ -102,3 +102,10 @@ Please refer to the Citation.cff file for the citation inforamtion for this repo
 
 The critical-soil-models source code and related files and documentation are distributed under the [GNU GENERAL PUBLIC LICENSE](https://github.com/CriticalSoilModels/critical-soil-models/blob/main/LICENSE).
 
+## Other Notes
+There are other libraries of constitutive models out there. The ones that I've come across are:
+* (Write list here)
+
+The plan is to include, licenses and time permitting, as many of the implementations in this library.
+
+Soil consitutive models are generally based on a specific set of stress and strain invariants. Currently, the implementation of the invariants are included in this library. In the future, they'll be moved to there own repo (maybe?) and given a python interface. The values should be compared to the Julia library that implements them with automatic differentiation (Fortran not having built in AD is not elite. Hey you, yeah you, drop out of geotech and go implement Automatic differention in the Lfortran compiler. Yeah that's a good idea.) This way users won't have to implement the invariants again inevitablly making a mistake. Instead we all have the same errors together. Yay!.

@@ -417,8 +417,7 @@ contains
          Sig = Sig_0 ! Update the stresses
 
        case default
-         print *, "Invalid Integration Scheme input"
-         stop
+         error stop "Invalid Integration Scheme input"
       end select
 
    endif
