@@ -1,7 +1,7 @@
 module mod_stress_invariants
    use stdlib_kinds, only: dp, i32 => int32
 
-   use mod_voigt_functions, only : TwoNormTensor, TwoNormTensor_strain, calc_dev_stess
+   use mod_voight_funcs, only : TwoNormTensor, TwoNormTensor_strain, calc_dev_stress
 
    implicit none
 
@@ -147,7 +147,7 @@ contains
 
       p = calc_mean_stress(Sig)
 
-      dev = calc_dev_stess(Sig, p)
+      dev = calc_dev_stress(Sig, p)
 
       J2 = calc_J2_invariant(dev)
 

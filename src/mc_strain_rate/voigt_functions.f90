@@ -1,10 +1,12 @@
-module mod_voigt_functions
+module mod_voight_funcs
    use stdlib_kinds, only: dp, i32 => int32
    implicit none
-
+   private
+   public :: calc_dev_stress, TwoNormTensor, TwoNormTensor_strain, inc_driver_voigt_2_matrix, sym_matrix_2_inc_driver_voigt, &
+   square_inc_driver_voigt_vector, TensorInnerProduct
 contains
 
-   pure function calc_dev_stess(stress, mean_stress) result(dev_stress)
+   pure function calc_dev_stress(stress, mean_stress) result(dev_stress)
       real(kind = dp), intent(in) :: stress(6), mean_stress
       real(kind = dp) :: dev_stress(6)
 
@@ -19,7 +21,7 @@ contains
          dev_stress(i) = dev_stress(i) - mean_stress
       end do
 
-   end function calc_dev_stess
+   end function calc_dev_stress
 
    pure Subroutine TwoNormTensor(Tensor, N, TwoNorm)
       !***********************************************************************
@@ -179,4 +181,4 @@ contains
       end do
    end subroutine TensorInnerProduct
 
-end module mod_voigt_functions
+end module mod_voight_funcs

@@ -4,7 +4,7 @@ module mod_SRMC
    use mod_stress_invariants, only : Get_invariants                             
    use mod_state_params     , only: Get_I_coeff, Get_M, Get_dilation, check4crossing, Update_GK, Check_Unloading
    use mod_yield_function   , only: YieldFunction
-   use mod_voigt_functions, only: TwoNormTensor, TwoNormTensor_strain
+   use mod_voight_funcs, only: TwoNormTensor, TwoNormTensor_strain
    use mod_SRMC_Substepping, only: Euler_Algorithm, Newton_Raphson, Stress_Drift_Correction
 
    use mod_SRMC_Ortiz_Simo, only: Ortiz_Simo_Integration

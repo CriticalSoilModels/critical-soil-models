@@ -5,7 +5,7 @@ module mod_test_stress_invar_deriv_suite
                                      calc_inc_driver_J3_invariant, calc_theta_s
     use mod_stress_invar_deriv, only: calc_mean_stress_to_dSigma, calc_dq_to_dSigma, calc_dJ2_to_dSigma, calc_dJ3_to_dSigma, &
                                       calc_inc_driver_dJ3_to_dSigma, calc_dtheta_to_dSigma, calc_dtheta_to_dSigma_2
-    use mod_voigt_functions   , only: calc_dev_stess
+    use mod_voight_funcs   , only: calc_dev_stress
     use mod_tensor_value_checker, only: check_tensor_values
 
     ! Testdrive imports
@@ -70,7 +70,7 @@ contains
         stress = stress - [0.5, 0.0, 0.5, 0.0, 0.5, 0.0]
         mean_stress = calc_mean_stress(stress)
 
-        dev_stress = calc_dev_stess(stress, mean_stress)
+        dev_stress = calc_dev_stress(stress, mean_stress)
         
         J2 = calc_J2_invariant(dev_stress)
 
@@ -107,7 +107,7 @@ contains
 
         mean_stress = calc_mean_stress(stress)
 
-        dev_stress = calc_dev_stess(stress, mean_stress)
+        dev_stress = calc_dev_stress(stress, mean_stress)
         
         ! Calc the value using the function
         dJ2_dSigma = calc_dJ2_to_dSigma(dev_stress)
@@ -142,7 +142,7 @@ contains
 
         mean_stress = calc_mean_stress(stress)
 
-        dev = calc_dev_stess(stress, mean_stress)
+        dev = calc_dev_stress(stress, mean_stress)
 
         ! Calc the value using the function
         dJ3_dSigma = calc_dJ3_to_dSigma(dev)
@@ -174,7 +174,7 @@ contains
 
         mean_stress = calc_mean_stress(stress)
 
-        dev = calc_dev_stess(stress, mean_stress)
+        dev = calc_dev_stress(stress, mean_stress)
         
         J2 = calc_J2_invariant(dev)
         J3 = calc_inc_driver_J3_invariant(dev)

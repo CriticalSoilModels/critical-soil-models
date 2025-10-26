@@ -3,7 +3,7 @@
 module mod_state_params
    use stdlib_kinds, only: dp
    use mod_yield_function, only: Get_dF_to_dSigma
-   use mod_voigt_functions, only: TwoNormTensor, TensorInnerProduct
+   use mod_voight_funcs, only: TwoNormTensor, TensorInnerProduct
    implicit none
 
 contains

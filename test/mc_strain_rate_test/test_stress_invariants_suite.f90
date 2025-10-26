@@ -5,7 +5,7 @@ module mod_test_stress_invariants_suite
    use mod_stress_invariants, only : Get_invariants, calc_theta_s, calc_J2_invariant, &
                                      calc_inc_driver_J3_invariant, calc_mean_stress
    use stdlib_linalg        , only : det
-   use mod_voigt_functions  , only : inc_driver_voigt_2_matrix, calc_dev_stess
+   use mod_voight_funcs  , only : inc_driver_voigt_2_matrix, calc_dev_stress
 
    ! Testdrive imports
    use testdrive, only : new_unittest, unittest_type, error_type, check
@@ -64,7 +64,7 @@ contains
       call random_number(stress)
       mean_stress = calc_mean_stress(stress)
 
-      dev_stress = calc_dev_stess(stress, mean_stress)
+      dev_stress = calc_dev_stress(stress, mean_stress)
       
       J2 = calc_J2_invariant(dev_stress)
 
@@ -87,7 +87,7 @@ contains
 
       call random_number(stress)
 
-      dev_stress = calc_dev_stess( stress, calc_mean_stress(stress) )
+      dev_stress = calc_dev_stress( stress, calc_mean_stress(stress) )
 
       ! Form the full matrix
       dev_matrix = inc_driver_voigt_2_matrix(dev_stress)
@@ -118,7 +118,7 @@ contains
    
       ! Test for triaxial compression (expected Lode angle is -pi/6)
       mean_stress = calc_mean_stress(trx_compression)
-      dev = calc_dev_stess(trx_compression, mean_stress)
+      dev = calc_dev_stress(trx_compression, mean_stress)
       compress_lode = calc_theta_s(calc_J2_invariant(dev), calc_inc_driver_J3_invariant(dev))
 
       call check(error, compress_lode, -PI / 6.0_dp, more = "compression lode angle")
@@ -126,7 +126,7 @@ contains
    
       ! Test for triaxial extension (expected Lode angle is pi/6)
       mean_stress = calc_mean_stress(trx_extension)
-      dev = calc_dev_stess(trx_extension, mean_stress)
+      dev = calc_dev_stress(trx_extension, mean_stress)
       exten_lode = calc_theta_s(calc_J2_invariant(dev), calc_inc_driver_J3_invariant(dev))
 
       call check(error, exten_lode, PI / 6.0_dp, more = "extension lode angle")
@@ -134,7 +134,7 @@ contains
    
       ! Test for shear stress (expected Lode angle is 0)
       mean_stress = calc_mean_stress(shear)
-      dev = calc_dev_stess(shear, mean_stress)
+      dev = calc_dev_stress(shear, mean_stress)
       shear_lode = calc_theta_s(calc_J2_invariant(dev), calc_inc_driver_J3_invariant(dev))
 
       call check(error, shear_lode, 0.0_dp, more = "shear lode angle")
@@ -170,7 +170,7 @@ contains
       ! Check the lode angle
       ! See function calc_theta_s for more information about the lode angle used here
    
-      dev = calc_dev_stess(stress, p)
+      dev = calc_dev_stress(stress, p)
       J3 = calc_inc_driver_J3_invariant(dev)
       J2 = calc_J2_invariant(dev)
 

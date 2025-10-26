@@ -3,7 +3,7 @@ module mod_yield_function
    use stdlib_kinds, only: dp
    use mod_stress_invariants, only : calc_inc_driver_J3_invariant, Get_invariants, calc_J2_invariant
    use mod_stress_invar_deriv, only: calc_mean_stress_to_dSigma, calc_dq_to_dSigma, calc_dJ3_to_dSigma, calc_dtheta_to_dSigma
-   use mod_voigt_functions   , only: calc_dev_stess
+   use mod_voight_funcs   , only: calc_dev_stress
    implicit none
 
 contains
@@ -51,7 +51,7 @@ contains
       !1) Get dp/dSig=1/3 Imat
       dpdsig = calc_mean_stress_to_dSigma()
 
-      dev= calc_dev_stess(Sig, p)
+      dev= calc_dev_stress(Sig, p)
 
       !2) Get dq/dsig
       dqdSig = calc_dq_to_dSigma(dev, q)
@@ -97,7 +97,7 @@ contains
       !1) Get dp/dSig=1/3 Imat
       dpdsig = calc_mean_stress_to_dSigma()
 
-      dev= calc_dev_stess(Sig, p)
+      dev= calc_dev_stress(Sig, p)
 
       !2) Get dq/dsig
       dqdSig = calc_dq_to_dSigma(dev, q)

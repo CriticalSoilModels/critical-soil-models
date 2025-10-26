@@ -4,7 +4,7 @@ module mod_test_plastic_potential_suite
     use stdlib_kinds, only: dp
     use ieee_arithmetic, only: ieee_is_nan
     use mod_stress_invariants, only: calc_q_invariant, calc_mean_stress, calc_J2_invariant
-    use mod_voigt_functions, only: calc_dev_stess 
+    use mod_voight_funcs, only: calc_dev_stress 
     use mod_stress_invar_deriv, only: calc_dq_to_dSigma, calc_mean_stress_to_dSigma
     use mod_plastic_potential, only: Get_dP_to_dSigma
     use mod_tensor_value_checker, only: check_tensor_values
@@ -42,7 +42,7 @@ contains
         call Get_dP_to_dSigma(dilatancy, stress, m_vec)
         
         mean_stress = calc_mean_stress(stress)
-        dev = calc_dev_stess(stress, mean_stress)
+        dev = calc_dev_stress(stress, mean_stress)
         J2 = calc_J2_invariant(dev)
         q = calc_q_invariant(J2)
 

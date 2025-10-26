@@ -2,7 +2,7 @@
 
 module mod_stress_invar_deriv
    use stdlib_kinds, only: dp
-   use mod_voigt_functions  , only : square_inc_driver_voigt_vector
+   use mod_voight_funcs  , only : square_inc_driver_voigt_vector
 
    implicit none
 
