@@ -20,7 +20,7 @@ contains
       endif
    end subroutine dbltobool
 
-   real(real_type) function logic2dbl(a)
+   real(dp) function logic2dbl(a)
       logical, intent(in) :: a
 
       if (a) then

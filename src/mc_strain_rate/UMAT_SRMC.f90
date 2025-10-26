@@ -1,4 +1,4 @@
-module MOD_NAMC_ESM
+module mod_mc_strain_rate
    !**********************************************************************
    !
    ! Module: Contains all functions and subroutines required for the Non-Associative Mohr-Coulomb constitutive model
@@ -23,17 +23,15 @@ module MOD_NAMC_ESM
    ! implicit none
 
    private ! Makes all function private to this module (No other modules can get access)
-   public UMAT_NAMC ! Overides private status for specific subroutine
+   public umat_mc_strain_rate ! Overides private status for specific subroutine
 contains
 
 
-   Subroutine UMAT_NAMC(STRESS, STATEV, DDSDDE, SSE, SPD, SCD, RPL, DDSDDT, DRPLDE, &
+   Subroutine umat_mc_strain_rate(STRESS, STATEV, DDSDDE, SSE, SPD, SCD, RPL, DDSDDT, DRPLDE, &
       DRPLDT, STRAN, DSTRAN, TIME, DTIME, TEMP, DTEMP, PREDEF, DPRED,&
       CMNAME, NDI, NSHR, NTENS, NSTATEV, PROPS, NPROPS, COORDS, &
       drot, PNEWDT, CELENT, DFGRD0, DFGRD1, NOEL, NPT, &
       LAYER, KSPT, KSTEP, KINC)
-
-      implicit none
 
       !Defining inputs
       ! Arguments:
@@ -49,26 +47,26 @@ contains
       integer, intent(in) :: NSTATEV, NPROPS, NPT
       integer :: NTENS
       integer, intent(in) :: NOEL
-      real (Real_Type), dimension(NTENS), intent(inout) :: STRESS
-      real(Real_Type), dimension(NSTATEV), intent(inout) :: STATEV
-      real(Real_Type), dimension(NTENS, NTENS), intent(inout) :: DDSDDE
-      real(Real_Type), intent(in) :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
-      real(Real_Type), intent(in) :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
-      real(Real_Type), dimension(NTENS), intent(in) :: DDSDDT
-      real(Real_Type), dimension(NTENS), intent(in) :: DRPLDE
-      real(Real_Type)                               :: DRPLDT
-      real(Real_Type), dimension(NTENS), intent(in) :: STRAN
-      real(Real_Type), dimension(NTENS), intent(inout) :: DSTRAN ! TODO: Change this back to intent(in) - 
+      real (dp), dimension(NTENS), intent(inout) :: STRESS
+      real(dp), dimension(NSTATEV), intent(inout) :: STATEV
+      real(dp), dimension(NTENS, NTENS), intent(inout) :: DDSDDE
+      real(dp), intent(in) :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
+      real(dp), intent(in) :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
+      real(dp), dimension(NTENS), intent(in) :: DDSDDT
+      real(dp), dimension(NTENS), intent(in) :: DRPLDE
+      real(dp)                               :: DRPLDT
+      real(dp), dimension(NTENS), intent(in) :: STRAN
+      real(dp), dimension(NTENS), intent(inout) :: DSTRAN ! TODO: Change this back to intent(in) - 
                                                                  ! Making it intent(inout) to reorder it for incremental driver
-      real(Real_Type), dimension(2), intent(in) :: TIME
-      real(Real_Type), dimension(1), intent(in) :: PREDEF
-      real(Real_Type), dimension(1), intent(in) :: DPRED
-      real(Real_Type), dimension(NPROPS), intent(in) :: PROPS
-      real(Real_Type), dimension(3), intent(in) :: COORDS
-      real(Real_Type), dimension(3,3), intent(in) :: DFGRD0
-      real(Real_Type), dimension(3,3), intent(in) :: DFGRD1, drot
-      REAL(Real_Type), intent(in) :: PNEWDT,  TEMP, DTEMP, CELENT
-      double precision, intent(in) :: DTIME
+      real(dp), dimension(2), intent(in) :: TIME
+      real(dp), dimension(1), intent(in) :: PREDEF
+      real(dp), dimension(1), intent(in) :: DPRED
+      real(dp), dimension(NPROPS), intent(in) :: PROPS
+      real(dp), dimension(3), intent(in) :: COORDS
+      real(dp), dimension(3,3), intent(in) :: DFGRD0
+      real(dp), dimension(3,3), intent(in) :: DFGRD1, drot
+      real(dp), intent(in) :: PNEWDT,  TEMP, DTEMP, CELENT
+      real(dp), intent(in) :: DTIME
       character(len = 80), intent(in):: CMNAME
       integer, intent(in) :: NDI, NSHR, LAYER, KSPT, KSTEP, KINC
 
@@ -85,17 +83,17 @@ contains
       !  Eps       : Total strain vector
       !  EpsRate	 : Total strain rate tensor
       !
-      integer     			:: N_S, N_i
-      real(Real_Type), dimension(6,6) :: DE
-      real(Real_Type), dimension(6)   :: Sig
-      real(Real_Type), dimension(6)   :: dEpsP
-      real(Real_Type), dimension(6)   :: EpsP, ERate
-      real(Real_Type), dimension(6) :: dEpsE, EpsE, dEps, Eps
+      integer :: N_S, N_i
+      real(dp), dimension(6,6) :: DE
+      real(dp), dimension(6)   :: Sig
+      real(dp), dimension(6)   :: dEpsP
+      real(dp), dimension(6)   :: EpsP, ERate
+      real(dp), dimension(6) :: dEpsE, EpsE, dEps, Eps
       logical :: switch_smooth, switch_original, switch_yield
-      real(Real_Type) :: G_0, enu, eM_tc, eN, D_min, eh, alpha_G, alpha_K, alpha_D, D_part, G_s, RefERate !SSMC props local variables, (props)
-      real(Real_Type) :: G, bk, eta_y, DP, eI_coeff, Sum_rate  !SSMC state variables (statv)
-      double precision :: Error_yield_1, Error_yield_2, Error_Euler_max, Error_Yield_last, Error_Yield_max
-      double precision :: F1, F2, bK_0, FTOL
+      real(dp) :: G_0, enu, eM_tc, eN, D_min, eh, alpha_G, alpha_K, alpha_D, D_part, G_s, RefERate !SSMC props local variables, (props)
+      real(dp) :: G, bk, eta_y, dilation, eI_coeff, Sum_rate  !SSMC state variables (statv)
+      real(dp) :: Error_yield_1, Error_yield_2, Error_Euler_max, Error_Yield_last, Error_Yield_max
+      real(dp) :: F1, F2, bK_0, FTOL
       integer :: i, max_stress_iters
       integer :: switch_plastic_integration
       integer, parameter :: A3D_voigt_order(6) = [1, 2, 3, 4, 6, 5]
@@ -171,7 +169,7 @@ contains
       G            = STATEV(1)               ! shear modulus
       bK           = STATEV(2)               ! bulk modulus
       eta_y        = STATEV(3)               ! friction ratio
-      Dp           = STATEV(4)               ! Dilation
+      dilation     = STATEV(4)               ! Dilation
       eI_coeff     = STATEV(5)               ! Inertial coefficient
       call dbltobool(STATEV(6),switch_yield) ! Point is yielding
       do i=1,6
@@ -212,7 +210,7 @@ contains
 
       call SRMC_HSR(NOEL, G_0, enu, eM_tc, eN, D_min, eh, alpha_G, alpha_K, alpha_D, D_part, G_s,&
          switch_smooth, RefERate, N_S, switch_original,&
-         G, bK, eta_y, Dp, EpsP, eI_coeff, switch_yield, N_i, SUM_rate,&
+         G, bK, eta_y, dilation, EpsP, eI_coeff, switch_yield, N_i, SUM_rate,&
          DSTRAN, STRESS, Sig, Erate, DTIME,&
          Error_yield_1, Error_yield_2, Error_Euler_max, Error_Yield_last, &
          Error_Yield_max, FTOL, max_stress_iters, switch_plastic_integration)
@@ -233,7 +231,7 @@ contains
       STATEV(1) = G
       STATEV(2) = bK
       STATEV(3) = eta_y
-      STATEV(4) = Dp
+      STATEV(4) = dilation
       STATEV(5) =	eI_coeff
       STATEV(6) = logic2dbl(switch_yield)
       do i=1,6
@@ -265,8 +263,7 @@ contains
       DDSDDE(5,5) = G
       DDSDDE(6,6) = G
       !*************************************************************************************
-      !End of UMAT
-      Return
-   end subroutine UMAT_NAMC
 
-end module MOD_NAMC_ESM
+   end subroutine umat_mc_strain_rate
+
+end module mod_mc_strain_rate

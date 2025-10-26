@@ -1,7 +1,7 @@
 module mod_SRMC_Ortiz_Simo
 
    use mod_SRMC_funcs        , only: MatVec, DotProduct_2 ! Subroutines that are required for calculations
-   use mod_state_params      , only: check4crossing, Update_GK, Get_Dp, Get_M
+   use mod_state_params      , only: check4crossing, Update_GK, get_dilation, Get_M
    use mod_state_params_deriv, only: Get_dD_to_dEpsP
    use mod_stress_invariants , only: Get_invariants
    use mod_strain_invariants , only: Get_strain_invariants
@@ -108,7 +108,7 @@ contains
       call check4crossing(I,  I_f, dI, I_0, ApplyStrainRateUpdate)
       call Get_strain_invariants(EpsPu, epsv_p, epsq_p)
       call Update_GK(G_0, nu, I_f, I_0, k_G, k_K, G, K)
-      call Get_Dp(h, D_min, I_f, I_0, epsq_p, k_D, ApplyStrainRateUpdate, Du) ! Need this for the strain rate but also to actually calculate Du
+      call get_dilation(h, D_min, I_f, I_0, epsq_p, k_D, ApplyStrainRateUpdate, Du) ! Need this for the strain rate but also to actually calculate Du
       eta_yu = Mu-du*(1.0 * No)
 
       ! Turn off strain rate affects

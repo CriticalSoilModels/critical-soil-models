@@ -17,14 +17,14 @@ contains
       !
       !***********************************************************************
       implicit none
-      real(real_type), intent(in)  :: xMat(N, N), Vec(N)
+      real(dp), intent(in)  :: xMat(N, N), Vec(N)
       integer, intent(in)          :: IM, N
-      real(real_type), intent(out) :: VecR(N)
+      real(dp), intent(out) :: VecR(N)
 
       !***********************************************************************
       ! Local variables
       integer :: I, J
-      real(real_type) :: X
+      real(dp) :: X
 
       Do I=1,N
          X=0
@@ -37,7 +37,7 @@ contains
    End Subroutine MatVec
 
    ! Instead of this function you should use dot_product. It's a fortran instrinsic
-   Subroutine DotProduct_2(VecA, VecB,N, Dp)
+   Subroutine DotProduct_2(VecA, VecB,N, res)
       !***********************************************************************
       !
       !     Calculate the dot product of A(Nx1) and B(1xN)
@@ -48,16 +48,16 @@ contains
       !
       !***********************************************************************
       implicit none
-      real(real_type), intent(in)  :: VecA(N), VecB(N)
+      real(dp), intent(in)  :: VecA(N), VecB(N)
       integer, intent(in)          :: N
-      real(real_type), intent(out) :: Dp
+      real(dp), intent(out) :: res
 
       !***********************************************************************
       ! Local variables
       integer :: I
-      Dp=0.0d0
+      res=0.0_dp
       Do I=1,N
-         Dp=Dp+VecA(I)*VecB(I)
+         res=res+VecA(I)*VecB(I)
       end do
 
    end subroutine DotProduct_2

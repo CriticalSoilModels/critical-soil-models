@@ -1,6 +1,6 @@
 module mod_SRMC_Substepping
     use mod_SRMC_funcs, only:  MatVec,  DotProduct_2
-    use mod_state_params, only: check4crossing, Update_GK, Get_dp, Check_Unloading
+    use mod_state_params, only: check4crossing, Update_GK, get_dilation, Check_Unloading
     use mod_strain_invariants, only: Get_strain_invariants
     use mod_strain_invar_deriv, only: Get_dEpsq_to_dEps
     use mod_stress_invariants, only : Get_invariants                           
@@ -84,7 +84,7 @@ contains
        call check4crossing(I_coeff, I_alpha, dI_alpha,I_0, ApplyStrainRateUpdates)
        if (ApplyStrainRateUpdates) then !Update parameters
           call Update_GK(G_0, nu, I_alpha, I_0, k_G, k_K, Gu, Ku)
-          call Get_Dp(h, D_min, I_alpha, I_0, eps_q, k_D, ApplyStrainRateUpdates, Du)
+          call get_dilation(h, D_min, I_alpha, I_0, eps_q, k_D, ApplyStrainRateUpdates, Du)
           eta_yu=M-Du*(1.0-No)
        endif
        !___________________________________________________________________

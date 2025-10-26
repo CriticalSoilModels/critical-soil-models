@@ -126,7 +126,7 @@ contains
 
    end subroutine Get_M
 
-   pure subroutine Get_Dp(h, D_min, I, I_0, eps_q, k, ApplyRateUpdating, D)
+   pure subroutine get_dilation(h, D_min, I, I_0, eps_q, k, ApplyRateUpdating, D)
       !*********************************************************************
       ! Returns the dilation for current inertial coefficient and dev.     *
       ! strain															 *
@@ -147,7 +147,7 @@ contains
       endif
 
       D = h * D_mm * eps_q * exp( 1.0_dp - h * eps_q) !hardening rule
-   end subroutine Get_Dp
+   end subroutine get_dilation
 
    pure subroutine Update_GK(G_0, nu, I, I_0, k_G, k_K, G, K)
       !*********************************************************************

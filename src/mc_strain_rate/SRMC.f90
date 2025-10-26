@@ -2,7 +2,7 @@ module mod_SRMC
    use mod_SRMC_funcs, only: MatVec
    use mod_strain_invariants, only: Get_strain_invariants
    use mod_stress_invariants, only : Get_invariants                             
-   use mod_state_params     , only: Get_I_coeff, Get_M, Get_Dp, check4crossing, Update_GK, Check_Unloading
+   use mod_state_params     , only: Get_I_coeff, Get_M, Get_dilation, check4crossing, Update_GK, Check_Unloading
    use mod_yield_function   , only: YieldFunction
    use mod_voigt_functions, only: TwoNormTensor, TwoNormTensor_strain
    use mod_SRMC_Substepping, only: Euler_Algorithm, Newton_Raphson, Stress_Drift_Correction
@@ -24,7 +24,7 @@ contains
 
    subroutine SRMC_HSR(NOEL, G_0, nu, M_tc, N, D_min, h, alpha_G, alpha_K, alpha_D, D_part, G_s,&
       switch_smooth, RefERate, N_S, switch_original, &
-      G, K, eta_y, Dp, EpsP, I_coeff, switch_yield, N_i, SUM_rate,&
+      G, K, eta_y, dilation, EpsP, I_coeff, switch_yield, N_i, SUM_rate,&
       dEps, Sig_0, Sig, Erate, DTIME,&
       Error_yield_1, Error_yield_2, Error_Euler_max, Error_Yield_last, &
       Error_Yield_max, FTOL, max_stress_iters, switch_plastic_integration)
@@ -53,7 +53,7 @@ contains
       !output variables
       integer, intent(inout):: N_i
 
-      double precision, intent(inout):: h, G, K, eta_y, Dp, I_coeff, &
+      double precision, intent(inout):: h, G, K, eta_y, dilation, I_coeff, &
          Error_yield_1, Error_yield_2, Error_Euler_max,&
          Error_Yield_last, Error_Yield_max, SUM_rate
       double precision, dimension(6), intent(inout):: Sig, Erate, EpsP
@@ -64,7 +64,7 @@ contains
       integer:: counter, MAXITER, SubStepping_MaxIter
       integer, parameter :: Substepping = 0, Ortiz_Simo = 1  
       double precision:: p, q, theta, M, I_act, I_0, Gu, Ku, eta_yu, Du, dI, &
-         G1, K1, eta_y1, Dp1, G2, K2, eta_y2, Dp2, &
+         G1, K1, eta_y1, dilation1, G2, K2, eta_y2, dilation2, &
          p_t, q_t, dI_t, dI_TT, I_TT, dD1, dD2
       double precision:: epsq_rate, epsq_p, eps_v
       double precision:: F0, FT, alpha
@@ -112,16 +112,16 @@ contains
       !    call Get_I_coeff(D_part, G_s, p, RefERate, I_coeff)
       !endif
 
-      ! Dp testing: This should be the first time that the dilatancy can be updated
-      if (Dp==0.0d0) then ! Since plastic deviatoric strain epsq_p will be zero in elastic Dp will be be zero
-         call Get_Dp(h, D_min, I_coeff, I_0, epsq_p, alpha_D, ApplyStrainRateUpdates, Dp)
+      ! dilation testing: This should be the first time that the dilatancy can be updated
+      if (dilation==0.0d0) then ! Since plastic deviatoric strain epsq_p will be zero in elastic dilation will be be zero
+         call Get_dilation(h, D_min, I_coeff, I_0, epsq_p, alpha_D, ApplyStrainRateUpdates, dilation)
       endif
 
       !print *, eta_y
       if (eta_y==0.0d0) then
          call Get_invariants(dEps, dummyvar(1), dummyvar(2), theta)
          call Get_M(M_tc, theta, M)
-         eta_y=M-Dp*(1.0-N)
+         eta_y=M-dilation*(1.0-N)
       endif
       !print *, eta_y
 
@@ -164,7 +164,7 @@ contains
       Gu=G
       Ku=K
       eta_yu=eta_y
-      Du=Dp
+      Du=dilation
 
       call Get_strain_invariants(Erate, dummyvar(1), epsq_rate)! deviatoric strain rate
       ! print *, "dev. strain rate invariant", epsq_rate
@@ -175,11 +175,11 @@ contains
       dI=I_act-I_coeff !change in inertial coefficient
       call check4crossing(I_coeff, I_act, dI, I_0, ApplyStrainRateUpdates) !Check if update needed
 
-      ! Dp Testing: Second time that dilatancy can be updated.
+      ! dilation Testing: Second time that dilatancy can be updated.
       if (applystrainrateupdates) then !update
          !h=h*(i_act/i_0)**alpha_g
          call update_gk(g_0, nu, i_act, i_0, alpha_g, alpha_k, gu, ku) !updates the elastic properties
-         call get_dp(h, d_min, i_act, i_0, epsq_p, alpha_d, applystrainrateupdates, du) !updates the dilation
+         call get_dilation(h, d_min, i_act, i_0, epsq_p, alpha_d, applystrainrateupdates, du) !updates the dilation
          eta_yu=m-du*(1.0-n) !updates eta
       endif
       !_________________________________________________________________________________
@@ -213,7 +213,7 @@ contains
          G=Gu
          K=Ku
          eta_y=eta_yu
-         Dp=Du
+         dilation=Du
          I_coeff=I_act
 
          !Update stress
@@ -235,7 +235,7 @@ contains
           case(Substepping) ! switch is set to zero
             ! Substepping integration here
             if (F0<-FTOL) then !Elasto-plastic transition
-               call Newton_Raphson(G, K, eta_y, Dp, G_0, nu, M, M_tc, N, D_min, h, D_part, &
+               call Newton_Raphson(G, K, eta_y, dilation, G_0, nu, M, M_tc, N, D_min, h, D_part, &
                   G_s, epsq_p, I_coeff, I_act, I_0, alpha_K, alpha_G, alpha_D,&
                   Gu, Ku, eta_yu, Du, dEps, MAXITER, FTOL,&
                   F0, Sig_0, alpha)
@@ -243,7 +243,7 @@ contains
             else!pure plastic deformations or unloading
                call Check_Unloading(M_tc, eta_y, eta_yu, dI, Sig_0, dSig_el, LTOL, IsUnloading)  !Determines if is unloading path
                if (IsUnloading) then !Find new alpha
-                  call Newton_Raphson(G, K, eta_y, Dp, G_0, nu, M, M_tc,N, D_min, h, D_part, &
+                  call Newton_Raphson(G, K, eta_y, dilation, G_0, nu, M, M_tc,N, D_min, h, D_part, &
                      G_s, epsq_p, I_coeff, I_act, I_0, alpha_K, alpha_G, alpha_D,&
                      Gu, Ku, eta_yu, Du, dEps, MAXITER, FTOL,&
                      F0, Sig_0, alpha)
@@ -282,12 +282,12 @@ contains
                G1=G
                K1=K
                eta_y1=eta_y
-               Dp1=Dp
+               dilation1=dilation
                Sig1=Sig_t
                EpsPt=EpsP
                !call the Euler's algorithm with input parameters
                call Euler_Algorithm(G_0, nu, M_tc, M, N, D_min, h, D_part, G_s,&
-                  G1, K1, eta_y1, Dp1, &
+                  G1, K1, eta_y1, dilation1, &
                   erate, I_0, I_coeff, dI_TT, alpha_G, alpha_K, alpha_D, DTIME, DT, &
                   switch_original, &
                   Sig1, EpsPt, dEps_TT, dD1, dEpsp1, dSig1)
@@ -307,11 +307,11 @@ contains
                G2=G1
                K2=K1
                eta_y2=eta_y1
-               Dp2=Dp1
+               dilation2=dilation1
                Sig2=Sig1
                !call the Euler's algorithm with input parameters
                call Euler_Algorithm(G_0, nu, M_tc, M, N, D_min, h, D_part, G_s,&
-                  G2, K2, eta_y2, Dp2, &
+                  G2, K2, eta_y2, dilation2, &
                   erate, I_0, I_TT, dI_TT, alpha_G, alpha_K, alpha_D, DTIME, DT, &
                   switch_original, &
                   Sig2, EpsPt, dEps_TT, dD2, dEpsp2, dSig2)
@@ -328,8 +328,8 @@ contains
                !Compute averages and error
 
                Sig_t=Sig_t+0.5*(dSig1+dSig2)!updated stress
-               Dp1=Dp+0.5*(dD1+dD2) !Updated dilation
-               eta_y1=M-Dp1
+               dilation1=dilation+0.5*(dD1+dD2) !Updated dilation
+               eta_y1=M-dilation1
            
                call TwoNormTensor((dSig1-dSig2), 6, dummyvar(1)) !||Delta Sigma||
                call TwoNormTensor(Sig_t, 6, dummyvar(2)) !||Sig_T+DT||
@@ -357,8 +357,8 @@ contains
                   G=0.5*(G1+G2)
                   K=0.5*(K1+K2)
                   call Get_strain_invariants(EpsP, eps_v, epsq_p)
-                  call Get_Dp(h, D_min, I_TT, I_0,  epsq_p, alpha_D, ApplyStrainRateUpdates, Dp)
-                  eta_y=M-Dp*(1.0-N)
+                  call Get_dilation(h, D_min, I_TT, I_0,  epsq_p, alpha_D, ApplyStrainRateUpdates, dilation)
+                  eta_y=M-dilation*(1.0-N)
                   !__________________________________________________________________________
 
                   !________________________________________________________________________________
@@ -373,7 +373,7 @@ contains
                   !=================================================================================
 
                   call Stress_Drift_Correction(G_0, nu, M_tc, M, N, D_min, h, D_part, G_s,&
-                     G, K, eta_y, Dp, &
+                     G, K, eta_y, dilation, &
                      Erate, I_0, I_TT, I_coeff, dI_TT, alpha_G, alpha_K, alpha_D, DTIME, DT, &
                      switch_original, MAXITER, F0, FTOL, &
                      Sig, EpsP, dEps_TT)
@@ -410,7 +410,7 @@ contains
             
        case(Ortiz_Simo) ! Switch is set to 1
          ! Oritz Simo Integration here
-         call Ortiz_Simo_Integration(G_0, nu, M_tc, M, N, D_min, h, G, K, eta_y, Dp, &
+         call Ortiz_Simo_Integration(G_0, nu, M_tc, M, N, D_min, h, G, K, eta_y, dilation, &
             I_0, I_coeff, dI, alpha_G, alpha_K, alpha_D, Sig_0, EpsP, dEps, &
             FTOL, NOEL, max_stress_iters)
 
