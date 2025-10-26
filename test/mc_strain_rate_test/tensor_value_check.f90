@@ -1,5 +1,5 @@
 module mod_tensor_value_checker
-   use kind_precision_module, only: dp, sp
+   use stdlib_kinds, only: dp, sp
    implicit none
 
    private

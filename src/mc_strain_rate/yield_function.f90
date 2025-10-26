@@ -9,14 +9,14 @@ module mod_yield_function
 contains
 
    pure function calc_dF_to_dtheta(M_tc, p, theta) result(dfdtheta)
-      real(kind = real_type), intent(in) :: M_tc, p, theta
-      real(kind = real_type) :: dfdtheta
+      real(dp), intent(in) :: M_tc, p, theta
+      real(dp) :: dfdtheta
 
       ! ! Local variables
-      real(kind = real_type), parameter :: pi=2.0*acos(0.0_real_type), &
-         THREE_HALVES = 1.5_real_type, &
-         ONE_QUARTER = 0.25_real_type, &
-         TWO_TENTHS = 0.2_real_type
+      real(dp), parameter :: pi=2.0*acos(0.0_dp), &
+         THREE_HALVES = 1.5_dp, &
+         ONE_QUARTER = 0.25_dp, &
+         TWO_TENTHS = 0.2_dp
 
       ! !Get dF/dtheta
       dfdtheta = 0.45 * p * M_tc * ( ( cos(THREE_HALVES * theta + ONE_QUARTER * PI) )**TWO_TENTHS) &
@@ -33,11 +33,11 @@ contains
       !************************************************************************
       implicit none
       !input
-      real(kind = real_type), intent(in)  :: M_tc, eta_y, Sig(6)
-      real(kind = real_type), intent(out) :: n_vec(6)
+      real(dp), intent(in)  :: M_tc, eta_y, Sig(6)
+      real(dp), intent(out) :: n_vec(6)
 
       ! Local variables
-      real(kind = real_type):: p, q, theta, J2, J3, dJ3dsig(6), dfdtheta, &
+      real(dp):: p, q, theta, J2, J3, dJ3dsig(6), dfdtheta, &
          dpdsig(6), dqdsig(6), dev(6), dthetadSig(6)
 
       !Get the invariants
@@ -79,11 +79,11 @@ contains
       !************************************************************************
       implicit none
       !input
-      real(kind = real_type), intent(in)  :: M_tc, eta_y, Sig(6)
-      real(kind = real_type), intent(out) :: n_vec(6)
+      real(dp), intent(in)  :: M_tc, eta_y, Sig(6)
+      real(dp), intent(out) :: n_vec(6)
 
       ! Local variables
-      real(kind = real_type):: p, q, theta, J2, J3, dJ3dsig(6), dfdtheta, &
+      real(dp):: p, q, theta, J2, J3, dJ3dsig(6), dfdtheta, &
          dpdsig(6), dqdsig(6), dev(6), dthetadSig(6)
 
       !Get the invariants
@@ -123,8 +123,8 @@ contains
       !																	 *
       !*********************************************************************
       implicit none
-      real(kind = real_type), intent(in):: q, p, eta_y
-      real(kind = real_type), intent(out):: F
+      real(dp), intent(in):: q, p, eta_y
+      real(dp), intent(out):: F
 
       F=q+eta_y*p !sign is due to compression being negative in UMAT
    end subroutine YieldFunction

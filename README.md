@@ -88,5 +88,5 @@ Another goal is to write all of this code in fortran. Including the final plotti
 
 ## License
 
-The critical-soil-models source code and related files and documentation are distributed under the [GNU GENERAL PUBLIC LICENSE](https://github.com/CriticalSoilModels/critical-soil-models/LICENSE).
+The critical-soil-models source code and related files and documentation are distributed under the [GNU GENERAL PUBLIC LICENSE](https://github.com/CriticalSoilModels/critical-soil-models/blob/main/LICENSE).
 

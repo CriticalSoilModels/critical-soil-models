@@ -14,11 +14,11 @@ contains
       !************************************************************************
       implicit none
       !input
-      real(kind = real_type), intent(in):: Epsq, Eps(6)
+      real(dp), intent(in):: Epsq, Eps(6)
       !output
-      real(kind = real_type), intent(out):: dEqdEpsq(6)
+      real(dp), intent(out):: dEqdEpsq(6)
       !local variables
-      real(kind = real_type):: evol, dev(6)
+      real(dp):: evol, dev(6)
 
       evol=calc_eps_vol_invariant(Eps)
 
@@ -36,13 +36,13 @@ contains
       ! This is just to check the general version of the dEpsq/dEps function
       ! The values for this derivative come from python using sympy in Epsq_derivative_check.ipynb
    
-      real(kind = real_type), intent(in) :: Eps(6)
-      real(kind = real_type) :: dEq_dEps(6)
+      real(dp), intent(in) :: Eps(6)
+      real(dp) :: dEq_dEps(6)
 
       ! Local variables
-      real(kind = real_type), parameter :: TWO = 2.0_real_type, &
-         THREE = 3.0_real_type, &
-         FOUR = 4.0_real_type
+      real(dp), parameter :: TWO = 2.0_dp, &
+         THREE = 3.0_dp, &
+         FOUR = 4.0_dp
 
       dEq_dEps(1) = FOUR*Eps(1)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)) &

@@ -15,9 +15,9 @@ contains
       ! b is a scalar															*
       !************************************************************************
       implicit none
-      real(kind = real_type), intent(in):: D_min, h, I_0, kD, eps_q, I
+      real(dp), intent(in):: D_min, h, I_0, kD, eps_q, I
       !output
-      real(kind = real_type), intent(out)::b
+      real(dp), intent(out)::b
       !local variables
 
       b=h*D_min*eps_q*exp(1-h*eps_q)*kD*((I/I_0)**(kD-1.0))/I_0
@@ -35,12 +35,12 @@ contains
       implicit none
       !input
       logical, intent(in):: ApplyStrainRateUpdate
-      real(kind = real_type), intent(in):: D_min, h, I_0, k_D, epsq_p, epsv_p, &
+      real(dp), intent(in):: D_min, h, I_0, k_D, epsq_p, epsv_p, &
          EpsP(6), I
       !output
-      real(kind = real_type), intent(out):: a(6)
+      real(dp), intent(out):: a(6)
       !local variables
-      real(kind = real_type):: D, dDdEpsq_p, dev(6),dEpsq_pdEpsp(6)
+      real(dp):: D, dDdEpsq_p, dev(6),dEpsq_pdEpsp(6)
 
       !________________________________________________________________________
       !Get dD/dEpsq_p

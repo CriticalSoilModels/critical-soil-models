@@ -1,5 +1,5 @@
 module mod_check_NaN_and_tensor_value
-   use kind_precision_module, only: dp, sp
+   use stdlib_kinds, only: dp, sp
    use ieee_arithmetic, only: ieee_is_nan
    use mod_tensor_value_checker, only: check_tensor_values
    implicit none

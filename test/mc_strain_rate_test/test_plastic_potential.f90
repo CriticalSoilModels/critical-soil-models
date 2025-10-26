@@ -1,7 +1,7 @@
 ! Module for holding the platic potential unit tests
 
 module mod_test_plastic_potential_suite
-    use kind_precision_module, only: real_type => dp
+    use stdlib_kinds, only: dp
     use ieee_arithmetic, only: ieee_is_nan
     use mod_stress_invariants, only: calc_q_invariant, calc_mean_stress, calc_J2_invariant
     use mod_voigt_functions, only: calc_dev_stess 
@@ -30,11 +30,11 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Local variables
-        real(kind = real_type) :: m_vec(6), exp_m_vec(6)
-        real(kind = real_type) :: dilatancy, stress(6), dev(6), q, mean_stress, J2
+        real(dp) :: m_vec(6), exp_m_vec(6)
+        real(dp) :: dilatancy, stress(6), dev(6), q, mean_stress, J2
         logical :: passed
-        real(kind = real_type), parameter :: tol = 1e-9_real_type
-        stress = [1.0_real_type, 3.0_real_type, 5.0_real_type, 7.0_real_type, 11.0_real_type, 13.0_real_type]
+        real(dp), parameter :: tol = 1e-9_dp
+        stress = [1.0_dp, 3.0_dp, 5.0_dp, 7.0_dp, 11.0_dp, 13.0_dp]
 
         dilatancy = -0.1
         

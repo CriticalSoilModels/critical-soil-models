@@ -1,7 +1,7 @@
 ! Functions for calculating and updating the state parameters
 
 module mod_state_params
-   use kind_precision_module, only : real_type => dp
+   use stdlib_kinds, only: dp
    use mod_yield_function, only: Get_dF_to_dSigma
    use mod_voigt_functions, only: TwoNormTensor, TensorInnerProduct
    implicit none
@@ -15,11 +15,11 @@ contains
       
       !input
       implicit none
-      real(kind = real_type), intent(in):: M_tc, eta_y, eta_yu, dI, Sig(6), dSig(6), LTOL
+      real(dp), intent(in):: M_tc, eta_y, eta_yu, dI, Sig(6), dSig(6), LTOL
       logical, intent(out):: IsUnloading
 
       !local variables
-      real(kind = real_type):: deta, n_vec(6), n_norm, Sig_norm, dSIg_inner_n, beta, phi
+      real(dp):: deta, n_vec(6), n_norm, Sig_norm, dSIg_inner_n, beta, phi
       
       ! Init the unloading to false
       IsUnloading=.false.
@@ -46,9 +46,9 @@ contains
       !*********************************************************************
       implicit none
       !input
-      real(kind = real_type), intent(in):: D_part, G_s, p, eps_rate
+      real(dp), intent(in):: D_part, G_s, p, eps_rate
       !output
-      real(kind = real_type), intent(out):: I
+      real(dp), intent(out):: I
 
       ! TODO
       ! Currently this function is wrong. The assumption that is made is that 
@@ -79,8 +79,8 @@ contains
       ! RateRef: Reference strain rate other variables are compared to
       ! Apply: Boolean keeping track to determine if strain rate updates should be applied
       implicit none
-      real(kind = real_type), intent(inout):: IErate0I, IErateI, dErate_eff
-      real(kind = real_type), intent(in)   :: RateRef
+      real(dp), intent(inout):: IErate0I, IErateI, dErate_eff
+      real(dp), intent(in)   :: RateRef
       logical:: cond1, cond2, cond3
       logical, intent(out)::Apply
       Apply=.false.
@@ -113,12 +113,12 @@ contains
       !*********************************************************************
       implicit none
       !in
-      real(kind = real_type), intent(in):: M_tc, theta
+      real(dp), intent(in):: M_tc, theta
       !out
-      real(kind = real_type), intent(out):: M
+      real(dp), intent(out):: M
       !local
-      real(kind = real_type):: COS_VAL
-      real(kind = real_type), parameter :: pi=2*acos(0.0d0)
+      real(dp):: COS_VAL
+      real(dp), parameter :: pi=2*acos(0.0d0)
 
       COS_VAL=cos(1.5*theta+0.25*pi)
 
@@ -133,11 +133,11 @@ contains
       !*********************************************************************
       implicit none
       logical, intent(in):: ApplyRateUpdating
-      real(kind = real_type), intent(in):: h, D_min, I, I_0, eps_q, k
-      real(kind = real_type), intent(out):: D
+      real(dp), intent(in):: h, D_min, I, I_0, eps_q, k
+      real(dp), intent(out):: D
 
       !local variables
-      real(kind = real_type):: D_mm
+      real(dp):: D_mm
 
       if (ApplyRateUpdating) then
          ! D_mm=D_min*(I/I_0)**k !strain/rate hardening
@@ -146,7 +146,7 @@ contains
          D_mm = D_min
       endif
 
-      D = h * D_mm * eps_q * exp( 1.0_real_type - h * eps_q) !hardening rule
+      D = h * D_mm * eps_q * exp( 1.0_dp - h * eps_q) !hardening rule
    end subroutine Get_Dp
 
    pure subroutine Update_GK(G_0, nu, I, I_0, k_G, k_K, G, K)
@@ -155,11 +155,11 @@ contains
       !																	 *
       !*********************************************************************
       implicit none
-      real(kind = real_type), intent(in):: G_0, nu, I, I_0, k_G, k_K
-      real(kind = real_type), intent(out):: G, K
+      real(dp), intent(in):: G_0, nu, I, I_0, k_G, k_K
+      real(dp), intent(out):: G, K
 
       !local variables
-      real(kind = real_type):: K_0
+      real(dp):: K_0
 
       ! G = G_0*(I/I_0)**k_G! updated modulus
       G = update_strain_depend_param(G_0, I, I_0, k_G)
@@ -175,21 +175,21 @@ contains
       ! Function updates parameters that are dependent parameter
       ! This is for the bulk modulus and the shear modulus updates
 
-      real(kind = real_type), intent(in) :: param, I, I_0, factor
-      real(kind = real_type) :: updated_param
+      real(dp), intent(in) :: param, I, I_0, factor
+      real(dp) :: updated_param
 
       updated_param = param * (I/I_0)**factor
    end function update_strain_depend_param
 
    pure function calc_bulk_modulus(shear_modulus, poisson_ratio) result(bulk_modulus)
       ! Calc the bulk modulus from the shear modulus and the poisson ratio
-      real(kind = real_type), intent(in) :: shear_modulus, poisson_ratio
-      real(kind = real_type) :: bulk_modulus
+      real(dp), intent(in) :: shear_modulus, poisson_ratio
+      real(dp) :: bulk_modulus
 
       ! Local variables
-      real(kind = real_type), parameter :: ONE = 1.0_real_type, &
-                                           TWO = 2.0_real_type, &
-                                           THREE = 3.0_real_type 
+      real(dp), parameter :: ONE = 1.0_dp, &
+                                           TWO = 2.0_dp, &
+                                           THREE = 3.0_dp 
 
       bulk_modulus = TWO * shear_modulus * (ONE + poisson_ratio) / ( THREE * (ONE - TWO * poisson_ratio) )
    end function calc_bulk_modulus

@@ -33,8 +33,8 @@ contains
 
    pure function calc_eps_vol_invariant(strain) result(eps_vol)
       ! Calc the volumetric strain invariant
-      real(kind = real_type), intent(in) :: strain(6)
-      real(kind = real_type) :: eps_vol
+      real(dp), intent(in) :: strain(6)
+      real(dp) :: eps_vol
 
       ! Init to zero to make sure nothing weird happens
       eps_vol = 0.0
@@ -45,8 +45,8 @@ contains
 
    pure function calc_dev_strain(strain, eps_v) result(dev_strain)
       ! Calc the deviatoric strain voigt vector
-      real(kind = real_type), intent(in) :: strain(6), eps_v
-      real(kind = real_type) :: dev_strain(6)
+      real(dp), intent(in) :: strain(6), eps_v
+      real(dp) :: dev_strain(6)
 
       ! Local variables
       integer :: i
@@ -56,19 +56,19 @@ contains
 
       ! Subtract off the mean volumetric strain
       do i = 1, 3
-         dev_strain(i) = dev_strain(i) - eps_v/3.0_real_type
+         dev_strain(i) = dev_strain(i) - eps_v/3.0_dp
       end do
    end function calc_dev_strain
 
    pure function calc_eps_q_invariant(dev_strain) result(eps_q)
       ! Calc the derivatoric strain invariant
       ! TODO: Need to check that the invariants are correct
-      real(kind = real_type), intent(in) :: dev_strain(6)
-      real(kind = real_type) :: eps_q
+      real(dp), intent(in) :: dev_strain(6)
+      real(dp) :: eps_q
 
       call TwoNormTensor_strain(dev_strain, 6, eps_q)
 
-      eps_q = eps_q * sqrt(2.0_real_type / 3.0_real_type)
+      eps_q = eps_q * sqrt(2.0_dp / 3.0_dp)
    end function calc_eps_q_invariant
    
 end module mod_strain_invariants

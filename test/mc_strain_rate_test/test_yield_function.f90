@@ -37,13 +37,13 @@ module mod_test_yield_function
         type(error_type), allocatable, intent(out) :: error
         
         ! Local variables
-        real(kind = real_type) :: &
+        real(dp) :: &
             M_tc  = 1.0  , &
             eta_y = 1.5  , &
             Sig(6)       , &
             n_vec(6), &
             tol = 1e-9
-        real(kind = real_type) :: exp_n_vec(6)
+        real(dp) :: exp_n_vec(6)
         logical :: passed
 
         Sig = [1.0, 3.0, 5.0, 7.0, 11.0, 13.0]

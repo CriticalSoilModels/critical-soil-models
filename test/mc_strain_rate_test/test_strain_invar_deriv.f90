@@ -1,6 +1,6 @@
 module mod_test_strain_invar_deriv_suite
     ! Local imports
-    use kind_precision_module, only : real_type => dp, i32
+    use stdlib_kinds, only: dp, i32 => int32
     use mod_strain_invar_deriv, only : Get_dEpsq_to_dEps, calc_inc_driver_dEpsq_to_dEps
     use mod_strain_invariants, only: calc_eps_q_invariant, calc_dev_strain, Get_strain_invariants
     use mod_check_NaN_and_tensor_value, only : check_NaN_and_tensor_value
@@ -33,11 +33,11 @@ module mod_test_strain_invar_deriv_suite
         type(error_type), allocatable, intent(out) :: error
 
         ! Local variables
-        real(kind = real_type) :: exp_dEq_dEpsq(6), dEq_dEpsq(6)
-        real(kind = real_type) :: Eps(6), Eps_v, Eps_q, dev_strain(6), test_arr(6)
+        real(dp) :: exp_dEq_dEpsq(6), dEq_dEpsq(6)
+        real(dp) :: Eps(6), Eps_v, Eps_q, dev_strain(6), test_arr(6)
         logical :: passed
-        real(kind = real_type) :: a
-        real(kind = real_type), parameter :: tol = 1e-9_real_type
+        real(dp) :: a
+        real(dp), parameter :: tol = 1e-9_dp
         Eps = [1.0, 3.0, 5.0, 7.0, 11.0, 13.0]
         
         call Get_strain_invariants(Eps, Eps_v, Eps_q)

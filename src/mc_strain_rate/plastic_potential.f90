@@ -1,7 +1,7 @@
 ! Module for holding the function that calcualtes the plastic potential function value and and the derivatives
 
 module mod_plastic_potential
-   use kind_precision_module , only: real_type => dp
+   use stdlib_kinds, only: dp
    use mod_stress_invariants , only: Get_invariants
    use mod_stress_invar_deriv, only: calc_mean_stress_to_dSigma, calc_dq_to_dSigma
    use mod_voigt_functions   , only: calc_dev_stess
@@ -17,12 +17,12 @@ contains
       !************************************************************************
       implicit none
       !input
-      real(kind = real_type), intent(in)  :: D, Sig(6)
+      real(dp), intent(in)  :: D, Sig(6)
       !output
-      real(kind = real_type), intent(out) :: m_vec(6)
+      real(dp), intent(out) :: m_vec(6)
 
       !local variables
-      real(kind = real_type):: p, q, theta, dpdsig(6), dev(6), dqdSig(6)
+      real(dp):: p, q, theta, dpdsig(6), dev(6), dqdSig(6)
       
       ! Get the invariants
       call Get_invariants(Sig, p, q, theta)
