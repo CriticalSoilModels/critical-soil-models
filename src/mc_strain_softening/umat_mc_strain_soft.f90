@@ -258,7 +258,7 @@ contains
       !*
       ! elastic stress increment
       dSig = matmul(DE, DSTRAN)
-
+      
       ! ! elastic stress
       Sig = STRESS + dSig
 

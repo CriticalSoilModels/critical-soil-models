@@ -1,4 +1,4 @@
-name: crit-soil
+name: csm
 channels:
   - conda-forge
   - defaults
@@ -9,7 +9,7 @@ dependencies:
   # - ifx_win-64
   # - intel-fortran-rt
   # - flang
-  # - lfortran
+  - lfortran
 
   # Build tools
   - fpm
@@ -34,3 +34,6 @@ dependencies:
 
   # Version control
   - git
+  - pip
+  - pip:
+    - git+https://github.com/Fortran-FOSS-Programmers/ford.git
