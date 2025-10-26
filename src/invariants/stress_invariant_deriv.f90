@@ -1,7 +1,7 @@
 ! Module holds the derivatives of the stress invariants
 
 module mod_stress_invar_deriv
-   use kind_precision_module, only: real_type => dp
+   use stdlib_kinds, only: dp
    use mod_voigt_functions  , only : square_inc_driver_voigt_vector
 
    implicit none

@@ -1,7 +1,7 @@
 ! Module for holding the derivatives of the strain invariants
 
 module mod_strain_invar_deriv
-   use kind_precision_module, only: real_type => dp
+   use stdlib_kinds, only: dp
    use mod_strain_invariants, only: calc_dev_strain, calc_eps_vol_invariant
    implicit none
 

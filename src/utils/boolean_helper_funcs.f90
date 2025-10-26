@@ -1,7 +1,7 @@
 ! Functions that help working with booleans (True or False values)
 
 module mod_bool_helper
-   use kind_precision_module, only: real_type => dp
+   use stdlib_kinds, only: dp
    implicit none
 
 contains

@@ -1,6 +1,6 @@
 ! Module for the the functions for the strain invariants
 module mod_strain_invariants
-   use kind_precision_module, only: real_type => dp
+   use stdlib_kinds, only: dp
    use mod_voigt_functions  , only: TwoNormTensor_strain
    implicit none
 

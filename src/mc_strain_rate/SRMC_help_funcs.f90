@@ -1,5 +1,5 @@
 module mod_SRMC_funcs
-   use kind_precision_module, only: real_type => dp
+   use stdlib_kinds, only: dp
 
    implicit none
 

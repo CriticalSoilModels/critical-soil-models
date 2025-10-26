@@ -1,7 +1,7 @@
 ! Functions that calculate the derivatives of the state paramters
 
 module mod_state_params_deriv
-   use kind_precision_module, only: real_type => dp
+   use stdlib_kinds, only: dp
 
    implicit none
 

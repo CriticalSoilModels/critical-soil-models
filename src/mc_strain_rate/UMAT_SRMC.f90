@@ -15,7 +15,7 @@ module MOD_NAMC_ESM
    !
    !**********************************************************************
 
-   use kind_precision_module, only: Real_Type => dp
+   use stdlib_kinds, only: dp
    use mod_bool_helper, only: dbltobool, logic2dbl
    use mod_SRMC, only: SRMC_HSR
    use mod_array_helper, only: reorder_real_array

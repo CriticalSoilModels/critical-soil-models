@@ -1,6 +1,6 @@
 ! Module holds the yield function equation and the derivatives of the yield function
 module mod_yield_function
-   use kind_precision_module, only: real_type => dp
+   use stdlib_kinds, only: dp
    use mod_stress_invariants, only : calc_inc_driver_J3_invariant, Get_invariants, calc_J2_invariant
    use mod_stress_invar_deriv, only: calc_mean_stress_to_dSigma, calc_dq_to_dSigma, calc_dJ3_to_dSigma, calc_dtheta_to_dSigma
    use mod_voigt_functions   , only: calc_dev_stess
