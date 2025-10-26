@@ -1,5 +1,5 @@
 module critical_soil_models
-   use mod_mcss_esm, only: umat_mcss => UMAT_MohrCoulombStrainSoftening
+   use mod_mcss_esm, only: umat_mc_strain_softening => UMAT_MohrCoulombStrainSoftening
    use mod_lin_elastic, only: umat_linear => UMAT
    use mod_bingham, only: umat_bingham => umat
    use mod_mc_strain_rate, only: umat_mc_strain_rate
