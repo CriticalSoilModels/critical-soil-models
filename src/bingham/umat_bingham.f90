@@ -1,4 +1,5 @@
 module mod_bingham
+   !! This module does this thing
    use stdlib_kinds, only: dp
    ! use mod_strain_invariants, only: calc_eps_vol_invariant
 

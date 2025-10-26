@@ -20,6 +20,15 @@ stdlib = {path = "../../stdlib"}
 [dev-dependencies]
 test-drive = { git = "https://github.com/fortran-lang/test-drive.git/" }
 
+[extra.ford]
+project = "critical-soil-models"
+author = "WaveHello"
+summary = "Modern Fortran library of constitutive relations for soil"
+src_dir = ["src", "example"]
+output_dir = "build/doc"
+# page_dir = "doc"
+# exclude = "**/fortplot_pdf_text.f90"
+
 [install]
 library = false
 test = false

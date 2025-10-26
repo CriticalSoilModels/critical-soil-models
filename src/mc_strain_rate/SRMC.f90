@@ -331,8 +331,8 @@ contains
                dilation1=dilation+0.5*(dD1+dD2) !Updated dilation
                eta_y1=M-dilation1
            
-               call TwoNormTensor((dSig1-dSig2), 6, dummyvar(1)) !||Delta Sigma||
-               call TwoNormTensor(Sig_t, 6, dummyvar(2)) !||Sig_T+DT||
+               call TwoNormTensor((dSig1-dSig2), 6, dummyvar(1)) !norm(Delta Sigma)
+               call TwoNormTensor(Sig_t, 6, dummyvar(2)) !norm(Sig_T+DT)
                R_TT=0.5*max(dummyvar(1)/dummyvar(2), abs(dD1-dD2)/abs(eta_y1)) !Relative residual error
                !________________________________________________________________________________
 
