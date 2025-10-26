@@ -1,5 +1,5 @@
 module mod_array_helper
-   use stdlib_kinds, only: dp, i32
+   use stdlib_kinds, only: dp, i32 =>int32
 
    implicit none
    private
