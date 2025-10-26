@@ -1,6 +1,6 @@
 # critical-soil-models
 Modern fortran library of common geotechnical constitutive models. This library is being made:
-- [x] Interface with [incremental-driver](https://github.com/CriticalSoilModels/Incremental_Driver) - For testing, calibrating, and debugging their constitutive model.
+- [x] Interface with  - For testing, calibrating, and debugging their constitutive model.
 
 - [ ] Expose an api that let's users develop and test there consitutive models extremely quickly. Users should be able to use predifined types and through that solvers to quickly test test and modifiy there constitutive relations.
 
@@ -12,13 +12,25 @@ Modern fortran library of common geotechnical constitutive models. This library 
 
 *Warning*: This library is just starting and we'll have to see how the progress comes along. The API is subject to change and this code has not been tested.
 
+## Design Philosophy
+Geotechnical engineers spend way too much time looking for, reimplementing, testing, debugging, constitutive relations that already exist. This sucks time away from running the larger simulation, actually getting results, sleeping/graduating/etc.
+
+Hence, there are two overarching goals for this repo. The first is to collect, abstract and accelerate the development of constitutive models. The second, is to provide a library disconnected from any one PDE solver. 
+
+As pointed out in (*Kayenta Paper Add Here*) it is extremly difficult to figure out if a bug is caused by your constitutive model or the numerical technique, when the constitutive strongly embeded in the PDE solver. A split framework allows the constitutive relations to crows source testing and validation to a much higher degree. 
+
 ## Soil Models that we aim to include:
 (Assme the model is in 3D unless otherwise specified)
 - [x] **Linear Elastic**
   - [ ] Paper
   - [ ] Unit Tested
   - [ ] Abstracted
-    
+
+- [ ] **Bingham**
+  - [ ] Paper
+  - [ ] Unit Tested
+  - [ ] Abstracted
+
 - [ ] **Modified Cam Clay - Standard version**
   - [ ] Paper: 
   - [ ] Unit Tested
@@ -26,7 +38,7 @@ Modern fortran library of common geotechnical constitutive models. This library 
 
 - [x] **Mohr-coulomb strain softening**
   * This model can act as an associative (yield and plastic surface are the same) or non-associate model (yield and plastic surface are independent) depending on the input parameters.
-  - [ ] Paper: 
+  - [ ] Paper: The repo was originally written by A. Yerro-Colom (use [Yerro (2015)](https://upcommons.upc.edu/handle/2117/102412) )
   - [ ] Unit Tested
   - [ ] Abstracted
 
@@ -67,24 +79,24 @@ Soil models that are lower on the list:
   - [ ] Abstracted
 
 ## The general plan:
+- [x] Integrate them with [incremental-driver](https://github.com/CriticalSoilModels/Incremental_Driver)
+  * Allows to constitutive models to be tested and calibrated in a single element framework
+  * Turns out the first steps of this were really easy thanks to ```fpm```
 - [ ] Collect repos that already exist
 - [ ] Put them into a unified framework
 - [ ] Build unit tests for them
-- [ ] Integrate them with incremental driver
 - [ ] Implement the ones that don't exist
 - [ ] Steamline the process for future users to implement there own models
   - [ ] Expose an api for extending the abstract model (?) class so that users can use the same solver functions but be able to model there own things.
+- [ ] Users should be able to generate, run, and analyze data all in fortran. Why? Fortran is goated :sunglasses:
+- [ ] Use the tensor types from ttb to ease calculations
+- [ ] Add interface for C++/C/python/Julia to be able to be able to call the constitutive relations
 
+## Citations
 
-## Design Philosophy
-The aim is to modularize the code that the same solvers can be used for the different soil models. As much as possible the solvers should be soil model agnostic.
+If you use this repo in your research or a publish manuscript please cite this library and the paper the implementation of the soil model was taken from.
 
-Also where applicable the code should be parallizable (if the user wants to)
-
-Also intially the tensor types being used here and the formulas to calculate the invariants will be included in this library but once that function is stable they'll be moved into there own library. This will allow them to be tested individually and be used in additional codes more easily.
-
-Another goal is to write all of this code in fortran. Including the final plotting and data analysis. Let's see how this goes.
-
+Please refer to the Citation.cff file for the citation inforamtion for this repo.
 
 ## License
 

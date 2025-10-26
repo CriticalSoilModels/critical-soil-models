@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Moore"
+    given-names: "Jonathan"
+    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX" # Optional
+  - family-names: "Yerro-Colom" # Add other authors if any
+    given-names: "Alba"
+  - family-names: "Swamy"
+    given-names: "Varsha"
+  - family-names: "Alsardi"
+    given-names: "Abdel"
+
+title: "critical-soil-models"
+version: "0.0.0" # Or your current version
+date-released: 2025-10-26 # YYYY-MM-DD
+url: "https://github.com/CriticalSoilModels/critical-soil-models"
+# If you have a DOI from Zenodo, uncomment and add it here:
+# doi: "10.5281/zenodo.XXXXXXX"
