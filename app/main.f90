@@ -1,7 +1,7 @@
 program main
   use stdlib_kinds, only: dp
-
+  use critical_soil_models, only: print_banner
   implicit none
 
-  print *, "Not sure if this needs to print anything"
+  call print_banner()
 end program main
