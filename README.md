@@ -1,36 +1,38 @@
 # critical-soil-models
 Modern fortran library of common geotechnical constitutive models. This library is being made to interface with:
-* incremental-driver - For testing and calibrating the soil models
-* pumat/fumat - For plotting and analyzing the results
-* Have an interface that is usable from abaqus and other common numerical solvers
-* Be able to integrate with other constitutive model libraries
+- [ ] incremental-driver - For testing and calibrating the soil models
+- [ ] pumat/fumat - For plotting and analyzing the results
+- [ ] Have an interface that is usable from abaqus and other common numerical solvers
+- [ ] Be able to integrate with other constitutive model libraries
 
 *Warning*: This library is just starting and we'll have to see how the progress comes along. The API is subject to change and this code has not been tested.
 
 Soil Models that we aim to include:
-* Linear Elastic
-* Associative Mohr-Coulomb - Paper: [N/A]()
-* Non-associate Mohr-Coulomb - Paper: [N/A]()
-* Modified Cam Clay - Standard version - Paper: [N/A]()
-* Mohr-coulomb strain softening - Paper: [N/A]()
-* Mohr-Coulomb with strain rate effects - Paper: [N/A]()
-* NorSand - Paper: [N/A]()
-* PM4Sand (possibly?) - Paper: [N/A]()
-* Drucker-Prager - Paper: [N/A]()
-
+- [x] Linear Elastic
+- [ ] Associative Mohr-Coulomb - Paper: [N/A]()
+- [ ] Non-associate Mohr-Coulomb - Paper: [N/A]()
+- [ ] Modified Cam Clay - Standard version - Paper: [N/A]()
+- [x] Mohr-coulomb strain softening 
+  - Paper: [N/A]()
+- [ ] Mohr-Coulomb with strain rate effects - Paper: [N/A]()
+- [ ] NorSand - Paper: [N/A]()
+- [ ] PM4Sand (possibly?) - Paper: [N/A]()
+- [ ] Drucker-Prager - Paper: [N/A]()
 
 Soil models that are lower on the list:
-* Original Cam-Clay - Paper: [N/A]()
-* Mohr-Coulomb with Cap - Paper: [N/A]()
-* Hypoplastic models - Paper: [N/A]()
+- [ ] Original Cam-Clay - Paper: [N/A]()
+- [ ] Mohr-Coulomb with Cap - Paper: [N/A]()
+- [ ] Hypoplastic models - Paper: [N/A]()
 
 The general plan:
-* Collect repos that already exist
-* Put them into a unified framework
-* Build unit tests for them
-* Integrate them with incremental driver
-* Implement the ones that don't exist
-* Steamline the process for future users to implement there own models
+- [ ] Collect repos that already exist
+- [ ] Put them into a unified framework
+- [ ] Build unit tests for them
+- [ ] Integrate them with incremental driver
+- [ ] Implement the ones that don't exist
+- [ ] Steamline the process for future users to implement there own models
+  - [ ] Expose an api for extending the abstract model (?) class so that users can use the same solver functions but be able to model there own things.
+    * Honestly not sure what finite strain and small strain models in the same repo is going to look like.
 
 The aim is to modularize the code that the same solvers can be used for the different soil models. As much as possible the solvers should be soil model agnostic.
 
