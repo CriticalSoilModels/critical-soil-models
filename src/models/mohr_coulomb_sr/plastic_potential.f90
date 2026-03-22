@@ -1,4 +1,4 @@
-! Module for holding the function that calcualtes the plastic potential function value and and the derivatives
+! Module for holding the function that calculates the plastic potential derivatives
 
 module mod_plastic_potential
    use stdlib_kinds, only: dp
@@ -8,41 +8,27 @@ module mod_plastic_potential
    implicit none
 
 contains
-   subroutine Get_dP_to_dSigma(D, Sig, m_vec)
-      !************************************************************************
-      ! Returns the derivative of the plastic potential function with respect *
-      ! to the stress tensor													*
-      ! m=dP/dSigma =dP/dp*dp/dSigma+ dP/dq*dq/dSigma							*
-      ! m is a (1X6) vector													*
-      !************************************************************************
+
+   subroutine calc_dg_by_dsig(dilation, sig, m_vec)
+      !! Returns dP/dsig = dP/dp * dp/dsig + dP/dq * dq/dsig
+      !! where dP/dp = -dilation and dP/dq = 1
+      !! m_vec is a 6-vector in Voigt notation
       implicit none
-      !input
-      real(dp), intent(in)  :: D, Sig(6)
-      !output
+      real(dp), intent(in)  :: dilation, sig(6)
       real(dp), intent(out) :: m_vec(6)
 
-      !local variables
-      real(dp):: p, q, lode_angle, dpdsig(6), dev(6), dqdSig(6)
+      real(dp) :: p, q, lode_angle, dp_by_dsig(6), dev(6), dq_by_dsig(6)
 
-      ! Get the invariants
-      call calc_sig_invariants(Sig, p, q, lode_angle)
+      call calc_sig_invariants(sig, p, q, lode_angle)
 
-      !Get dP/dp=-D and dF/dq=1
-      !___________________________________________________________________________
-      !1) Get dp/dSig=1/3 Imat
-      dpdsig=0.0d0
+      dp_by_dsig = calc_dp_by_dsig()
 
-      dpdsig = calc_dp_by_dsig()
+      dev = calc_dev_stress(sig, p)
 
-      !2) Get dq/dsig
-      dev = calc_dev_stress(Sig, p)
+      dq_by_dsig = calc_dq_by_dsig(dev, q)
 
-      dqdSig = calc_dq_by_dsig(dev, q)
+      m_vec = (-dilation * dp_by_dsig) + dq_by_dsig
 
-      !__________________________________________________________________
-      !Get m_vec=dP/dSig]
-      ! Dilatancy is negative there
-      m_vec=(-D*dpdsig)+dqdSig !m_vec=dP/dSig
+   end subroutine calc_dg_by_dsig
 
-   end subroutine Get_dP_to_dSigma
 end module mod_plastic_potential

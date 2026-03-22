@@ -8,125 +8,92 @@ module mod_yield_function
 
 contains
 
-   pure function calc_dF_to_dtheta(M_tc, p, theta) result(dfdtheta)
+   pure function calc_dF_by_dtheta(M_tc, p, theta) result(dF_by_dtheta)
       real(dp), intent(in) :: M_tc, p, theta
-      real(dp) :: dfdtheta
+      real(dp) :: dF_by_dtheta
 
-      ! ! Local variables
-      real(dp), parameter :: pi=2.0*acos(0.0_dp), &
+      real(dp), parameter :: pi = 2.0_dp * acos(0.0_dp), &
          THREE_HALVES = 1.5_dp, &
-         ONE_QUARTER = 0.25_dp, &
-         TWO_TENTHS = 0.2_dp
+         ONE_QUARTER  = 0.25_dp, &
+         TWO_TENTHS   = 0.2_dp
 
-      ! !Get dF/dtheta
-      dfdtheta = 0.45 * p * M_tc * ( ( cos(THREE_HALVES * theta + ONE_QUARTER * PI) )**TWO_TENTHS) &
-         * sin( THREE_HALVES * theta + ONE_QUARTER * PI)
+      dF_by_dtheta = 0.45_dp * p * M_tc * ( ( cos(THREE_HALVES * theta + ONE_QUARTER * pi) )**TWO_TENTHS) &
+         * sin( THREE_HALVES * theta + ONE_QUARTER * pi)
 
-   end function calc_dF_to_dtheta
+   end function calc_dF_by_dtheta
 
-   pure subroutine Get_dF_to_dSigma(M_tc, eta_y, Sig, n_vec)
-      !************************************************************************
-      ! Returns the derivative of the yield function with respect to the		*
-      ! stress tensor 														*
-      ! n=dF/dSigma =dF/dp*dp/dSigma+ dF/dq*dq/dSigma +dF/dlode_angle*dlode_angle/dSigma*
-      ! n is a (1X6) vector													*
-      !************************************************************************
+   pure subroutine calc_dF_by_dsig(M_tc, eta_y, sig, n_vec)
+      !! Returns dF/dsig = dF/dp * dp/dsig + dF/dq * dq/dsig + dF/dtheta * dtheta/dsig
+      !! n_vec is a 6-vector in Voigt notation
       implicit none
-      !input
-      real(dp), intent(in)  :: M_tc, eta_y, Sig(6)
+      real(dp), intent(in)  :: M_tc, eta_y, sig(6)
       real(dp), intent(out) :: n_vec(6)
 
-      ! Local variables
-      real(dp):: p, q, lode_angle, J2, J3, dJ3dsig(6), dfdtheta, &
-         dpdsig(6), dqdsig(6), dev(6), dlode_angle_dSig(6)
+      real(dp) :: p, q, lode_angle, J2, J3
+      real(dp) :: dJ3_by_dsig(6), dF_by_dtheta, dp_by_dsig(6), dq_by_dsig(6)
+      real(dp) :: dev(6), dlode_angle_by_dsig(6)
 
-      !Get the invariants
-      call calc_sig_invariants(Sig, p, q, lode_angle)
+      call calc_sig_invariants(sig, p, q, lode_angle)
 
-      !Get dF/dp=eta_y and dF/dq=1
-      !Get dF/dtheta
-      dfdtheta= calc_dF_to_dtheta(M_tc, p, lode_angle)
+      dF_by_dtheta = calc_dF_by_dtheta(M_tc, p, lode_angle)
 
-      !___________________________________________________________________________
-      !1) Get dp/dSig=1/3 Imat
-      dpdsig = calc_dp_by_dsig()
+      dp_by_dsig = calc_dp_by_dsig()
 
-      dev= calc_dev_stress(Sig, p)
+      dev = calc_dev_stress(sig, p)
 
-      !2) Get dq/dsig
-      dqdSig = calc_dq_by_dsig(dev, q)
+      dq_by_dsig = calc_dq_by_dsig(dev, q)
 
-      !3) Get dlode_angle/dSigma
       J2 = calc_J2(dev)
+      J3 = calc_J3(dev)
 
-      J3 = calc_J3( dev )
+      dJ3_by_dsig = calc_dJ3_by_dsig(dev)
 
-      dJ3dsig = calc_dJ3_by_dsig(dev)
+      dlode_angle_by_dsig = calc_dlode_angle_by_dsig(dJ3_by_dsig, dev, J3, J2, lode_angle)
 
-      !Compute dlode_angle/dsig
-      dlode_angle_dSig = calc_dlode_angle_by_dsig(dJ3dsig, dev, J3, J2, lode_angle)
+      n_vec = (eta_y * dp_by_dsig) + dq_by_dsig + (dF_by_dtheta * dlode_angle_by_dsig)
 
-      !Get n_vec=dF/dSig
-      n_vec = ( eta_y * dpdsig ) + dqdSig + ( dfdtheta * dlode_angle_dSig) !n_vec=dF/dSig
-   end subroutine Get_dF_to_dSigma
+   end subroutine calc_dF_by_dsig
 
-   subroutine Get_dF_to_dSigma_3(M_tc, eta_y, Sig, n_vec)
-      !************************************************************************
-      ! Returns the derivative of the yield function with respect to the		*
-      ! stress tensor 														*
-      ! n=dF/dSigma =dF/dp*dp/dSigma+ dF/dq*dq/dSigma +dF/dlode_angle*dlode_angle/dSigma*
-      ! n is a (1X6) vector													*
-      !************************************************************************
+   subroutine calc_dF_by_dsig_3(M_tc, eta_y, sig, n_vec)
+      !! Non-pure variant of calc_dF_by_dsig (allows I/O for debugging)
       implicit none
-      !input
-      real(dp), intent(in)  :: M_tc, eta_y, Sig(6)
+      real(dp), intent(in)  :: M_tc, eta_y, sig(6)
       real(dp), intent(out) :: n_vec(6)
 
-      ! Local variables
-      real(dp):: p, q, lode_angle, J2, J3, dJ3dsig(6), dfdtheta, &
-         dpdsig(6), dqdsig(6), dev(6), dlode_angle_dSig(6)
+      real(dp) :: p, q, lode_angle, J2, J3
+      real(dp) :: dJ3_by_dsig(6), dF_by_dtheta, dp_by_dsig(6), dq_by_dsig(6)
+      real(dp) :: dev(6), dlode_angle_by_dsig(6)
 
-      !Get the invariants
-      call calc_sig_invariants(Sig, p, q, lode_angle)
+      call calc_sig_invariants(sig, p, q, lode_angle)
 
-      !Get dF/dp=eta_y and dF/dq=1
-      !Get dF/dtheta
-      dfdtheta= calc_dF_to_dtheta(M_tc, p, lode_angle)
+      dF_by_dtheta = calc_dF_by_dtheta(M_tc, p, lode_angle)
 
-      !___________________________________________________________________________
-      !1) Get dp/dSig=1/3 Imat
-      dpdsig = calc_dp_by_dsig()
+      dp_by_dsig = calc_dp_by_dsig()
 
-      dev= calc_dev_stress(Sig, p)
+      dev = calc_dev_stress(sig, p)
 
-      !2) Get dq/dsig
-      dqdSig = calc_dq_by_dsig(dev, q)
+      dq_by_dsig = calc_dq_by_dsig(dev, q)
 
-      !3) Get dlode_angle/dSigma
       J2 = calc_J2(dev)
+      J3 = calc_J3(dev)
 
-      J3 = calc_J3( dev )
+      dJ3_by_dsig = calc_dJ3_by_dsig(dev)
 
-      dJ3dsig = calc_dJ3_by_dsig(dev)
+      dlode_angle_by_dsig = calc_dlode_angle_by_dsig(dJ3_by_dsig, dev, J3, J2, lode_angle)
 
-      !Compute dlode_angle/dsig
-      dlode_angle_dSig = calc_dlode_angle_by_dsig(dJ3dsig, dev, J3, J2, lode_angle)
+      n_vec = (eta_y * dp_by_dsig) + dq_by_dsig + (dF_by_dtheta * dlode_angle_by_dsig)
 
-      !Get n_vec=dF/dSig
-      n_vec = ( eta_y * dpdsig ) + dqdSig + ( dfdtheta * dlode_angle_dSig) !n_vec=dF/dSig
+   end subroutine calc_dF_by_dsig_3
 
-   end subroutine Get_dF_to_dSigma_3
-
-   pure subroutine YieldFunction(q, p, eta_y, F)
-      !*********************************************************************
-      ! Returns the value of the yield function evaluated at q, p , eta    *
-      !																	 *
-      !*********************************************************************
+   pure subroutine calc_yield_function(q, p, eta_y, F)
+      !! Returns the value of the yield function F = q + eta_y * p
+      !! Sign convention: compression is negative in UMAT
       implicit none
-      real(dp), intent(in):: q, p, eta_y
-      real(dp), intent(out):: F
+      real(dp), intent(in)  :: q, p, eta_y
+      real(dp), intent(out) :: F
 
-      F=q+eta_y*p !sign is due to compression being negative in UMAT
-   end subroutine YieldFunction
+      F = q + eta_y * p
+
+   end subroutine calc_yield_function
 
 end module mod_yield_function

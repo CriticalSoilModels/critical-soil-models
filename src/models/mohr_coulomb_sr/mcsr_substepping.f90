@@ -5,8 +5,8 @@ module mod_SRMC_Substepping
     use mod_strain_invariants, only: calc_eps_invariants
     use mod_strain_invar_deriv, only: calc_deps_q_by_deps
     use mod_stress_invariants, only : calc_sig_invariants                           
-    use mod_yield_function, only: Get_dF_to_dSigma, YieldFunction
-    use mod_plastic_potential, only: Get_dP_to_dSigma
+    use mod_yield_function, only: calc_dF_by_dsig, calc_yield_function
+    use mod_plastic_potential, only: calc_dg_by_dsig
     use mod_state_params_deriv, only: calc_ddil_by_deps_p, calc_ddil_by_dI
 
     implicit none
@@ -106,10 +106,10 @@ contains
        !___________________________________________________________
        !Evaluate yield function
        call calc_sig_invariants(Sig_alpha, p_alpha, q_alpha, dummyvar)
-       call YieldFunction(q_alpha, p_alpha, eta_yu, FT)
+       call calc_yield_function(q_alpha, p_alpha, eta_yu, FT)
 
        !Evaluate n=dF/dSig and L=dF/dXs
-       call Get_dF_to_dSigma(M_tc, eta_yu, Sig_alpha, n_vec)!dF/dSig
+       call calc_dF_by_dsig(M_tc, eta_yu, Sig_alpha, n_vec)!dF/dSig
        L=-p_alpha*(1.0-No) !L=dF/dXs
        !____________________________________________________________
        !Evaluate F'(alpha)
@@ -214,8 +214,8 @@ contains
     !Compute invariants and derivatives
     call calc_sig_invariants(Sig, p, q, dummyvar)
     call calc_eps_invariants(EpsP, epsv_p, epsq_p)
-    call Get_dF_to_dSigma(M_tc, eta_y, Sig, n_vec) !n=dFdSig
-    call Get_dP_to_dSigma(dilation, Sig, m_vec) !m=dP/dSig
+    call calc_dF_by_dsig(M_tc, eta_y, Sig, n_vec) !n=dFdSig
+    call calc_dg_by_dsig(dilation, Sig, m_vec) !m=dP/dSig
     L = -p*(1.0-No) !L=dF/dXs
     call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
        EpsP, I, ApplyStrainRateUpdate, a) !a=ddil/dEpsq^p
@@ -365,8 +365,8 @@ contains
        !Compute invariants and derivatives
        call calc_sig_invariants(Sig, p, q, dummyvar)
        call calc_eps_invariants(EpsP, epsv_p, epsq_p)
-       call Get_dF_to_dSigma(M_tc, eta_y, Sig, n_vec) !n=dFdSig
-       call Get_dP_to_dSigma(dilation, Sig, m_vec) !m=dP/dSig
+       call calc_dF_by_dsig(M_tc, eta_y, Sig, n_vec) !n=dFdSig
+       call calc_dg_by_dsig(dilation, Sig, m_vec) !m=dP/dSig
        L=-p*(1.0-No) !L=dF/dXs
        call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
           EpsP, I_f, ApplyStrainRateUpdate, a) !a=ddil/dEpsq^p
@@ -427,7 +427,7 @@ contains
        !__________________________________________________________________
        !Evaluate yield function
        call calc_sig_invariants(Sigu, p, q, dummyvar)
-       call YieldFunction(q, p, eta_yu, FC)
+       call calc_yield_function(q, p, eta_yu, FC)
        !__________________________________________________________________
        !Evaluate change direction
        if (abs(FC)>abs(F0)) then

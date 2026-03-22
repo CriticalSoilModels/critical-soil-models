@@ -1,7 +1,7 @@
 module mod_test_yield_function
     ! Local imports
     use stdlib_kinds, only: dp, i32 => int32
-    use mod_yield_function, only : Get_dF_to_dSigma, Get_dF_to_dSigma_3
+    use mod_yield_function, only : calc_dF_by_dsig, calc_dF_by_dsig_3
     use mod_shape_checker , only : check_matrix_shape
     use mod_tensor_value_checker, only: check_tensor_values
     use ieee_arithmetic, only: ieee_is_nan
@@ -51,10 +51,10 @@ module mod_test_yield_function
         ! The expected n_vector
         
         ! Call the original df_dsigma
-        call Get_dF_to_dSigma(M_tc, eta_y, Sig, exp_n_vec)
+        call calc_dF_by_dsig(M_tc, eta_y, Sig, exp_n_vec)
         
         ! Call the updated df_dsigma
-        call Get_dF_to_dSigma_3(M_tc, eta_y, Sig, n_vec)
+        call calc_dF_by_dsig_3(M_tc, eta_y, Sig, n_vec)
         
         ! Check if ther are any NaN values in the calculation 
         if (all(ieee_is_nan(n_vec) .eqv. .False.)) then

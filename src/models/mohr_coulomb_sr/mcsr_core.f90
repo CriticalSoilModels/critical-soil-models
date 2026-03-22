@@ -4,7 +4,7 @@ module mod_SRMC
    use mod_strain_invariants, only: calc_eps_invariants
    use mod_stress_invariants, only : calc_sig_invariants
    use mod_state_params     , only: Get_I_coeff, Get_M, Get_dilation, check4crossing, Update_GK, Check_Unloading
-   use mod_yield_function   , only: YieldFunction
+   use mod_yield_function   , only: calc_yield_function
    use mod_voigt_utils, only: calc_two_norm_tensor, calc_two_norm_tensor_strain
    use mod_SRMC_Substepping, only: Euler_Algorithm, Newton_Raphson, Stress_Drift_Correction
 
@@ -129,7 +129,7 @@ contains
       !_____________________________________________________________________________
       !Evaluate yield function at initial stress-state variable
 
-      call YieldFunction(q, p, eta_y, F0)
+      call calc_yield_function(q, p, eta_y, F0)
 
       !_____________________________________________________________________________
       !Compute the current deviatoric strain rate
@@ -205,7 +205,7 @@ contains
       call calc_sig_invariants(Sig_t, p_t, q_t, lode_angle)
 
       !Evaluate yield function
-      call YieldFunction(q_t, p_t, eta_yu, FT)
+      call calc_yield_function(q_t, p_t, eta_yu, FT)
 
       !___________________________________________________________________________
       !Now check elastic loading, unloading
@@ -297,7 +297,7 @@ contains
                !=================================================================================
                !Store max F1 comment if not needed
                call calc_sig_invariants(Sig1, p, q, lode_angle)
-               call YieldFunction(q, p, eta_y1, FT)
+               call calc_yield_function(q, p, eta_y1, FT)
                ! if (abs(FT)>abs(Error_yield_1)) Error_yield_1=abs(FT)
                !=================================================================================
 
@@ -321,7 +321,7 @@ contains
                !=================================================================================
                !Store max F2 comment if not needed
                call calc_sig_invariants(Sig2, p, q, lode_angle)
-               call YieldFunction(q, p, eta_y2, FT)
+               call calc_yield_function(q, p, eta_y2, FT)
                ! if (abs(FT)>abs(Error_yield_2)) Error_yield_2=abs(FT)
                !=================================================================================
 
@@ -366,7 +366,7 @@ contains
                   !***********************Stress drift correction**********************************
                   !________________________________________________________________________________
                   call calc_sig_invariants(Sig, p, q, lode_angle) !stress invariants
-                  call YieldFunction(q, p, eta_y, F0) !Initial drift
+                  call calc_yield_function(q, p, eta_y, F0) !Initial drift
                   !print *, "F0:", F0
                   !=================================================================================
                   !Store last F0, comment if not needed

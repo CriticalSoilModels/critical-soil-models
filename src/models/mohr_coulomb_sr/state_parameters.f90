@@ -2,7 +2,7 @@
 
 module mod_state_params
    use stdlib_kinds, only: dp
-   use mod_yield_function, only: Get_dF_to_dSigma
+   use mod_yield_function, only: calc_dF_by_dsig
    use mod_voigt_utils, only: calc_two_norm_tensor, calc_tensor_inner_product
    implicit none
 
@@ -26,7 +26,7 @@ contains
 
       deta=eta_yu-eta_y!change in state parameter
 
-      call Get_dF_to_dSigma(M_tc, eta_yu, Sig, n_vec)!Normal to surface
+      call calc_dF_by_dsig(M_tc, eta_yu, Sig, n_vec)  ! Normal to surface
       n_norm   = calc_two_norm_tensor(n_vec) !norm of n_vec
       Sig_norm = calc_two_norm_tensor(dSig)  !norm of dSig
       dSIg_inner_n = calc_tensor_inner_product(dSig, n_vec) !inner product
