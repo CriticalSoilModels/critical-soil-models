@@ -1,12 +1,9 @@
-! =============================================================================
-! PSEUDOCODE — does not compile
 ! Abstract base type for all constitutive soil models.
 ! Every concrete model (MCSS, NorSand, MC-SR, etc.) extends this type
-! and implements the five deferred procedures.
-! =============================================================================
+! and implements the seven deferred procedures.
 
 module mod_csm_model
-   use iso_fortran_env, only: dp => real64
+   use stdlib_kinds, only: dp
    implicit none
 
    ! ---------------------------------------------------------------------------
@@ -55,14 +52,14 @@ module mod_csm_model
          real(dp) :: dF_by_dsig(6)
       end function flow_rule_iface
 
-      ! dG_by_dsig = model%plastic_potential(sig)
+      ! dg_plas_by_dsig = model%plastic_potential(sig)
       ! Flow direction. For associated flow: identical to flow_rule.
       ! For non-associated flow (e.g. MC): uses dilation angle instead of friction angle.
-      function plastic_pot_iface(self, sig) result(dG_by_dsig)
+      function plastic_pot_iface(self, sig) result(dg_plas_by_dsig)
          import :: csm_model_t, dp
          class(csm_model_t), intent(in) :: self
          real(dp), intent(in) :: sig(6)
-         real(dp) :: dG_by_dsig(6)
+         real(dp) :: dg_plas_by_dsig(6)
       end function plastic_pot_iface
 
       ! call model%update_hardening(deps_p)

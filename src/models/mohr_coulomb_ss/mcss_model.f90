@@ -1,15 +1,12 @@
-! =============================================================================
-! PSEUDOCODE — does not compile
 ! Concrete implementation of csm_model_t for Mohr-Coulomb Strain Softening.
-! Shows the pattern every model should follow:
+! Pattern every model follows:
 !   1. Extend csm_model_t with named param + state fields
-!   2. Implement the five deferred procedures
+!   2. Implement the seven deferred procedures
 !   3. Provide from_props / load_state / save_state at the UMAT boundary
-! =============================================================================
 
 module mod_mcss_model
-   use iso_fortran_env, only: dp => real64
-   use mod_csm_model
+   use stdlib_kinds,          only: dp
+   use mod_csm_model,         only: csm_model_t
    use mod_stress_invariants, only: calc_sig_invariants
    implicit none
 

@@ -1,5 +1,3 @@
-! =============================================================================
-! PSEUDOCODE — does not compile
 ! Voigt convention translation utilities.
 ! Internal convention: [11, 22, 33, 12, 13, 23]  (standard mechanics order)
 ! Translation and inflation/deflation happen only at the UMAT boundary —
@@ -16,10 +14,9 @@
 ! The wrapper inflates solver vectors to 6 on entry and deflates back on exit.
 ! Plane stress requires a Newton iteration in the wrapper to find eps_33
 ! such that sig_33 = 0 — handled in the UMAT wrapper, not here.
-! =============================================================================
 
 module mod_voigt_conventions
-   use iso_fortran_env, only: dp => real64
+   use stdlib_kinds, only: dp
    implicit none
 
    ! ---------------------------------------------------------------------------

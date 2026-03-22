@@ -1,6 +1,4 @@
-! =============================================================================
-! PSEUDOCODE — does not compile
-! Shows what the UMAT wrapper looks like under the new architecture.
+! UMAT wrapper for the MCSS model under the new architecture.
 !
 ! Responsibilities of this wrapper — and ONLY this wrapper:
 !   1. Unpack PROPS/STATEV into typed model fields
@@ -32,7 +30,7 @@ subroutine umat_mc_strain_softening(STRESS, STATEV, DDSDDE,       &
                                      DFGRD0, DFGRD1,               &
                                      NOEL, NPT, LAYER, KSPT, KSTEP, KINC)
 
-   use iso_fortran_env,       only: dp => real64
+   use stdlib_kinds,           only: dp
    use mod_mcss_model,        only: mcss_model_t, mcss_from_props, &
                                     mcss_load_state, mcss_save_state
    use mod_euler_substep,     only: euler_substep

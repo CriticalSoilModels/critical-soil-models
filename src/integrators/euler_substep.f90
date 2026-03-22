@@ -1,13 +1,10 @@
-! =============================================================================
-! PSEUDOCODE — does not compile
 ! Generic modified Euler integrator with automatic substepping and error control.
-! Knows nothing about any specific model — calls only the five deferred procedures
+! Knows nothing about any specific model — calls only the deferred procedures
 ! defined in csm_model_t.
-! =============================================================================
 
 module mod_euler_substep
-   use iso_fortran_env, only: dp => real64
-   use mod_csm_model
+   use stdlib_kinds, only: dp
+   use mod_csm_model, only: csm_model_t
    implicit none
 
    real(dp), parameter :: DT_MIN_DEFAULT = 1.0e-9_dp
@@ -118,22 +115,22 @@ contains
       real(dp),           intent(in)  :: sig(6), deps_sub(6), stiff_e(6,6)
       real(dp),           intent(out) :: dsig(6), deps_p(6)
 
-      real(dp) :: dF_by_dsig(6), dG_by_dsig(6), dlambda
-      real(dp) :: stiff_e_dG(6)   ! stiff_e * dG_by_dsig
+      real(dp) :: dF_by_dsig(6), dg_plas_by_dsig(6), dlambda
+      real(dp) :: stiff_e_dG(6)   ! stiff_e * dg_plas_by_dsig
       real(dp) :: dF_stiff_e(6)   ! dF_by_dsig^T * stiff_e (row vector)
 
       dF_by_dsig = model%flow_rule(sig)
-      dG_by_dsig = model%plastic_potential(sig)
+      dg_plas_by_dsig = model%plastic_potential(sig)
 
       ! Plastic multiplier from consistency condition:
-      !   dlambda = (dF_by_dsig . stiff_e . deps) / (dF_by_dsig . stiff_e . dG_by_dsig)
+      !   dlambda = (dF_by_dsig . stiff_e . deps) / (dF_by_dsig . stiff_e . dg_plas_by_dsig)
       ! (hardening denominator term omitted here — placeholder)
-      stiff_e_dG   = matmul(stiff_e, dG_by_dsig)
+      stiff_e_dG   = matmul(stiff_e, dg_plas_by_dsig)
       dF_stiff_e   = matmul(dF_by_dsig, stiff_e)
-      dlambda      = dot_product(dF_stiff_e, deps_sub) / dot_product(dF_stiff_e, dG_by_dsig)
+      dlambda      = dot_product(dF_stiff_e, deps_sub) / dot_product(dF_stiff_e, dg_plas_by_dsig)
       dlambda      = max(dlambda, 0.0_dp)   ! no negative plastic multiplier
 
-      deps_p = dlambda * dG_by_dsig
+      deps_p = dlambda * dg_plas_by_dsig
       dsig   = matmul(stiff_e, deps_sub - deps_p)
    end subroutine euler_step
 
@@ -185,7 +182,7 @@ contains
       real(dp),           intent(inout) :: sig(6)
       real(dp),           intent(in)    :: stiff_e(6,6), ftol
 
-      real(dp) :: F, dF_by_dsig(6), dG_by_dsig(6), dlambda
+      real(dp) :: F, dF_by_dsig(6), dg_plas_by_dsig(6), dlambda
       integer  :: iter
 
       do iter = 1, 100
@@ -193,10 +190,10 @@ contains
          if (abs(F) < ftol) return
 
          dF_by_dsig = model%flow_rule(sig)
-         dG_by_dsig = model%plastic_potential(sig)
-         dlambda    = F / dot_product(dF_by_dsig, matmul(stiff_e, dG_by_dsig))
-         sig        = sig - dlambda * matmul(stiff_e, dG_by_dsig)
-         call model%update_hardening(dlambda * dG_by_dsig)
+         dg_plas_by_dsig = model%plastic_potential(sig)
+         dlambda    = F / dot_product(dF_by_dsig, matmul(stiff_e, dg_plas_by_dsig))
+         sig        = sig - dlambda * matmul(stiff_e, dg_plas_by_dsig)
+         call model%update_hardening(dlambda * dg_plas_by_dsig)
       end do
 
    end subroutine correct_drift
