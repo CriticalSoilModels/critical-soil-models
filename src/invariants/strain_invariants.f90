@@ -5,33 +5,21 @@ module mod_strain_invariants
    implicit none
 
 contains
-   Subroutine calc_strain_invariants(Eps, Eps_v, Eps_q)
-      !*********************************************************************
-      ! Takes the strain tensor and returns deviatoric and vol. strain     *
-      !																	 *
-      !*********************************************************************
+   subroutine calc_eps_invariants(eps, eps_v, eps_q)
+      !! Takes the strain tensor and returns volumetric and deviatoric strain invariants
       implicit none
-      !input
-      double precision, dimension(6), intent(in):: Eps
-      !output
-      double precision, intent(out):: Eps_v, Eps_q
-      !local variables
-      double precision:: dev(6)
-      ! Eps_v=Eps(1)+Eps(2)+Eps(3)! vol strain
-      Eps_v = calc_eps_vol_invariant(Eps)
+      real(dp), dimension(6), intent(in)  :: eps
+      real(dp),               intent(out) :: eps_v, eps_q
 
-      ! dev=Eps
-      ! dev(1)=dev(1)-(Eps_v/3.0)
-      ! dev(2)=dev(2)-(Eps_v/3.0)
-      ! dev(3)=dev(3)-(Eps_v/3.0)!deviatoric strain tensor
-      dev = calc_dev_strain(Eps, Eps_v)
+      ! Local variables
+      real(dp) :: dev(6)
 
-      ! call TwoNormTensor_strain(dev, 6, Eps_q)
-      ! Eps_q=Eps_q*sqrt(2.0/3.0) ! dev strain
-      Eps_q = calc_eps_q_invariant(dev)
-   end subroutine  calc_strain_invariants
+      eps_v = calc_eps_vol(eps)
+      dev   = calc_dev_strain(eps, eps_v)
+      eps_q = calc_eps_q(dev)
+   end subroutine calc_eps_invariants
 
-   pure function calc_eps_vol_invariant(strain) result(eps_vol)
+   pure function calc_eps_vol(strain) result(eps_vol)
       ! Calc the volumetric strain invariant
       real(dp), intent(in) :: strain(6)
       real(dp) :: eps_vol
@@ -41,7 +29,7 @@ contains
       ! Calc the volumetric strain invariant Tr(\epsilon)
       eps_vol = strain(1) + strain(2) + strain(3)
 
-   end function calc_eps_vol_invariant
+   end function calc_eps_vol
 
    pure function calc_dev_strain(strain, eps_v) result(dev_strain)
       ! Calc the deviatoric strain voigt vector
@@ -60,15 +48,13 @@ contains
       end do
    end function calc_dev_strain
 
-   pure function calc_eps_q_invariant(dev_strain) result(eps_q)
+   pure function calc_eps_q(dev_strain) result(eps_q)
       ! Calc the derivatoric strain invariant
       ! TODO: Need to check that the invariants are correct
       real(dp), intent(in) :: dev_strain(6)
       real(dp) :: eps_q
 
-      call calc_two_norm_tensor_strain(dev_strain, 6, eps_q)
-
-      eps_q = eps_q * sqrt(2.0_dp / 3.0_dp)
-   end function calc_eps_q_invariant
+      eps_q = calc_two_norm_tensor_strain(dev_strain) * sqrt(2.0_dp / 3.0_dp)
+   end function calc_eps_q
    
 end module mod_strain_invariants

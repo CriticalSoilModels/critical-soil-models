@@ -1,12 +1,13 @@
 module mod_SRMC_Substepping
+    use stdlib_kinds, only: dp
     use mod_SRMC_funcs, only:  MatVec,  DotProduct_2
     use mod_state_params, only: check4crossing, Update_GK, get_dilation, Check_Unloading
-    use mod_strain_invariants, only: calc_strain_invariants
+    use mod_strain_invariants, only: calc_eps_invariants
     use mod_strain_invar_deriv, only: calc_deps_q_by_deps
-    use mod_stress_invariants, only : calc_stress_invariants                           
+    use mod_stress_invariants, only : calc_sig_invariants                           
     use mod_yield_function, only: Get_dF_to_dSigma, YieldFunction
     use mod_plastic_potential, only: Get_dP_to_dSigma
-    use mod_state_params_deriv, only: Get_dD_to_dEpsP, Get_dD_to_dI
+    use mod_state_params_deriv, only: calc_ddil_by_deps_p, calc_ddil_by_dI
 
     implicit none
     
@@ -27,9 +28,9 @@ contains
    !##    ##  ##     ## ##        ##     ## ##    ## ##     ## ##   ###
    !##     ## ##     ## ##        ##     ##  ######   #######  ##    ##
 
-   subroutine Newton_Raphson(G, K, eta_y, Dp, G_0, nu, M, M_tc, No, D_min, h, D_par, &
+   subroutine Newton_Raphson(G, K, eta_y, dilation, G_0, nu, M, M_tc, No, D_min, h, dilationar, &
     G_s, eps_q, I_coeff, I_act, I_0, k_K, k_G, k_D,&
-    Gu, Ku, eta_yu, Du, dEps, MAXITER, FTOL, &
+    Gu, Ku, eta_yu, dil_u, dEps, MAXITER, FTOL, &
     F0, Sig_0, alpha)
     !**************************************************************************************
     !  This subroutine determine the elastic proportion with consistent state and elastic *
@@ -38,22 +39,22 @@ contains
     implicit none
     !input
     integer, intent(in):: MAXITER
-    double precision, intent(in):: G_0, nu, M, M_tc, No, D_min, h, D_par, G_s, &
+    real(dp), intent(in):: G_0, nu, M, M_tc, No, D_min, h, dilationar, G_s, &
        eps_q, k_G, k_K, k_D, I_act, I_0, FTOL
-    double precision, dimension(6), intent(in):: dEps
+    real(dp), dimension(6), intent(in):: dEps
     !output
-    double precision, intent(inout):: G, K, eta_y, Dp, I_coeff, &
-       Gu, Ku, eta_yu, Du, F0, Sig_0(6)
-    double precision, intent(out):: alpha
+    real(dp), intent(inout):: G, K, eta_y, dilation, I_coeff, &
+       Gu, Ku, eta_yu, dil_u, F0, Sig_0(6)
+    real(dp), intent(out):: alpha
     !local variables
     logical:: ApplyStrainRateUpdates
     integer:: n, i
-    double precision:: FT, dG, dK, deta, dD, dI, &
+    real(dp):: FT, dG, dK, deta, ddil, dI, &
        dI_alpha, I_alpha, &
        p_alpha, q_alpha, dummyvar, F_prime
-    double precision:: dEps_alpha(6), dSig_alpha(6), Sig_alpha(6), &
+    real(dp):: dEps_alpha(6), dSig_alpha(6), Sig_alpha(6), &
        n_vec(6), L, dSigdAlpha(6)
-    double precision:: D1, D2, DE(6,6), dDdG(6,6), dDdK(6,6), aux(6,6)
+    real(dp):: D1, D2, DE(6,6), ddildG(6,6), ddildK(6,6), aux(6,6)
 
     !Initialize parameters
     FT=1000
@@ -63,14 +64,14 @@ contains
     dG=Gu-G
     dK=Ku-K
     deta=eta_yu-eta_y
-    dD=Du-Dp
+    ddil=dil_u-dilation
     dI=I_act-I_coeff
     do while (FT >= - FTOL.and.(n<=MAXITER))
        !Store variables
        Gu=G
        Ku=K
        eta_yu=eta_y
-       Du=Dp
+       dil_u=dilation
        F0=FT
 
        n=n+1
@@ -84,8 +85,8 @@ contains
        call check4crossing(I_coeff, I_alpha, dI_alpha,I_0, ApplyStrainRateUpdates)
        if (ApplyStrainRateUpdates) then !Update parameters
           call Update_GK(G_0, nu, I_alpha, I_0, k_G, k_K, Gu, Ku)
-          call get_dilation(h, D_min, I_alpha, I_0, eps_q, k_D, ApplyStrainRateUpdates, Du)
-          eta_yu=M-Du*(1.0-No)
+          call get_dilation(h, D_min, I_alpha, I_0, eps_q, k_D, ApplyStrainRateUpdates, dil_u)
+          eta_yu=M-dil_u*(1.0-No)
        endif
        !___________________________________________________________________
        !Update trial stress
@@ -104,7 +105,7 @@ contains
        Sig_alpha = Sig_0 + dSig_alpha
        !___________________________________________________________
        !Evaluate yield function
-       call calc_stress_invariants(Sig_alpha, p_alpha, q_alpha, dummyvar)
+       call calc_sig_invariants(Sig_alpha, p_alpha, q_alpha, dummyvar)
        call YieldFunction(q_alpha, p_alpha, eta_yu, FT)
 
        !Evaluate n=dF/dSig and L=dF/dXs
@@ -113,24 +114,24 @@ contains
        !____________________________________________________________
        !Evaluate F'(alpha)
        !Elastic matrix derivatives
-       dDdK=0.0
-       dDdK(1:3,1:3) = 1.0
-       dDdG=0.0
-       dDdG(1:3,1:3)=-2./3.
-       dDdG(1,1)=4./3.
-       dDdG(2,2)=4./3.
-       dDdG(3,3)=4./3.
-       dDdG(4,4)=1.0
-       dDdG(5,5)=1.0
-       dDdG(5,5)=1.0
-       aux=alpha* (dK*dDdK+dG*dDdG)
+       ddildK=0.0
+       ddildK(1:3,1:3) = 1.0
+       ddildG=0.0
+       ddildG(1:3,1:3)=-2./3.
+       ddildG(1,1)=4./3.
+       ddildG(2,2)=4./3.
+       ddildG(3,3)=4./3.
+       ddildG(4,4)=1.0
+       ddildG(5,5)=1.0
+       ddildG(5,5)=1.0
+       aux=alpha* (dK*ddildK+dG*ddildG)
        aux=DE+aux
        call MatVec(aux, 6, dEps, 6, dSigdAlpha)
        F_prime=0.0d0
        do i=1,6 !dot product
           F_prime=F_prime+n_vec(i)*dSigdAlpha(i)
        enddo
-       F_prime=F_prime+L*dD!F'(alpha)
+       F_prime=F_prime+L*ddil!F'(alpha)
        !______________________________________________________________
        !Update alpha
        alpha=alpha-FT/F_prime
@@ -142,7 +143,7 @@ contains
     G=Gu
     K=Ku
     eta_y=eta_yu
-    Dp=Du
+    dilation=dil_u
     I_coeff=I_alpha
     Sig_0=Sig_alpha
  end subroutine Newton_Raphson
@@ -173,11 +174,11 @@ contains
 !##     ## ##       ##    ##  ##     ## ##    ##   ##     ##    ##     ## ##     ##
 !##     ## ########  ######    #######  ##     ## ####    ##    ##     ## ##     ##
 
- subroutine Euler_Algorithm(G_0, nu, M_tc, M, No,  D_min, h, Dpart, Gs,&
-    G, K, eta_y, Dp, &
+ subroutine Euler_Algorithm(G_0, nu, M_tc, M, No,  D_min, h, dilationart, Gs,&
+    G, K, eta_y, dilation, &
     erate, I_0, I, dI, k_G, k_K, k_D, dtime, DT, &
     switch_original, &
-    Sig, EpsP, dEps, dD, dEpsp, dSig)
+    Sig, EpsP, dEps, ddil, dEpsp, dSig)
     !************************************************************************
     ! Euler's algorithm (finite difference) integration						*
     ! Returns:																*
@@ -186,16 +187,16 @@ contains
     implicit none
     !input
     logical, intent(in):: switch_original
-    double precision, intent(in):: G_0, nu, M_tc, M, No, D_min, h, Dpart, Gs,&
+    real(dp), intent(in):: G_0, nu, M_tc, M, No, D_min, h, dilationart, Gs,&
        erate(6), I_0, k_G, k_K, k_D, dtime, DT,&
        dEps(6)
-    double precision, intent(inout):: I, dI
+    real(dp), intent(inout):: I, dI
     !output
-    double precision, intent(inout):: G, K, eta_y, Dp, EpsP(6) , Sig(6)
-    double precision, intent(out):: dD, dSig(6), dEpsp(6)
+    real(dp), intent(inout):: G, K, eta_y, dilation, EpsP(6) , Sig(6)
+    real(dp), intent(out):: ddil, dSig(6), dEpsp(6)
     !local variables
     logical:: ApplyStrainRateUpdate
-    double precision:: I_f, DE(6,6), D1, D2, dSig_el(6), num, lambda, &
+    real(dp):: I_f, DE(6,6), D1, D2, dSig_el(6), num, lambda, &
        n_vec(6), p, q, dummyvar, L, b, m_vec(6), a(6), &
        epsq_p, epsv_p, Hard, den, dummyvec(6), Hvp, erate_q
 
@@ -211,14 +212,14 @@ contains
 
     !________________________________________________________________________
     !Compute invariants and derivatives
-    call calc_stress_invariants(Sig, p, q, dummyvar)
-    call calc_strain_invariants(EpsP, epsv_p, epsq_p)
+    call calc_sig_invariants(Sig, p, q, dummyvar)
+    call calc_eps_invariants(EpsP, epsv_p, epsq_p)
     call Get_dF_to_dSigma(M_tc, eta_y, Sig, n_vec) !n=dFdSig
-    call Get_dP_to_dSigma(Dp, Sig, m_vec) !m=dP/dSig
+    call Get_dP_to_dSigma(dilation, Sig, m_vec) !m=dP/dSig
     L = -p*(1.0-No) !L=dF/dXs
-    call Get_dD_to_dEpsP(D_min, h, I_0, k_D, epsq_p, epsv_p, &
-       EpsP, I, ApplyStrainRateUpdate, a) !a=dD/dEpsq^p
-    call Get_dD_to_dI(D_min, h, I_0, k_D, epsq_p, I, b) !b=dXs/dI in place of dXs/dErate
+    call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
+       EpsP, I, ApplyStrainRateUpdate, a) !a=ddil/dEpsq^p
+    call calc_ddil_by_dI(D_min, h, I_0, k_D, epsq_p, I, b) !b=dXs/dI in place of dXs/dErate
     !________________________________________________________________________
 
     !________________________________________________________________________
@@ -262,9 +263,9 @@ contains
 
     if ((ApplyStrainRateUpdate).and.(switch_original)) then !original
        !compute viscous hardening modulus Hvp=-L.bv.m/(dt*DT)
-       call calc_strain_invariants(erate,dummyvar,erate_q)
-       call calc_deps_q_by_deps(erate_q,erate,dummyvec)
-       dummyvec=b*Dpart*sqrt(Gs/abs(p))*dummyvec
+       call calc_eps_invariants(erate,dummyvar,erate_q)
+       dummyvec=calc_deps_q_by_deps(erate_q,erate)
+       dummyvec=b*dilationart*sqrt(Gs/abs(p))*dummyvec
        call DotProduct_2(dummyvec, m_vec, 6, dummyvar)
        Hvp=-L*dummyvar/(dtime*DT)
        den=den+Hvp
@@ -272,23 +273,23 @@ contains
     !_____________________________________________________________________
 
     !_____________________________________________________________________
-    !compute viscoplastic mult. lambda, dEpsp, dSig, and dD
+    !compute viscoplastic mult. lambda, dEpsp, dSig, and ddil
 
     lambda=num/den! viscoelastic multiplier
     dEpsp=lambda*m_vec! Flow rule
     dummyvec=dEps-dEpsp
     call MatVec(DE, 6, dummyvec, 6, dSig) !stress increment
-    dD=0.0
-    call DotProduct_2(a, dEpsp, 6, dD)!plastic hard/softening
-    dD=dD+b*dI !rate hard/softening
+    ddil=0.0
+    call DotProduct_2(a, dEpsp, 6, ddil)!plastic hard/softening
+    ddil=ddil+b*dI !rate hard/softening
     !_____________________________________________________________________
 
     !_____________________________________________________________________
     !Update EpsP, Sig, D, and eta_y
     EpsP=EpsP+dEpsp
     Sig=Sig+dSig
-    Dp=Dp+dD
-    eta_y=M-Dp*(1.0-No)
+    dilation=dilation+ddil
+    eta_y=M-dilation*(1.0-No)
     !____________________________________________________________________
  end subroutine Euler_Algorithm
 !*************************************************************************
@@ -311,8 +312,8 @@ contains
 !##     ## ##    ##   ##  ##          ##
 !########  ##     ## #### ##          ##
 
- subroutine Stress_Drift_Correction(G_0, nu, M_tc, M, No, D_min, h, Dpart, Gs, &
-    G, K, eta_y, Dp, &
+ subroutine Stress_Drift_Correction(G_0, nu, M_tc, M, No, D_min, h, dilationart, Gs, &
+    G, K, eta_y, dilation, &
     erate, I_0, I_f, I, dI, k_G, k_K, k_D, dtime, DT, &
     switch_original, MAXITER, F0, FTOL, &
     Sig, EpsP, dEps)
@@ -324,19 +325,19 @@ contains
     !input
     logical, intent(in):: switch_original
     integer, intent(in):: MAXITER
-    double precision, intent(in):: G_0, nu, M_tc, M, No, D_min, h, Dpart, Gs,&
+    real(dp), intent(in):: G_0, nu, M_tc, M, No, D_min, h, dilationart, Gs,&
        erate(6), I_0, k_G, k_K, k_D, dtime, DT,&
        FTOL, dEps(6)
-    double precision, intent(inout):: I, I_f, dI
+    real(dp), intent(inout):: I, I_f, dI
     !output
-    double precision, intent(inout):: G, K, eta_y, Dp, EpsP(6) , Sig(6), F0
+    real(dp), intent(inout):: G, K, eta_y, dilation, EpsP(6) , Sig(6), F0
     !local variables
     logical:: ApplyStrainRateUpdate
     integer:: n
-    double precision::epsq_p, epsv_p, n_vec(6), m_vec(6), L, a(6), b,&
+    real(dp)::epsq_p, epsv_p, n_vec(6), m_vec(6), L, a(6), b,&
        DE(6,6), D1, D2, Den,  Hard, Hvp, dlambda, &
        dummyvec(6), dummyvar, FC, &
-       Du, eta_yu, Sigu(6), dD, dSig(6), dEpsp(6),Epspu(6), &
+       dil_u, eta_yu, Sigu(6), ddil, dSig(6), dEpsp(6),Epspu(6), &
        p, q, erate_q
     !________________________________________________________________________
     !Evaluate for strain rate updating
@@ -362,14 +363,14 @@ contains
 
        !________________________________________________________________________
        !Compute invariants and derivatives
-       call calc_stress_invariants(Sig, p, q, dummyvar)
-       call calc_strain_invariants(EpsP, epsv_p, epsq_p)
+       call calc_sig_invariants(Sig, p, q, dummyvar)
+       call calc_eps_invariants(EpsP, epsv_p, epsq_p)
        call Get_dF_to_dSigma(M_tc, eta_y, Sig, n_vec) !n=dFdSig
-       call Get_dP_to_dSigma(Dp, Sig, m_vec) !m=dP/dSig
+       call Get_dP_to_dSigma(dilation, Sig, m_vec) !m=dP/dSig
        L=-p*(1.0-No) !L=dF/dXs
-       call Get_dD_to_dEpsP(D_min, h, I_0, k_D, epsq_p, epsv_p, &
-          EpsP, I_f, ApplyStrainRateUpdate, a) !a=dD/dEpsq^p
-       call Get_dD_to_dI(D_min, h, I_0, k_D, epsq_p, I_f, b) !b=dXs/dI in place of dXs/dErate
+       call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
+          EpsP, I_f, ApplyStrainRateUpdate, a) !a=ddil/dEpsq^p
+       call calc_ddil_by_dI(D_min, h, I_0, k_D, epsq_p, I_f, b) !b=dXs/dI in place of dXs/dErate
        !________________________________________________________________________
 
        !___________________________________________________________________
@@ -398,9 +399,9 @@ contains
 
        if ((ApplyStrainRateUpdate).and.(switch_original)) then !original
           !compute viscous hardening modulus Hvp=-L.bdI/dErate.m/(dt*DT)
-          call calc_strain_invariants(erate,dummyvar,erate_q)
-          call calc_deps_q_by_deps(erate_q,erate,dummyvec)
-          dummyvec=b*Dpart*sqrt(Gs/abs(p))*dummyvec
+          call calc_eps_invariants(erate,dummyvar,erate_q)
+          dummyvec=calc_deps_q_by_deps(erate_q,erate)
+          dummyvec=b*dilationart*sqrt(Gs/abs(p))*dummyvec
           call DotProduct_2(dummyvec, m_vec, 6, dummyvar)
           Hvp=-L*dummyvar/(dtime*DT)
           den=den+Hvp
@@ -413,19 +414,19 @@ contains
        dEpsp=dlambda*m_vec !error in plastic strain tensor
        Epspu=EpsP-dEpsp
        call MatVec(DE, 6, dEpsp, 6, dSig) !stress drift
-       dD=0.0
-       call DotProduct_2(a, dEpsp, 6, dD)!plastic hard/softening
-       !if (switch_original) dD=dD+b*dI
+       ddil=0.0
+       call DotProduct_2(a, dEpsp, 6, ddil)!plastic hard/softening
+       !if (switch_original) ddil=ddil+b*dI
 
        !update
        Sigu=Sig-dSig
-       Du=Dp-dD
-       eta_yu=M-Du*(1.0-No)
+       dil_u=dilation-ddil
+       eta_yu=M-dil_u*(1.0-No)
        !__________________________________________________________________
 
        !__________________________________________________________________
        !Evaluate yield function
-       call calc_stress_invariants(Sigu, p, q, dummyvar)
+       call calc_sig_invariants(Sigu, p, q, dummyvar)
        call YieldFunction(q, p, eta_yu, FC)
        !__________________________________________________________________
        !Evaluate change direction
@@ -436,7 +437,7 @@ contains
           Epspu=EpsP-dEpsp
           call MatVec(DE, 6, dEpsp, 6, dSig) !stress drift
           Sigu=Sig-dSig
-          Du=Dp
+          dil_u=dilation
           eta_yu=eta_y
        end if
        !__________________________________________________________________
@@ -445,7 +446,7 @@ contains
        !Update the state parameters
        EpsP=Epspu
        Sig=Sigu
-       Dp=Du
+       dilation=dil_u
        eta_y=eta_yu
        !__________________________________________________________________
     end do

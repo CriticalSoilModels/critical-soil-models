@@ -3,7 +3,7 @@ module mod_test_strain_invar_deriv_suite
     use stdlib_kinds, only: dp, i32 => int32
     use mod_strain_invar_deriv, only : calc_deps_q_by_deps
     use mod_strain_invar_refs, only: calc_deps_q_by_deps_full
-    use mod_strain_invariants, only: calc_eps_q_invariant, calc_dev_strain, calc_strain_invariants
+    use mod_strain_invariants, only: calc_eps_q, calc_dev_strain, calc_eps_invariants
     use mod_check_NaN_and_tensor_value, only : check_NaN_and_tensor_value
 
     ! Testdrive imports
@@ -41,10 +41,10 @@ module mod_test_strain_invar_deriv_suite
         real(dp), parameter :: tol = 1e-9_dp
         Eps = [1.0, 3.0, 5.0, 7.0, 11.0, 13.0]
         
-        call calc_strain_invariants(Eps, Eps_v, Eps_q)
+        call calc_eps_invariants(Eps, Eps_v, Eps_q)
     
         ! Calc the value
-        call calc_deps_q_by_deps(Eps_q, Eps, dEq_dEpsq)
+        dEq_dEpsq = calc_deps_q_by_deps(Eps_q, Eps)
         
         exp_dEq_dEpsq = calc_deps_q_by_deps_full(Eps)
 

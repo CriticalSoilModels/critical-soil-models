@@ -10,7 +10,7 @@
 module mod_mcss_model
    use iso_fortran_env, only: dp => real64
    use mod_csm_model
-   use mod_stress_invariants, only: calc_stress_invariants
+   use mod_stress_invariants, only: calc_sig_invariants
    implicit none
 
    real(dp), parameter :: DEG_TO_RAD = acos(-1.0_dp) / 180.0_dp
@@ -132,7 +132,7 @@ contains
       real(dp) :: F
       real(dp) :: p, q, lode_angle
 
-      call calc_stress_invariants(sig, p, q, lode_angle)
+      call calc_sig_invariants(sig, p, q, lode_angle)
       ! Mohr-Coulomb: F = q - eta*p - c
       ! where eta = M(theta) derived from phi
       ! (simplified here — real version uses Lode-angle-dependent M)

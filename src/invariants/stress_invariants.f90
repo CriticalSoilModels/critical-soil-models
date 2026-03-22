@@ -100,10 +100,7 @@ contains
       real(kind = dp) :: J2
 
       ! Calc the sqrt of the J2 invariant
-      ! calc_two_norm_tensor calculates the sqrt{inner product of a symmetric stress tensor}
-      call calc_two_norm_tensor(dev, 6, J2)
-
-      J2 = 0.5_dp * J2**2
+      J2 = 0.5_dp * calc_two_norm_tensor(dev)**2
    end function calc_J2
 
    pure function calc_q(J2) result(q)
@@ -114,21 +111,17 @@ contains
 
    end function calc_q
 
-   pure subroutine calc_stress_invariants(Sig, p, q, lode_angle)
-      !*********************************************************************
-      ! Takes the stress tensor Sig and return invariants p, q, and lode_angle *
-      !																	 *
-      !*********************************************************************
-      !input variables
-      real(dp), dimension(6), intent(in) :: Sig
-      !output variables
+   pure subroutine calc_sig_invariants(sig, p, q, lode_angle)
+      !! Takes the stress tensor sig and returns invariants p, q, and lode_angle
+      real(dp), dimension(6), intent(in) :: sig
       real(dp), intent(out) :: p, q, lode_angle
-      !local variables
+
+      ! Local variables
       real(dp) :: dev(6), J2, J3
 
-      p = calc_mean_stress(Sig)
+      p = calc_mean_stress(sig)
 
-      dev = calc_dev_stress(Sig, p)
+      dev = calc_dev_stress(sig, p)
 
       J2 = calc_J2(dev)
 
@@ -139,6 +132,6 @@ contains
 
       lode_angle = calc_lode_angle(J2, J3) !Lode's angle
 
-   end subroutine calc_stress_invariants
+   end subroutine calc_sig_invariants
 
 end module mod_stress_invariants

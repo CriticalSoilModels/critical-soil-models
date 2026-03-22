@@ -66,9 +66,7 @@ contains
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
 
-        call random_number(stress)
-
-        stress = stress - [0.5, 0.0, 0.5, 0.0, 0.5, 0.0]
+        stress = [100.0_dp, 50.0_dp, 25.0_dp, 10.0_dp, 5.0_dp, 2.0_dp]
         mean_stress = calc_mean_stress(stress)
 
         dev_stress = calc_dev_stress(stress, mean_stress)
@@ -104,8 +102,7 @@ contains
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
 
-        call random_number(stress)
-
+        stress = [100.0_dp, 50.0_dp, 25.0_dp, 10.0_dp, 5.0_dp, 2.0_dp]
         mean_stress = calc_mean_stress(stress)
 
         dev_stress = calc_dev_stress(stress, mean_stress)
@@ -139,8 +136,7 @@ contains
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
 
-        call random_number(stress)
-
+        stress = [100.0_dp, 50.0_dp, 25.0_dp, 10.0_dp, 5.0_dp, 2.0_dp]
         mean_stress = calc_mean_stress(stress)
 
         dev = calc_dev_stress(stress, mean_stress)
@@ -171,8 +167,7 @@ contains
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
 
-        call random_number(stress)
-
+        stress = [100.0_dp, 50.0_dp, 25.0_dp, 10.0_dp, 5.0_dp, 2.0_dp]
         mean_stress = calc_mean_stress(stress)
 
         dev = calc_dev_stress(stress, mean_stress)

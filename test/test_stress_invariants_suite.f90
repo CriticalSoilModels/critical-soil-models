@@ -1,8 +1,8 @@
 module mod_test_stress_invariants_suite
    ! Local imports
    use stdlib_kinds, only: dp, i32 => int32
-   use mod_strain_invariants, only : calc_strain_invariants
-   use mod_stress_invariants, only : calc_stress_invariants, calc_lode_angle, calc_J2, &
+   use mod_strain_invariants, only : calc_eps_invariants
+   use mod_stress_invariants, only : calc_sig_invariants, calc_lode_angle, calc_J2, &
                                      calc_J3, calc_mean_stress
    use stdlib_linalg        , only : det
    use mod_voigt_utils  , only : calc_voigt_to_matrix, calc_dev_stress
@@ -43,8 +43,8 @@ contains
       real(kind = dp) :: exp_p, p
       real(kind = dp) :: stress(6)
 
-      call random_number(stress)
-      
+      stress = [100.0_dp, 50.0_dp, 25.0_dp, 10.0_dp, 5.0_dp, 2.0_dp]
+
       p = calc_mean_stress(stress)
 
       exp_p = sum(stress(1:3)) / 3.0_dp
@@ -61,7 +61,7 @@ contains
       real(kind = dp) :: exp_J2, J2, stress(6), dev_stress(6)
       real(kind = dp) :: mean_stress
 
-      call random_number(stress)
+      stress = [100.0_dp, 50.0_dp, 25.0_dp, 10.0_dp, 5.0_dp, 2.0_dp]
       mean_stress = calc_mean_stress(stress)
 
       dev_stress = calc_dev_stress(stress, mean_stress)
@@ -85,7 +85,7 @@ contains
       ! Local variables
       real(kind = dp) :: J3, exp_J3, stress(6), dev_stress(6), dev_matrix(3,3)
 
-      call random_number(stress)
+      stress = [100.0_dp, 50.0_dp, 25.0_dp, 10.0_dp, 5.0_dp, 2.0_dp]
 
       dev_stress = calc_dev_stress( stress, calc_mean_stress(stress) )
 
@@ -142,7 +142,7 @@ contains
    
    end subroutine test_lode_angle
 
-   ! Test the calc_stress_invariants functions. This is some what redundant due to the above tests but it makes it easier to test each of them individually
+   ! Test the calc_sig_invariants functions. This is some what redundant due to the above tests but it makes it easier to test each of them individually
    subroutine test_main_stress_invariant(error)
       type(error_type), allocatable, intent(out) :: error
 
@@ -157,7 +157,7 @@ contains
       stress = [1.0_dp, 3.0_dp, 5.0_dp, 7.0_dp, 11.0_dp, 13.0_dp]
 
       ! Calc the stress invariants
-      call calc_stress_invariants(stress, p, q, lode_angle)
+      call calc_sig_invariants(stress, p, q, lode_angle)
 
       ! Check the mean stress
       call check(error, p, exp_p, more = "Mean Stress Test^")

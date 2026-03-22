@@ -30,13 +30,13 @@ contains
       real(dp) :: dq_by_dsig(6)
 
       ! Local variables
-      real(dp) :: dJ2_dsigma(6)
+      real(dp) :: dJ2_by_dsig(6)
 
-      ! Calc dJ2/dsigma
-      dJ2_dSigma = calc_dJ2_by_dsig(dev)
+      ! Calc dJ2/dsig
+      dJ2_by_dsig = calc_dJ2_by_dsig(dev)
 
-      ! Calc dq/dSigma
-      dq_by_dsig = 3.0_dp/ (2.0_dp * q) * dJ2_dsigma
+      ! Calc dq/dsig
+      dq_by_dsig = 3.0_dp/ (2.0_dp * q) * dJ2_by_dsig
 
    end function calc_dq_by_dsig
 
@@ -56,23 +56,23 @@ contains
       real(dp) :: dJ3_by_dsig(6)
 
       ! Local variables
-      real(kind=  dp) :: II(6), dev2(6), TrS2
+      real(dp) :: ii(6), dev2(6), tr_s2
 
       !Fill S.S
       dev2 = calc_voigt_square( dev )
 
       !Compute dJ3_by_dsig
-      TrS2 = dev2(1) + dev2(2) + dev2(3)
+      tr_s2 = dev2(1) + dev2(2) + dev2(3)
 
-      II=0.0d0!Identity tensor
-      II(1)=1.0
-      II(2)=1.0
-      II(3)=1.0
+      ii = 0.0_dp   ! Identity tensor
+      ii(1) = 1.0_dp
+      ii(2) = 1.0_dp
+      ii(3) = 1.0_dp
 
       ! This is equaivalent to s^{2} - 2/3 J_{2} \matr{1}
       ! J_{2}(\matr{s}) = 2 * I_{1}(\matr{ s^{2} })
       ! See Appendix B. Invariant Notes Moore, Jonathan Thesis for more details
-      dJ3_by_dsig = dev2 - ( TrS2*II / 3.0d0 )
+      dJ3_by_dsig = dev2 - ( tr_s2*ii / 3.0_dp )
 
       ! Need to double the shear terms because voigt notation is being used and therefore shear terms are linked together
       dJ3_by_dsig(4:6) = 2.0_dp * dJ3_by_dsig(4:6)
@@ -85,7 +85,7 @@ contains
       real(dp) :: dlode_angle_by_dsig(6)
 
       ! Local variables
-      real(dp) :: cos_term, outside_term, inside_term_1(6), dJ2_dSigma(6)
+      real(dp) :: cos_term, outside_term, inside_term_1(6), dJ2_by_dsig(6)
       real(dp), parameter :: tolerance = 1e-12_dp
       real(dp), parameter :: THREE = 3.0_dp, &
          TWO   = 2.0_dp, &
@@ -103,9 +103,9 @@ contains
       outside_term = sqrt(THREE) / (TWO * cos_term * J2**1.5_dp)
 
       ! Calc the first term inside the parenthesis
-      dJ2_dSigma = calc_dJ2_by_dsig(dev)
+      dJ2_by_dsig = calc_dJ2_by_dsig(dev)
 
-      inside_term_1 = THREE * J3 / (2 * J2) * dJ2_dSigma
+      inside_term_1 = THREE * J3 / (2 * J2) * dJ2_by_dsig
 
       ! Calc the full term
       dlode_angle_by_dsig = outside_term * (inside_term_1 - dJ3_by_dsig)

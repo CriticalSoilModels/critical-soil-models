@@ -11,7 +11,7 @@ contains
       real(kind = dp) :: dev_stress(6)
 
       ! Local variables
-      integer(i32) :: i
+      integer :: i
 
       ! Initialize the deviatoric stress to the input stress
       dev_stress = stress
@@ -23,68 +23,41 @@ contains
 
    end function calc_dev_stress
 
-   pure Subroutine calc_two_norm_tensor(Tensor, N, TwoNorm)
-      !***********************************************************************
-      !     ! WaveHello: This is actually the frobenius norm
-      !     Calculate 2NormTensor = sqrt(A:A)
-      !
-      ! I   Tensor  : (Square or vector of dimension N)
-      ! I   N     :   Number of elements
-      ! O   2Norm : Resulting norm
-      !
-      !***********************************************************************
-      implicit none
-      real(kind = dp), intent(in) :: Tensor(N)
-      integer, intent(in):: N
+   pure function calc_two_norm_tensor(v) result(norm)
+      ! Frobenius norm of a symmetric tensor in Voigt-6 form: sqrt(A:A)
+      ! Normal components (1:3) enter once; shear components (4:6) enter twice.
+      real(kind = dp), intent(in) :: v(6)
+      real(kind = dp) :: norm
+      integer :: i
 
-      real(kind = dp), intent(out) :: TwoNorm
-      !***********************************************************************
-      ! Local variables
-      integer :: X, I
-
-      X=N/2
-      TwoNorm=0.0d0
-      Do I=1,X
-         TwoNorm=TwoNorm+Tensor(I)*Tensor(I)
-      end Do
-      Do I=X+1,N
-         TwoNorm=TwoNorm+2*(Tensor(I)*Tensor(I))
+      norm = 0.0_dp
+      do i = 1, 3
+         norm = norm + v(i)*v(i)
       end do
-      TwoNorm=sqrt(TwoNorm)
-
-   end subroutine calc_two_norm_tensor
-
-   pure Subroutine calc_two_norm_tensor_strain(Tensor, N, TwoNorm)
-      !***********************************************************************
-      !     ! WaveHello: This is actually the frobenius norm
-      !     Calculate 2NormTensor = sqrt(A:A)
-      !
-      ! I   Tensor  : (Square or vector of dimension N)
-      ! I   N     :   Number of elements
-      ! O   2Norm : Resulting norm
-      !
-      !***********************************************************************
-      implicit none
-      real(kind = dp), intent(in)  :: Tensor(N)
-      integer, intent(in) :: N
-
-      real(kind = dp), intent(out) :: TwoNorm
-      !***********************************************************************
-      ! Local variables
-      integer :: X, I
-
-      X=N/2
-      TwoNorm=0.0d0
-      Do I=1,X
-         TwoNorm=TwoNorm+Tensor(I)*Tensor(I)
-      end Do
-      Do I=X+1,N
-         !The convention in UMAT is to use engineering shear strains
-         TwoNorm=TwoNorm+0.5*(Tensor(I)*Tensor(I))
+      do i = 4, 6
+         norm = norm + 2.0_dp*(v(i)*v(i))
       end do
-      TwoNorm=sqrt(TwoNorm)
+      norm = sqrt(norm)
 
-   end subroutine calc_two_norm_tensor_strain
+   end function calc_two_norm_tensor
+
+   pure function calc_two_norm_tensor_strain(v) result(norm)
+      ! Frobenius norm of a symmetric strain tensor in Voigt-6 form.
+      ! Uses engineering shear strains (factor 0.5 on shear components).
+      real(kind = dp), intent(in) :: v(6)
+      real(kind = dp) :: norm
+      integer :: i
+
+      norm = 0.0_dp
+      do i = 1, 3
+         norm = norm + v(i)*v(i)
+      end do
+      do i = 4, 6
+         norm = norm + 0.5_dp*(v(i)*v(i))
+      end do
+      norm = sqrt(norm)
+
+   end function calc_two_norm_tensor_strain
 
    pure function calc_voigt_to_matrix(voigt_vector) result(matrix)
 
@@ -151,34 +124,20 @@ contains
       voigt2(6)=voigt(6) * ( voigt(2) + voigt(3) ) + voigt(4)*voigt(5)
    end function calc_voigt_square
 
-   pure Subroutine calc_tensor_inner_product(TensorA, TensorB, N, Re)
-      !***********************************************************************
-      !
-      !     Calculate 2NormTensor = sqrt(A:A)
-      !
-      ! I   Tensor  : (Square or vector of dimension N)
-      ! I   N     :   Number of elements
-      ! O   2Norm : Resulting norm
-      !
-      !***********************************************************************
-      implicit none
+   pure function calc_tensor_inner_product(a, b) result(inner)
+      ! Symmetric tensor inner product A:B in Voigt-6 form.
+      ! Normal components (1:3) enter once; shear components (4:6) enter twice.
+      real(kind = dp), intent(in) :: a(6), b(6)
+      real(kind = dp) :: inner
+      integer :: i
 
-      real(kind = dp),intent(in) :: TensorA(N), TensorB(N)
-      real(kind = dp),intent(out) :: Re
-      integer, intent(in) :: N
-      !***********************************************************************
-
-      ! Local variables
-      integer :: X, I
-
-      X=N/2
-      Re=0.0d0
-      Do I=1,X
-         Re=Re+TensorA(I)*TensorB(I)
-      end Do
-      Do I=X+1,N
-         Re=Re+2*(TensorA(I)*TensorB(I))
+      inner = 0.0_dp
+      do i = 1, 3
+         inner = inner + a(i)*b(i)
       end do
-   end subroutine calc_tensor_inner_product
+      do i = 4, 6
+         inner = inner + 2.0_dp*(a(i)*b(i))
+      end do
+   end function calc_tensor_inner_product
 
 end module mod_voigt_utils

@@ -7,72 +7,50 @@ module mod_state_params_deriv
 
 contains
 
-   pure subroutine Get_dD_to_dI(D_min, h, I_0, kD, eps_q, I, b)
-      !************************************************************************
-      ! Returns the derivative of the Dilation with respect to the inertial	*
-      ! coefficient 															*
-      ! b=dD/dI																*
-      ! b is a scalar															*
-      !************************************************************************
+   pure subroutine calc_ddil_by_dI(D_min, h, I_0, kD, eps_q, I, b)
+      !! Returns the derivative of the dilation with respect to the inertial
+      !! coefficient: b = ddil/dI (scalar)
       implicit none
-      real(dp), intent(in):: D_min, h, I_0, kD, eps_q, I
-      !output
-      real(dp), intent(out)::b
-      !local variables
+      real(dp), intent(in)  :: D_min, h, I_0, kD, eps_q, I
+      real(dp), intent(out) :: b
 
-      b=h*D_min*eps_q*exp(1-h*eps_q)*kD*((I/I_0)**(kD-1.0))/I_0
+      b = h*D_min*eps_q*exp(1-h*eps_q)*kD*((I/I_0)**(kD-1.0_dp))/I_0
 
-   end subroutine Get_dD_to_dI
+   end subroutine calc_ddil_by_dI
 
-   subroutine Get_dD_to_dEpsP(D_min, h, I_0, k_D, epsq_p, epsv_p, &
-      EpsP, I, ApplyStrainRateUpdate, a)
-      !************************************************************************
-      ! Returns the derivative of the Dilation with respect to the plastic    *
-      ! strain																*
-      ! a=dXs/dEpsp= dD/dEpsq * dEPsq/dEpsp									*
-      ! a is a (1X6) vector													*
-      !************************************************************************
+   subroutine calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
+      eps_p, I, apply_strain_rate_update, a)
+      !! Returns the derivative of the dilation with respect to plastic strain:
+      !! a = ddil/dEpsq * dEpsq/dEpsp  (6-vector)
       implicit none
-      !input
-      logical, intent(in):: ApplyStrainRateUpdate
-      real(dp), intent(in):: D_min, h, I_0, k_D, epsq_p, epsv_p, &
-         EpsP(6), I
-      !output
-      real(dp), intent(out):: a(6)
-      !local variables
-      real(dp):: D, dDdEpsq_p, dev(6),dEpsq_pdEpsp(6)
+      logical,  intent(in)  :: apply_strain_rate_update
+      real(dp), intent(in)  :: D_min, h, I_0, k_D, epsq_p, epsv_p, eps_p(6), I
+      real(dp), intent(out) :: a(6)
 
-      !________________________________________________________________________
-      !Get dD/dEpsq_p
-      if (ApplyStrainRateUpdate) then
-         D=D_min*(I/I_0)**k_D
+      real(dp) :: dil, ddil_by_depsq_p, dev(6), deps_q_by_deps_p(6)
+
+      if (apply_strain_rate_update) then
+         dil = D_min*(I/I_0)**k_D
       else
-         D=D_min
+         dil = D_min
       end if
 
-      dDdEpsq_p=h*D*exp(1.0-h*epsq_p)*(1.0-h*epsq_p)
-      !_______________________________________________________________________
+      ddil_by_depsq_p = h*dil*exp(1.0_dp - h*epsq_p)*(1.0_dp - h*epsq_p)
 
-      !_______________________________________________________________________
-      !Get dEpsp_Q/dEpsp=
-      dev=EpsP
-      dev(1)=dev(1)-(epsv_p/3.0)
-      dev(2)=dev(2)-(epsv_p/3.0)
-      dev(3)=dev(3)-(epsv_p/3.0) !deviatoric stress tensor
+      dev = eps_p
+      dev(1) = dev(1) - (epsv_p/3.0_dp)
+      dev(2) = dev(2) - (epsv_p/3.0_dp)
+      dev(3) = dev(3) - (epsv_p/3.0_dp)
 
-      if (epsq_p>0.0d0) then !in case of zero plastic strain
-         dEpsq_pdEpsp=(2.0/(3.0*epsq_p))*dev
+      if (epsq_p > 0.0_dp) then
+         deps_q_by_deps_p = (2.0_dp/(3.0_dp*epsq_p))*dev
       else
-         dEpsq_pdEpsp=0.0d0
-      endif
-      !_______________________________________________________________________
+         deps_q_by_deps_p = 0.0_dp
+      end if
 
-      !_______________________________________________________________________
-      !Get a=dXs/dEpsp
+      a = ddil_by_depsq_p * deps_q_by_deps_p
 
-      a=dDdEpsq_p*dEpsq_pdEpsp
-      !______________________________________________________________________
-   end subroutine Get_dD_to_dEpsP
+   end subroutine calc_ddil_by_deps_p
 
 
 end module mod_state_params_deriv

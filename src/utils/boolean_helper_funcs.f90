@@ -11,7 +11,7 @@ contains
       ! Boolean
       !******************************************************************
       implicit none
-      double precision, intent(in):: A
+      real(dp), intent(in):: A
       logical, intent(out):: B
       if (A<1.0) then
          B=.false.

@@ -1,7 +1,7 @@
 module mod_test_strain_invariants_suite
     ! Local imports
     use stdlib_kinds, only: dp, i32 => int32
-    use mod_strain_invariants, only : calc_strain_invariants
+    use mod_strain_invariants, only : calc_eps_invariants
     
     ! Testdrive imports
     use testdrive, only : new_unittest, unittest_type, error_type, check
@@ -40,7 +40,7 @@ module mod_test_strain_invariants_suite
        strain = [1.0_dp, 3.0_dp, 5.0_dp, 7.0_dp, 11.0_dp, 13.0_dp]
  
        ! Calc the strain invariant for the predifed strain (in voigt notation)
-       call calc_strain_invariants(strain, eps_v, eps_q)
+       call calc_eps_invariants(strain, eps_v, eps_q)
  
        ! Check if the strain invariants meet the expected values
        call check(error, eps_v, exp_eps_v, more = "Eps Volumetric test")

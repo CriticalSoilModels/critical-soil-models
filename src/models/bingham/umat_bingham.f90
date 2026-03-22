@@ -1,7 +1,7 @@
 module mod_bingham
-   !! This module does this thing
+   !! This module does this thingw
    use stdlib_kinds, only: dp
-   ! use mod_strain_invariants, only: calc_eps_vol_invariant
+   ! use mod_strain_invariants, only: calc_eps_vol
 
 contains
 

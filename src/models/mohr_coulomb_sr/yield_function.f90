@@ -1,7 +1,7 @@
 ! Module holds the yield function equation and the derivatives of the yield function
 module mod_yield_function
    use stdlib_kinds, only: dp
-   use mod_stress_invariants, only : calc_J3, calc_stress_invariants, calc_J2
+   use mod_stress_invariants, only : calc_J3, calc_sig_invariants, calc_J2
    use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig, calc_dJ3_by_dsig, calc_dlode_angle_by_dsig
    use mod_voigt_utils   , only: calc_dev_stress
    implicit none
@@ -41,7 +41,7 @@ contains
          dpdsig(6), dqdsig(6), dev(6), dlode_angle_dSig(6)
 
       !Get the invariants
-      call calc_stress_invariants(Sig, p, q, lode_angle)
+      call calc_sig_invariants(Sig, p, q, lode_angle)
 
       !Get dF/dp=eta_y and dF/dq=1
       !Get dF/dtheta
@@ -87,7 +87,7 @@ contains
          dpdsig(6), dqdsig(6), dev(6), dlode_angle_dSig(6)
 
       !Get the invariants
-      call calc_stress_invariants(Sig, p, q, lode_angle)
+      call calc_sig_invariants(Sig, p, q, lode_angle)
 
       !Get dF/dp=eta_y and dF/dq=1
       !Get dF/dtheta

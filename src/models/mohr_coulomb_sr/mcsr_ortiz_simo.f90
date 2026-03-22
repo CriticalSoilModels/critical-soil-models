@@ -1,17 +1,18 @@
 module mod_SRMC_Ortiz_Simo
+   use stdlib_kinds, only: dp
 
    use mod_SRMC_funcs        , only: MatVec, DotProduct_2 ! Subroutines that are required for calculations
    use mod_state_params      , only: check4crossing, Update_GK, get_dilation, Get_M
-   use mod_state_params_deriv, only: Get_dD_to_dEpsP
-   use mod_stress_invariants , only: calc_stress_invariants
-   use mod_strain_invariants , only: calc_strain_invariants
+   use mod_state_params_deriv, only: calc_ddil_by_deps_p
+   use mod_stress_invariants , only: calc_sig_invariants
+   use mod_strain_invariants , only: calc_eps_invariants
    use mod_yield_function    , only: YieldFunction, Get_dF_to_dSigma
    use mod_plastic_potential , only: Get_dP_to_dSigma
 
    implicit none
 
 contains
-   subroutine Ortiz_Simo_Integration(G_0, nu, M_tc, M, No, D_min, h, G, K, eta_y, Dp, &
+   subroutine Ortiz_Simo_Integration(G_0, nu, M_tc, M, No, D_min, h, G, K, eta_y, dilation, &
       I_0, I, dI, k_G, k_K, k_D, Sig, EpsP, dEps, &
       FTOL, NOEL, max_stress_iters)
 
@@ -34,7 +35,7 @@ contains
       ! G: Current Shear modulus
       ! K: Current Bulk Modulus
       ! eta_y: Current Stress ratio
-      ! Dp: Current dilatancy
+      ! dilation: Current dilatancy
       ! I_0: Reference interial coefficient
       ! I: Current inertial coefficient
       ! dI: Increment of the inertial coeff
@@ -54,43 +55,43 @@ contains
       !--------------Input variables--------------!
 
       ! Input scalar values
-      double precision, intent(in):: G_0, nu, M_tc, No, D_min, h, &
+      real(dp), intent(in):: G_0, nu, M_tc, No, D_min, h, &
          k_G, k_K, k_D, FTOL
       integer, intent(in) :: NOEL, max_stress_iters
       ! Input vector values
-      double precision, dimension (6), intent(in):: dEps
+      real(dp), dimension (6), intent(in):: dEps
 
       !-------------End Input Variables-----------!
 
       !--------------Output Variables-------------!
       ! In/Out scalar values
-      double precision, intent(inout):: G, K, eta_y, Dp, I_0, I, dI, M
+      real(dp), intent(inout):: G, K, eta_y, dilation, I_0, I, dI, M
 
       ! In/Out Vector values
-      double precision, dimension(6), intent(inout):: Sig, EpsP !, dEpsP
+      real(dp), dimension(6), intent(inout):: Sig, EpsP !, dEpsP
 
       ! Out scalar values
-      !double precision, intent(out)::
+      !real(dp), intent(out)::
 
       ! Out vector values
-      ! double precision, dimension(6), intent(out):: dSig
+      ! real(dp), dimension(6), intent(out):: dSig
 
       !-------------End Output Variables--------!
 
       !-------------local Variables-------------!
       ! Local scalar values
-      double precision:: I_f, F, p, q, epsv_p, epsq_p, eta_yu, Du, Mu, dummyVal, a_Dot_m, L, H_term, &
-         D1, D2, b, dLambda, dD
+      real(dp):: I_f, F, p, q, epsv_p, epsq_p, eta_yu, dil_u, Mu, dummyVal, a_Dot_m, L, H_term, &
+         D1, D2, b, dLambda, ddil
 
       logical:: ApplyStrainRateUpdate = .false.
       integer:: counter
 
       ! Local vector values
-      double precision, dimension(6):: dEpsE, dummyVec, dEpsPu, EpsPu, Sigu, &
+      real(dp), dimension(6):: dEpsE, dummyVec, dEpsPu, EpsPu, Sigu, &
          m_vec, n_vec, DE_m, a, dSig
 
       ! Local matrix values
-      double precision, dimension(6,6):: DE
+      real(dp), dimension(6,6):: DE
 
       !------------End local Variables----------!
 
@@ -99,16 +100,16 @@ contains
       EpsPu = EpsP
       ! dEpsPu = dEpsP
       eta_yu = eta_y
-      Du = Dp
+      dil_u = dilation
       Mu = M
 
       ! Apply strain rate updates
       I_f=I+dI
       call check4crossing(I,  I_f, dI, I_0, ApplyStrainRateUpdate)
-      call calc_strain_invariants(EpsPu, epsv_p, epsq_p)
+      call calc_eps_invariants(EpsPu, epsv_p, epsq_p)
       call Update_GK(G_0, nu, I_f, I_0, k_G, k_K, G, K)
-      call get_dilation(h, D_min, I_f, I_0, epsq_p, k_D, ApplyStrainRateUpdate, Du) ! Need this for the strain rate but also to actually calculate Du
-      eta_yu = Mu-du*(1.0 * No)
+      call get_dilation(h, D_min, I_f, I_0, epsq_p, k_D, ApplyStrainRateUpdate, dil_u) ! Need this for the strain rate but also to actually calculate dil_u
+      eta_yu = Mu-dil_u*(1.0 * No)
 
       ! Turn off strain rate affects
       ApplyStrainRateUpdate = .false.
@@ -140,12 +141,12 @@ contains
       !-------------------Begin Yielding Check--------------------------!
 
       ! Compute stress invariants
-      call calc_stress_invariants(Sigu, p, q, dummyVal)
+      call calc_sig_invariants(Sigu, p, q, dummyVal)
 
       ! M = M_tc*(1 + 0.25(cos(1.5 * theta + 0.25 *pi))
       call Get_M(M_tc, dummyVal, Mu)
 
-      eta_yu = Mu - Du * (1.0 -No)
+      eta_yu = Mu - dil_u * (1.0 -No)
 
       ! Compute the value of the yield Function
       call YieldFunction(q, p, eta_yu, F)
@@ -153,12 +154,12 @@ contains
       if (F < FTOL) then
          ! Prediction is correct, stress and strain values can be updated and returned
 
-         ! Update Sig, EpsP, dEpsP, eta_y, Dp
+         ! Update Sig, EpsP, dEpsP, eta_y, dilation
          Sig = Sigu
          EpsP = EpsPu
          ! dEpsP = dEpsPu
          eta_y = eta_yu
-         Dp = Du
+         dilation = dil_u
          ! Exit out of the Subroutine and return values
          return
       endif
@@ -172,17 +173,17 @@ contains
 
       counter = 0
 
-      call Get_dD_to_dEpsP(D_min, h, I_0, k_D, epsq_p, epsv_p, &
-         dEpsPu, I, ApplyStrainRateUpdate, a) !a=dD/dEpsP
+      call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
+         dEpsPu, I, ApplyStrainRateUpdate, a) !a=ddil/dEpsP
 
       ! Compute stress invariants
-      call calc_stress_invariants(Sigu, p, q, dummyVal)
+      call calc_sig_invariants(Sigu, p, q, dummyVal)
 
       do while (abs(F) >= FTOL .and. counter <= max_stress_iters)
          !---------------------Begin Compute derivatives--------------------------!
          call Get_dF_to_dSigma(Mu, eta_yu, Sigu, n_vec) !n=dF/dSig
-         call Get_dP_to_dSigma(Du, Sigu, m_vec) !m=dP/dSig
-         L = -p * (1-No) !dF/Xs = dF/dDp = Xi in Ortiz & Simo
+         call Get_dP_to_dSigma(dil_u, Sigu, m_vec) !m=dP/dSig
+         L = -p * (1-No) !dF/Xs = dF/ddilation = Xi in Ortiz & Simo
 
          !-----------------------End Compute derivatives--------------------------!
 
@@ -208,7 +209,7 @@ contains
          Sigu = Sigu - dLambda * DE_m
 
          ! Compute stress invariants
-         call calc_stress_invariants(Sigu, p, q, dummyVal)
+         call calc_sig_invariants(Sigu, p, q, dummyVal)
 
          ! Update M
          call Get_M(M_tc, dummyVal, Mu)
@@ -220,16 +221,16 @@ contains
          EpsPu = EpsPu + dEpsPu
 
          ! Calc strain invariants
-         ! call calc_strain_invariants(EpsPu, epsv_p, epsq_p)
+         ! call calc_eps_invariants(EpsPu, epsv_p, epsq_p)
 
-         ! ! Calc a = dD/dEpsP
-         ! call Get_dD_to_dEpsP(D_min, h, I_0, k_D, epsq_p, epsv_p, &
-         !    dEpsPu, I, ApplyStrainRateUpdate, a) !a=dD/dEpsP
+         ! ! Calc a = ddil/dEpsP
+         ! call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
+         !    dEpsPu, I, ApplyStrainRateUpdate, a) !a=ddil/dEpsP
 
          ! Don't need to update the diltancy. It's a function of the total deviatoric strain. Not the plastic part 
 
          ! Update eta_y
-         eta_yu = Mu - Du * (1.0 -No)
+         eta_yu = Mu - dil_u * (1.0 -No)
 
          ! Calc the yield function
          call YieldFunction(q, p, eta_yu, F)
@@ -245,14 +246,14 @@ contains
       !Calc dEpsP
       dEpsPu = EpsPu - EpsP
 
-      ! Update Sig, dEpsP, EpsP, eta_y, Dp
+      ! Update Sig, dEpsP, EpsP, eta_y, dilation
       Sig = Sigu
       ! dEpsP = dEpsPu
       EpsP = EpsPu
       eta_y = eta_yu
 
-      dD = Du -Dp
-      Dp = Du
+      ddil = dil_u -dilation
+      dilation = dil_u
       M = Mu
 
    end subroutine Ortiz_Simo_Integration

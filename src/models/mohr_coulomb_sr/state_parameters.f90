@@ -27,9 +27,9 @@ contains
       deta=eta_yu-eta_y!change in state parameter
 
       call Get_dF_to_dSigma(M_tc, eta_yu, Sig, n_vec)!Normal to surface
-      call calc_two_norm_tensor(n_vec, 6, n_norm) !norm of n_vec
-      call calc_two_norm_tensor(dSig, 6, Sig_norm) !norm of dSig
-      call calc_tensor_inner_product(dSig, n_vec, 6,dSIg_inner_n) !inner product
+      n_norm   = calc_two_norm_tensor(n_vec) !norm of n_vec
+      Sig_norm = calc_two_norm_tensor(dSig)  !norm of dSig
+      dSIg_inner_n = calc_tensor_inner_product(dSig, n_vec) !inner product
 
       beta=acos(deta/(n_norm*Sig_norm))!conical aperture is a plane for inviscid mat.
       

@@ -62,6 +62,7 @@ module MOD_MCSS_ESM
       MCSS_Ortiz_Simo_Integration
    
    use mod_array_helper, only: reorder_real_array
+   use stdlib_kinds, only: dp
 
    implicit none
    private ! Makes all function private to this module (No other modules can get access)
@@ -75,28 +76,28 @@ contains
       CHARACTER*80 CMNAME
       integer :: NPT, NOEL, IDSET, NSTATEV, NADDVAR, NPROPS, NUMBEROFPHASES, NTENS
       integer :: IStep, TimeStep
-      double precision :: Eunloading, PLASTICMULTIPLIER
-      double precision :: STRESS(NTENS), DSTRAN(NTENS), STATEV(NSTATEV), ADDITIONALVAR(NADDVAR), &
+      real(dp) :: Eunloading, PLASTICMULTIPLIER
+      real(dp) :: STRESS(NTENS), DSTRAN(NTENS), STATEV(NSTATEV), ADDITIONALVAR(NADDVAR), &
          PROPS(NPROPS)
 
       !---Local variables required in standard UMAT
-      double precision, dimension(:), allocatable :: ddsddt ! only for fully coupled thermal analysis: variation of stress increment due to temperature
-      double precision, dimension(:), allocatable :: drplde ! only for fully coupled thermal analysis: variation of volumetric heat generation due to strain increment
-      double precision, dimension(:), allocatable :: stran
-      double precision, dimension(:), allocatable :: time
-      double precision, dimension(:), allocatable :: predef
-      double precision, dimension(:), allocatable :: dpred
-      double precision, dimension(:), allocatable :: coords
-      double precision, dimension(:,:), allocatable :: ddsdde ! Jacobian matrix of the constitutive model (tangent stiffness matrix in case of MC)
-      double precision, dimension(:,:), allocatable :: drot
-      double precision, dimension(:,:), allocatable :: dfgrd0
-      double precision, dimension(:,:), allocatable :: dfgrd1
-      double precision :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
-      double precision :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
-      double precision :: drpldt ! only for fully coupled thermal analysis: variation of volumetric heat generation due to temperature
-      double precision :: pnewdt, dtime, temp, dtemp, celent
-      double precision :: Value ! auxiliary variable holding any real valued number
-      double precision :: Porosity, WaterPressure, WaterPressure0, GasPressure, GasPressure0, DegreeSaturation
+      real(dp), dimension(:), allocatable :: ddsddt ! only for fully coupled thermal analysis: variation of stress increment due to temperature
+      real(dp), dimension(:), allocatable :: drplde ! only for fully coupled thermal analysis: variation of volumetric heat generation due to strain increment
+      real(dp), dimension(:), allocatable :: stran
+      real(dp), dimension(:), allocatable :: time
+      real(dp), dimension(:), allocatable :: predef
+      real(dp), dimension(:), allocatable :: dpred
+      real(dp), dimension(:), allocatable :: coords
+      real(dp), dimension(:,:), allocatable :: ddsdde ! Jacobian matrix of the constitutive model (tangent stiffness matrix in case of MC)
+      real(dp), dimension(:,:), allocatable :: drot
+      real(dp), dimension(:,:), allocatable :: dfgrd0
+      real(dp), dimension(:,:), allocatable :: dfgrd1
+      real(dp) :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
+      real(dp) :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
+      real(dp) :: drpldt ! only for fully coupled thermal analysis: variation of volumetric heat generation due to temperature
+      real(dp) :: pnewdt, dtime, temp, dtemp, celent
+      real(dp) :: Value ! auxiliary variable holding any real valued number
+      real(dp) :: Porosity, WaterPressure, WaterPressure0, GasPressure, GasPressure0, DegreeSaturation
 
 
       integer :: ndi, nshr, layer, kspt, kstep, kinc, IDTask
@@ -154,26 +155,26 @@ contains
 
       ! Extra variables that are being passed in but not used
       CHARACTER*80 CMNAME
-      double precision :: SSE, SPD, SCD, rpl, DDSDDT(NTENS), DRPLDE(NTENS), DRPLDT, STRAN(NTENS), &
+      real(dp) :: SSE, SPD, SCD, rpl, DDSDDT(NTENS), DRPLDE(NTENS), DRPLDT, STRAN(NTENS), &
          TIME(2), DTIME, TEMP, DTEMP, PREDEF(1), DPRED(1), COORDS(3), DROT(3,3), pnewdt,  &
          celent, DFGRD0(3,3), DFGRD1(3,3)
       integer :: ndi, nshr, noel, npt, layer, kspt, kstep, kinc
 
       ! Variables that are being used
       integer :: ntens, nstatev, nprops
-      double precision :: STRESS(NTENS), STATEV(NSTATEV), DDSDDE(NTENS,NTENS), DSTRAN(NTENS), PROPS(NPROPS)
+      real(dp) :: STRESS(NTENS), STATEV(NSTATEV), DDSDDE(NTENS,NTENS), DSTRAN(NTENS), PROPS(NPROPS)
 
       !---  Local variables --------
-      double precision :: Rad ! Store the value of a radian
+      real(dp) :: Rad ! Store the value of a radian
 
       !Soil properties
-      double precision :: G, ENU, cp, cr, phip, phir, psip, psir, factor, c, phi, psi, &
+      real(dp) :: G, ENU, cp, cr, phip, phir, psip, psir, factor, c, phi, psi, &
          F1, F2
       ! Stress variables
-      double precision :: YTOL, Euler_DT_min
+      real(dp) :: YTOL, Euler_DT_min
 
       ! Define elastic matrix (DE), stress increment, stress, plastic strain incremenent, and total plastic strain
-      double precision :: DE(6,6), dSig(6), Sig(6), dEpsP(6), EpsP(6)
+      real(dp) :: DE(6,6), dSig(6), Sig(6), dEpsP(6), EpsP(6)
 
       integer :: i, integration_flag, num_integration_iters, ipl, intGlo
       
@@ -325,43 +326,43 @@ contains
       !Local variables
       integer :: i,n,m,it
       integer, parameter :: ONE =1, ZERO = 0
-      double precision :: F,F0,F2 !Evaluation of the Yield function
-      double precision :: alpha !Elastic Strain proportion
-      double precision :: SSTOL !Tolerance Relative Error
-      double precision :: SPTOL !Tolerance Softening parameters
-      double precision :: Rn !Relative error
-      double precision :: T,DT,T1,beta,DTmin !Substepping parameters
-      double precision :: c1,phi1,psi1,c2,phi2,psi2
-      double precision :: ctol,phitol,psitol !c,phi,psi tolerances
-      double precision :: Dcr,Dphir,Dpsir !Diference between current and residial values
-      double precision :: moduleEr,moduleSigDSig
-      double precision :: EpsPEq,EpsPEq1,EpsPEq2 !Equivalent Plastic Deformation
-      double precision :: DEpsPEq !Derivative Strain in function of Equivalent Plastic Deformation
-      double precision, dimension(6) :: SigYield, SigYield2
-      double precision, dimension(6) :: DSigPP,DSigP1,DSigP2, DSIGE
-      double precision, dimension(6) :: DEpsPP,DEpsPP1,DEpsPP2
-      double precision, dimension(6) :: DEpsS,DEpsSS
-      double precision, dimension(6) :: EpsP1,EpsP2
-      double precision, dimension(6) :: DEpsPEqDPS,DEpsPEqDPS1
-      double precision, dimension(6) :: sumSg,Er
-      double precision, dimension(3) :: DSPDPEq,DSPDPEq1 !Variation of softening parameters (c,phi,psi) in function of plastic strain
-      double precision, dimension(6, 6) :: DE
+      real(dp) :: F,F0,F2 !Evaluation of the Yield function
+      real(dp) :: alpha !Elastic Strain proportion
+      real(dp) :: SSTOL !Tolerance Relative Error
+      real(dp) :: SPTOL !Tolerance Softening parameters
+      real(dp) :: Rn !Relative error
+      real(dp) :: T,DT,T1,beta,DTmin !Substepping parameters
+      real(dp) :: c1,phi1,psi1,c2,phi2,psi2
+      real(dp) :: ctol,phitol,psitol !c,phi,psi tolerances
+      real(dp) :: Dcr,Dphir,Dpsir !Diference between current and residial values
+      real(dp) :: moduleEr,moduleSigDSig
+      real(dp) :: EpsPEq,EpsPEq1,EpsPEq2 !Equivalent Plastic Deformation
+      real(dp) :: DEpsPEq !Derivative Strain in function of Equivalent Plastic Deformation
+      real(dp), dimension(6) :: SigYield, SigYield2
+      real(dp), dimension(6) :: DSigPP,DSigP1,DSigP2, DSIGE
+      real(dp), dimension(6) :: DEpsPP,DEpsPP1,DEpsPP2
+      real(dp), dimension(6) :: DEpsS,DEpsSS
+      real(dp), dimension(6) :: EpsP1,EpsP2
+      real(dp), dimension(6) :: DEpsPEqDPS,DEpsPEqDPS1
+      real(dp), dimension(6) :: sumSg,Er
+      real(dp), dimension(3) :: DSPDPEq,DSPDPEq1 !Variation of softening parameters (c,phi,psi) in function of plastic strain
+      real(dp), dimension(6, 6) :: DE
 
       !In variables
       integer, intent(in) :: IntGlo !Global ID of Gauss point or particle
       integer, intent(in) :: integration_flag, num_integration_iters
-      double precision, intent(in) :: D1,D2,GG !Elastic Parameters
-      double precision, intent(in) :: cp,cr,phip,phir,psip,psir,factor !Softening parameter
-      double precision, intent(in) :: YTOL !Tolerance Error on the Yield surface (10-6 to 10-9)
-      double precision, intent(in) :: Euler_DT_min ! Minimum psuedo-time step size
+      real(dp), intent(in) :: D1,D2,GG !Elastic Parameters
+      real(dp), intent(in) :: cp,cr,phip,phir,psip,psir,factor !Softening parameter
+      real(dp), intent(in) :: YTOL !Tolerance Error on the Yield surface (10-6 to 10-9)
+      real(dp), intent(in) :: Euler_DT_min ! Minimum psuedo-time step size
 
       !Inout variables
-      double precision, intent(inout), dimension(6) :: DEps !Incremental total strain
-      double precision, intent(inout):: c,phi,psi !cohesion,friction angle and dilatancy angle
-      double precision, intent(inout), dimension(6) :: EpsP !Accumulated Plastic Strain
-      double precision, intent(inout), dimension(6) :: Sig0 !Initial Stress
-      double precision, intent(inout), dimension(6) :: SigC !Final Stress
-      double precision, intent(inout), dimension(6) :: DEpsP !Incremental plastic strain
+      real(dp), intent(inout), dimension(6) :: DEps !Incremental total strain
+      real(dp), intent(inout):: c,phi,psi !cohesion,friction angle and dilatancy angle
+      real(dp), intent(inout), dimension(6) :: EpsP !Accumulated Plastic Strain
+      real(dp), intent(inout), dimension(6) :: Sig0 !Initial Stress
+      real(dp), intent(inout), dimension(6) :: SigC !Final Stress
+      real(dp), intent(inout), dimension(6) :: DEpsP !Incremental plastic strain
 
       !Out variables
       integer, intent(out) :: IPL

@@ -2,7 +2,7 @@
 
 module mod_plastic_potential
    use stdlib_kinds, only: dp
-   use mod_stress_invariants , only: calc_stress_invariants
+   use mod_stress_invariants , only: calc_sig_invariants
    use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig
    use mod_voigt_utils   , only: calc_dev_stress
    implicit none
@@ -25,7 +25,7 @@ contains
       real(dp):: p, q, lode_angle, dpdsig(6), dev(6), dqdSig(6)
 
       ! Get the invariants
-      call calc_stress_invariants(Sig, p, q, lode_angle)
+      call calc_sig_invariants(Sig, p, q, lode_angle)
 
       !Get dP/dp=-D and dF/dq=1
       !___________________________________________________________________________

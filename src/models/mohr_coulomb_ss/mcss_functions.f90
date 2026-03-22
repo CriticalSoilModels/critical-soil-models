@@ -1,5 +1,6 @@
 module mod_MCSS_funcs
 ! Functions that are used for MCSS. Moved them to a new module to make testing easier
+   use stdlib_kinds, only: dp
    implicit none
 
 contains
@@ -16,23 +17,23 @@ contains
 
       !Local variables
       integer :: i
-      double precision :: p,J,Lode,S3TA !Invariants
-      double precision :: Lambda,param,c2,phi2,psi2,F2
-      double precision :: Denom,A,Ai
-      double precision, dimension(2) :: DFDSP
-      double precision, dimension(6) :: DPPDSig,DFDSig,Sig2,DEpsP,EpsP2
-      double precision, dimension(6) :: Denom1
-      double precision, dimension(3) :: Dh
+      real(dp) :: p,J,Lode,S3TA !Invariants
+      real(dp) :: Lambda,param,c2,phi2,psi2,F2
+      real(dp) :: Denom,A,Ai
+      real(dp), dimension(2) :: DFDSP
+      real(dp), dimension(6) :: DPPDSig,DFDSig,Sig2,DEpsP,EpsP2
+      real(dp), dimension(6) :: Denom1
+      real(dp), dimension(3) :: Dh
       !In Variables
       integer, intent(in) :: IntGlo,IPL !Global ID of Gauss point or particle
-      double precision, intent(in):: D1,D2,GG
-      double precision, intent(in), dimension(3) :: DSPDPEq !Derivatives respect Equivalent Plastic Strain
-      double precision, intent(in), dimension(6) :: DEpsPEqDPS !Derivatives respect Equivalent Plastic Strain
+      real(dp), intent(in):: D1,D2,GG
+      real(dp), intent(in), dimension(3) :: DSPDPEq !Derivatives respect Equivalent Plastic Strain
+      real(dp), intent(in), dimension(6) :: DEpsPEqDPS !Derivatives respect Equivalent Plastic Strain
       !InOut Variables
-      double precision, intent(inout):: c,phi,psi
-      double precision, intent(inout), dimension(6) :: Sig
-      double precision, intent(inout), dimension(6) :: EpsP
-      double precision, intent(inout):: F
+      real(dp), intent(inout):: c,phi,psi
+      real(dp), intent(inout), dimension(6) :: Sig
+      real(dp), intent(inout), dimension(6) :: EpsP
+      real(dp), intent(inout):: F
 
       call CalculateInvariants(IntGlo,Sig,p,J,Lode,S3TA)
       call CalculateDerivativesYieldFunctAndPlasticPotential(Sig,p,J,Lode,S3TA,c,phi,psi,DFDSig,DPPDSig)
@@ -111,15 +112,15 @@ contains
 
       !Local variables
       integer :: Its, max_iterations
-      double precision :: alpha0,alpha1,F0,F1,F
-      double precision, dimension(6) :: Sig0,Sig1,SigNew
+      real(dp) :: alpha0,alpha1,F0,F1,F
+      real(dp), dimension(6) :: Sig0,Sig1,SigNew
       !In variables
-      double precision, intent(in), dimension(6) :: Sig, DSig
-      double precision, intent(in), dimension(6) :: DEps
-      double precision, intent(in) :: c,phi,YTOL
+      real(dp), intent(in), dimension(6) :: Sig, DSig
+      real(dp), intent(in), dimension(6) :: DEps
+      real(dp), intent(in) :: c,phi,YTOL
       integer, intent(in) :: IntGlo       !Global ID of Gauss point or particle
       !Out variables
-      double precision, intent(out) :: alpha
+      real(dp), intent(out) :: alpha
 
       alpha0 = 0.0d0
       alpha1 = 1.0d0
@@ -194,19 +195,19 @@ contains
       ! -------------------------- Variable Definitions --------------------------
       ! ------------- Scalar Values -------------
       ! In
-      double precision, intent(in) :: G, D1, D2, factor, cr, phir, psir, cp, phip, psip, ctol, phitol, psitol, FTOL
+      real(dp), intent(in) :: G, D1, D2, factor, cr, phir, psir, cp, phip, psip, ctol, phitol, psitol, FTOL
       integer, intent(in) :: IntGlo, max_iterations
 
       ! In/Out
-      double precision, intent(inout) :: c, phi, psi
+      real(dp), intent(inout) :: c, phi, psi
       ! Out
-      ! double precision, intent(out) ::
+      ! real(dp), intent(out) ::
 
       ! ------------- Vector Values -------------
       ! In
-      !double precision, intent(inout), dimension(6) ::
+      !real(dp), intent(inout), dimension(6) ::
       ! In/Out
-      double precision, intent(inout), dimension(6) :: Sig, dEps, EpsP, dEpsP
+      real(dp), intent(inout), dimension(6) :: Sig, dEps, EpsP, dEpsP
 
       ! ------------- Local Variables -------------
       ! Variable definitions
@@ -244,20 +245,20 @@ contains
 
       ! Local scalar values
 
-      double precision :: F, cu, Phiu, Psiu , J, Lode, S3TA, dummyVal_1, dummyVal_2, dummyVal_3, H, epsPEq, dLambda
-      double precision :: p
+      real(dp) :: F, cu, Phiu, Psiu , J, Lode, S3TA, dummyVal_1, dummyVal_2, dummyVal_3, H, epsPEq, dLambda
+      real(dp) :: p
       integer:: counter
 
       ! Local vector values
-      double precision, dimension(6):: dummyVec_6d, dEpsPu, EpsPu, Sigu, dSigu, &
+      real(dp), dimension(6):: dummyVec_6d, dEpsPu, EpsPu, Sigu, dSigu, &
          m_vec, n_vec, DE_m, DEpsPEqDPS
 
-      double precision, dimension(3):: dummyVec_3d, DSPDPEq
+      real(dp), dimension(3):: dummyVec_3d, DSPDPEq
 
-      double precision, dimension(2):: dFdSP ! Derivative of the yield function with respect to the softening parameters (phi, c)
+      real(dp), dimension(2):: dFdSP ! Derivative of the yield function with respect to the softening parameters (phi, c)
 
       ! Local matrix values
-      double precision, dimension(6,6):: DE
+      real(dp), dimension(6,6):: DE
 
       ! -------------------------- Begin Calculations --------------------------
 
@@ -396,20 +397,20 @@ contains
       implicit none
 
       !Local variables
-      double precision :: Sx,Sy,Sz,SqTxy,SqTyz,SqTxz,suma,h1,h2,J2,J3
-      double precision, parameter :: C00000 = 0.0D0
-      double precision, parameter :: C00001 = 1.0D0
-      double precision, parameter :: C00P16 = 0.166666666666666D0
-      double precision, parameter :: C00002 = 2.0D0
-      double precision, parameter :: C00003 = 3.0D0
-      double precision, parameter :: CP3333 = 0.333333333333333D0
-      double precision, parameter :: C00IR3 = 0.577350269189626D0 ! 1/sqrt(3)
-      double precision, parameter :: TINY = 0.000000000000001D0
+      real(dp) :: Sx,Sy,Sz,SqTxy,SqTyz,SqTxz,suma,h1,h2,J2,J3
+      real(dp), parameter :: C00000 = 0.0D0
+      real(dp), parameter :: C00001 = 1.0D0
+      real(dp), parameter :: C00P16 = 0.166666666666666D0
+      real(dp), parameter :: C00002 = 2.0D0
+      real(dp), parameter :: C00003 = 3.0D0
+      real(dp), parameter :: CP3333 = 0.333333333333333D0
+      real(dp), parameter :: C00IR3 = 0.577350269189626D0 ! 1/sqrt(3)
+      real(dp), parameter :: TINY = 0.000000000000001D0
       !In variables
-      double precision, intent(in), dimension(6) :: Sig
+      real(dp), intent(in), dimension(6) :: Sig
       integer, intent(in) :: IntGlo !Global ID of Gauss point or particle
       !Out variables
-      double precision, intent(out) :: p,J,Lode,S3TA !Invariants
+      real(dp), intent(out) :: p,J,Lode,S3TA !Invariants
 
       p = C00000
       J = C00000
@@ -476,39 +477,39 @@ contains
       implicit none
 
       !Local variables
-      double precision ::  p,J,Lode,S3TA !Invariants
-      double precision ::  COH, SPHI, CPHI, COTPHI, STA, CTA, K, aSmooth, ASPHI2, SGN, A, B
-      double precision, parameter :: C00001 = 1.0d0 !Parameters
-      double precision, parameter :: C00003 = 3.0d0
-      double precision, parameter :: C00P50 = 0.0005d0
-      double precision, parameter :: C00000 = 0.0d0
-      double precision, parameter :: C00IR3 = 0.577350269189626d0
-      double precision, parameter :: C000P1 = 0.00000000001D0
+      real(dp) ::  p,J,Lode,S3TA !Invariants
+      real(dp) ::  COH, SPHI, CPHI, COTPHI, STA, CTA, K, aSmooth, ASPHI2, SGN, A, B
+      real(dp), parameter :: C00001 = 1.0d0 !Parameters
+      real(dp), parameter :: C00003 = 3.0d0
+      real(dp), parameter :: C00P50 = 0.0005d0
+      real(dp), parameter :: C00000 = 0.0d0
+      real(dp), parameter :: C00IR3 = 0.577350269189626d0
+      real(dp), parameter :: C000P1 = 0.00000000001D0
       !Constants for rounded K function (for LodeT=25)
-      !double precision, parameter :: A1 = 1.432052062044227d0
-      !double precision, parameter :: A2 = 0.406941858374615d0
-      !double precision, parameter :: B1 = 0.544290524902313d0
-      !double precision, parameter :: B2 = 0.673903324498392d0
-      !double precision, parameter :: ATTRAN = 0.436332312998582d0 !Smoothing parameter: LodeT in radians
+      !real(dp), parameter :: A1 = 1.432052062044227d0
+      !real(dp), parameter :: A2 = 0.406941858374615d0
+      !real(dp), parameter :: B1 = 0.544290524902313d0
+      !real(dp), parameter :: B2 = 0.673903324498392d0
+      !real(dp), parameter :: ATTRAN = 0.436332312998582d0 !Smoothing parameter: LodeT in radians
       !Constants for rounded K function (for LodeT=29.5)
-      double precision, parameter :: A1 = 7.138654723242414d0
-      double precision, parameter :: A2 = 6.112267270920612d0
-      double precision, parameter :: B1 = 6.270447753139589d0
-      double precision, parameter :: B2 = 6.398760841429403d0
-      double precision, parameter :: ATTRAN = 0.514872129338327d0 !Smoothing parameter: LodeT in radians
+      real(dp), parameter :: A1 = 7.138654723242414d0
+      real(dp), parameter :: A2 = 6.112267270920612d0
+      real(dp), parameter :: B1 = 6.270447753139589d0
+      real(dp), parameter :: B2 = 6.398760841429403d0
+      real(dp), parameter :: ATTRAN = 0.514872129338327d0 !Smoothing parameter: LodeT in radians
       !Constants for rounded K function (for LodeT=30)
-      !double precision, parameter :: A1 = -138300705.446275
-      !double precision, parameter :: A2 = -138300706.472675
-      !double precision, parameter :: B1 = -138300706.3123
-      !double precision, parameter :: B2 = 0.192450089729875
-      !double precision, parameter :: ATTRAN = 0.523598776 !Smoothing parameter: LodeT in radians
+      !real(dp), parameter :: A1 = -138300705.446275
+      !real(dp), parameter :: A2 = -138300706.472675
+      !real(dp), parameter :: B1 = -138300706.3123
+      !real(dp), parameter :: B2 = 0.192450089729875
+      !real(dp), parameter :: ATTRAN = 0.523598776 !Smoothing parameter: LodeT in radians
       !In variables
-      double precision, intent(in), dimension(6) :: Sig
-      double precision, intent(in) :: c,phi
+      real(dp), intent(in), dimension(6) :: Sig
+      real(dp), intent(in) :: c,phi
       integer, intent(in) :: IntGlo !Global ID of Gauss point or particle
 
       !Out variables
-      double precision, intent(out) :: F
+      real(dp), intent(out) :: F
 
       F = C00000
 
@@ -562,53 +563,53 @@ contains
 
       !Local variables
       integer :: i
-      double precision :: COH, SPHI, CPHI, TPHI, COTPHI, STA, CTA, A, B,&
+      real(dp) :: COH, SPHI, CPHI, TPHI, COTPHI, STA, CTA, A, B,&
          D, aSmooth, ASPHI2, SGN, T3TA, C3TA, J2, psi2
-      double precision ::   K, dKdLode
-      double precision :: SPSI, CPSI, TPSI, COTPSI, ASPSI2
-      double precision :: i1, i2, Sx, Sy, Sz
-      double precision :: DFDp,DFDJ,DFDLode !Derivatives F respect Invariants
-      double precision :: DPDp,DPDJ,DPDLode !Derivatives P respect Invariants
-      double precision :: C1, C2, C3
-      double precision, dimension(6):: DpDSig,DJDSig,DJ3DSig !Derivatives Invariants
+      real(dp) ::   K, dKdLode
+      real(dp) :: SPSI, CPSI, TPSI, COTPSI, ASPSI2
+      real(dp) :: i1, i2, Sx, Sy, Sz
+      real(dp) :: DFDp,DFDJ,DFDLode !Derivatives F respect Invariants
+      real(dp) :: DPDp,DPDJ,DPDLode !Derivatives P respect Invariants
+      real(dp) :: C1, C2, C3
+      real(dp), dimension(6):: DpDSig,DJDSig,DJ3DSig !Derivatives Invariants
 
-      double precision, parameter :: C00001 = 1.0D0 !Parameters
-      double precision, parameter :: C000P5 = 0.5D0
-      double precision, parameter :: C00P50 = 0.0005D0
-      double precision, parameter :: C00000 = 0.0D0
-      double precision, parameter :: C00003 = 3.0D0
-      double precision, parameter :: C00004 = 4.0D0
-      double precision, parameter :: C00002 = 2.0D0
-      double precision, parameter :: CP3333 = 0.333333333333333D0
-      double precision, parameter :: C00IR3 = 0.577350269189626D0
-      double precision, parameter :: C0R3I2 = 0.866025403784439D0
-      double precision, parameter :: C000P1 = 0.000000000000001D0
-      double precision, parameter :: J0 = 0.001D0
+      real(dp), parameter :: C00001 = 1.0D0 !Parameters
+      real(dp), parameter :: C000P5 = 0.5D0
+      real(dp), parameter :: C00P50 = 0.0005D0
+      real(dp), parameter :: C00000 = 0.0D0
+      real(dp), parameter :: C00003 = 3.0D0
+      real(dp), parameter :: C00004 = 4.0D0
+      real(dp), parameter :: C00002 = 2.0D0
+      real(dp), parameter :: CP3333 = 0.333333333333333D0
+      real(dp), parameter :: C00IR3 = 0.577350269189626D0
+      real(dp), parameter :: C0R3I2 = 0.866025403784439D0
+      real(dp), parameter :: C000P1 = 0.000000000000001D0
+      real(dp), parameter :: J0 = 0.001D0
       !Constants for rounded K function (for LodeT=25)
-      !double precision, parameter :: A1 = 1.432052062044227d0
-      !double precision, parameter :: A2 = 0.406941858374615d0
-      !double precision, parameter :: B1 = 0.544290524902313d0
-      !double precision, parameter :: B2 = 0.673903324498392d0
-      !double precision, parameter :: ATTRAN = 0.436332312998582d0 !Smoothing parameter: LodeT in radians
+      !real(dp), parameter :: A1 = 1.432052062044227d0
+      !real(dp), parameter :: A2 = 0.406941858374615d0
+      !real(dp), parameter :: B1 = 0.544290524902313d0
+      !real(dp), parameter :: B2 = 0.673903324498392d0
+      !real(dp), parameter :: ATTRAN = 0.436332312998582d0 !Smoothing parameter: LodeT in radians
       !Constants for rounded K function (for LodeT=29.5)
-      double precision, parameter :: A1 = 7.138654723242414d0
-      double precision, parameter :: A2 = 6.112267270920612d0
-      double precision, parameter :: B1 = 6.270447753139589d0
-      double precision, parameter :: B2 = 6.398760841429403d0
-      double precision, parameter :: ATTRAN = 0.514872129338327d0 !Smoothing parameter: LodeT in radians
+      real(dp), parameter :: A1 = 7.138654723242414d0
+      real(dp), parameter :: A2 = 6.112267270920612d0
+      real(dp), parameter :: B1 = 6.270447753139589d0
+      real(dp), parameter :: B2 = 6.398760841429403d0
+      real(dp), parameter :: ATTRAN = 0.514872129338327d0 !Smoothing parameter: LodeT in radians
       !Constants for rounded K function (for LodeT=30)
-      !double precision, parameter :: A1 = -138300705.446275
-      !double precision, parameter :: A2 = -138300706.472675
-      !double precision, parameter :: B1 = -138300706.3123
-      !double precision, parameter :: B2 = 0.192450089729875
-      !double precision, parameter :: ATTRAN = 0.523598776 !Smoothing parameter: LodeT in radians
+      !real(dp), parameter :: A1 = -138300705.446275
+      !real(dp), parameter :: A2 = -138300706.472675
+      !real(dp), parameter :: B1 = -138300706.3123
+      !real(dp), parameter :: B2 = 0.192450089729875
+      !real(dp), parameter :: ATTRAN = 0.523598776 !Smoothing parameter: LodeT in radians
       !In variables
-      double precision, intent(in) ::  c,phi,psi !Soft Parameters
-      double precision, intent(in), dimension(6) :: Sig
+      real(dp), intent(in) ::  c,phi,psi !Soft Parameters
+      real(dp), intent(in), dimension(6) :: Sig
       !Out variables
-      double precision, intent(out), dimension(6) :: DFDSig, DPPDSig !Derivatives respect Sigma
+      real(dp), intent(out), dimension(6) :: DFDSig, DPPDSig !Derivatives respect Sigma
       !Inout variables
-      double precision, intent(inout) :: p,J,Lode,S3TA !Invariants
+      real(dp), intent(inout) :: p,J,Lode,S3TA !Invariants
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !!!!! DFDSig = C1*DPDSig + C2*DJDSig + C3*DJ3DSig  !!!!!!!!!!!!!!!!!!!!!
@@ -766,40 +767,40 @@ contains
       implicit none
 
       !Local variables
-      double precision :: COH, SPHI, CPHI, TPHI, COTPHI, STA, CTA, A, B,&
+      real(dp) :: COH, SPHI, CPHI, TPHI, COTPHI, STA, CTA, A, B,&
          Denom, Num, aSmooth, ASPHI2, SGN
-      double precision :: K, dKdPhi, dadc, dadPhi
-      double precision, parameter :: C00001 = 1.0D0 !Parameters
-      double precision, parameter :: C00P50 = 0.0005D0
-      double precision, parameter :: C00000 = 0.0D0
-      double precision, parameter :: C00003 = 3.0D0
-      double precision, parameter :: C00002 = 2.0D0
-      double precision, parameter :: C00IR3 = 0.577350269189626D0
-      double precision, parameter :: C000P1 = 0.00000000001D0
+      real(dp) :: K, dKdPhi, dadc, dadPhi
+      real(dp), parameter :: C00001 = 1.0D0 !Parameters
+      real(dp), parameter :: C00P50 = 0.0005D0
+      real(dp), parameter :: C00000 = 0.0D0
+      real(dp), parameter :: C00003 = 3.0D0
+      real(dp), parameter :: C00002 = 2.0D0
+      real(dp), parameter :: C00IR3 = 0.577350269189626D0
+      real(dp), parameter :: C000P1 = 0.00000000001D0
       !Constants for rounded K function (for LodeT=25)
-      !double precision, parameter :: A1 = 1.432052062044227d0
-      !double precision, parameter :: A2 = 0.406941858374615d0
-      !double precision, parameter :: B1 = 0.544290524902313d0
-      !double precision, parameter :: B2 = 0.673903324498392d0
-      !double precision, parameter :: ATTRAN = 0.436332312998582d0 !Smoothing parameter: LodeT in radians
+      !real(dp), parameter :: A1 = 1.432052062044227d0
+      !real(dp), parameter :: A2 = 0.406941858374615d0
+      !real(dp), parameter :: B1 = 0.544290524902313d0
+      !real(dp), parameter :: B2 = 0.673903324498392d0
+      !real(dp), parameter :: ATTRAN = 0.436332312998582d0 !Smoothing parameter: LodeT in radians
       !Constants for rounded K function (for LodeT=29.5)
-      double precision, parameter :: A1 = 7.138654723242414d0
-      double precision, parameter :: A2 = 6.112267270920612d0
-      double precision, parameter :: B1 = 6.270447753139589d0
-      double precision, parameter :: B2 = 6.398760841429403d0
-      double precision, parameter :: ATTRAN = 0.514872129338327d0 !Smoothing parameter: LodeT in radians
+      real(dp), parameter :: A1 = 7.138654723242414d0
+      real(dp), parameter :: A2 = 6.112267270920612d0
+      real(dp), parameter :: B1 = 6.270447753139589d0
+      real(dp), parameter :: B2 = 6.398760841429403d0
+      real(dp), parameter :: ATTRAN = 0.514872129338327d0 !Smoothing parameter: LodeT in radians
       !Constants for rounded K function (for LodeT=30)
-      !double precision, parameter :: A1 = -138300705.446275
-      !double precision, parameter :: A2 = -138300706.472675
-      !double precision, parameter :: B1 = -138300706.3123
-      !double precision, parameter :: B2 = 0.192450089729875
-      !double precision, parameter :: ATTRAN = 0.523598776 !Smoothing parameter: LodeT in radians
+      !real(dp), parameter :: A1 = -138300705.446275
+      !real(dp), parameter :: A2 = -138300706.472675
+      !real(dp), parameter :: B1 = -138300706.3123
+      !real(dp), parameter :: B2 = 0.192450089729875
+      !real(dp), parameter :: ATTRAN = 0.523598776 !Smoothing parameter: LodeT in radians
 
       !In variables
-      double precision, intent(in) :: p,J,Lode,S3TA !Invariants
-      double precision, intent(in) :: c,phi !Soft Parameters
+      real(dp), intent(in) :: p,J,Lode,S3TA !Invariants
+      real(dp), intent(in) :: c,phi !Soft Parameters
       !Out variables
-      double precision, intent(out), dimension(2) :: DFDSP !Derivatives respect Soft Parameters
+      real(dp), intent(out), dimension(2) :: DFDSP !Derivatives respect Soft Parameters
 
 
       !Material parameters
@@ -867,10 +868,10 @@ contains
       implicit none
 
       ! In Variables
-      double precision, intent(in) :: EpsPEq
-      double precision, intent(in) :: factor,cp,cr,phip,phir,psip,psir
+      real(dp), intent(in) :: EpsPEq
+      real(dp), intent(in) :: factor,cp,cr,phip,phir,psip,psir
       ! Out Variables
-      double precision, intent(out), dimension(3):: DSPDPEq
+      real(dp), intent(out), dimension(3):: DSPDPEq
 
       ! Derivative Cohesion respect Equivalent Plastic Strain (Dc/DPEq)
       DSPDPEq(1) = -factor * (cp - cr) * (exp(-factor*EpsPEq))
@@ -892,14 +893,14 @@ contains
       implicit none
 
       !Local Variables
-      double precision :: k1, k2, k3
-      double precision :: EpsPM
-      double precision, dimension(3) :: EpsDev
+      real(dp) :: k1, k2, k3
+      real(dp) :: EpsPM
+      real(dp), dimension(3) :: EpsDev
       !In Variables
-      double precision, intent(in), dimension(6) :: EpsP
-      double precision, intent(in) :: EpsPEq
+      real(dp), intent(in), dimension(6) :: EpsP
+      real(dp), intent(in) :: EpsPEq
       !Out Variables
-      double precision, intent(out), dimension(6):: DEpsPEqDPS
+      real(dp), intent(out), dimension(6):: DEpsPEqDPS
 
       if (EpsPEq < 0.00000000001d0) then
          k1 = 0.0d0
@@ -934,12 +935,12 @@ contains
       implicit none
 
       !Local variables
-      double precision:: EpsPM, C1, C2
-      double precision, dimension(3) :: EpsDev
+      real(dp):: EpsPM, C1, C2
+      real(dp), dimension(3) :: EpsDev
       !In variables
-      double precision, intent(in), dimension(6) :: EpsP
+      real(dp), intent(in), dimension(6) :: EpsP
       !Out variables
-      double precision, intent(out) :: EpsPEq
+      real(dp), intent(out) :: EpsPEq
 
       !EpsPEq = ((2/3)ep:ep)^(1/2), ep is the deviatoric plastic strain
 
@@ -965,9 +966,9 @@ contains
       implicit none
 
       !In variables
-      double precision, intent(in) :: EpsPEq,factor,cp,cr,phip,phir,psip,psir
+      real(dp), intent(in) :: EpsPEq,factor,cp,cr,phip,phir,psip,psir
       !Out variables
-      double precision, intent(out) :: c,phi,psi
+      real(dp), intent(out) :: c,phi,psi
 
       c   = cr + (cp-cr)*exp(-factor*EpsPEq)
       phi = phir + (phip-phir)*exp(-factor*EpsPEq)
@@ -989,25 +990,25 @@ contains
 
       !Local variables
       integer :: i,k
-      double precision :: A,Ai,Denom,Fact,LambdaNum,Lambda
-      double precision :: p,J,Lode,S3TA !Invariants
-      double precision, dimension(6,6) :: Num,Num1,Prod
-      double precision, dimension(6) :: Denom1
-      double precision, dimension(6) :: DPPDSig !Derivatives Plastic potential respect net stress
-      double precision, dimension(6) :: DFDSig !Derivatives Yield function respect net stress
-      double precision, dimension(2) :: DFDSP !Derivatives Yield function respect Soft Parameters
-      double precision, dimension(6,6) :: Dep !Elastoplastic Constitutive Matrix
+      real(dp) :: A,Ai,Denom,Fact,LambdaNum,Lambda
+      real(dp) :: p,J,Lode,S3TA !Invariants
+      real(dp), dimension(6,6) :: Num,Num1,Prod
+      real(dp), dimension(6) :: Denom1
+      real(dp), dimension(6) :: DPPDSig !Derivatives Plastic potential respect net stress
+      real(dp), dimension(6) :: DFDSig !Derivatives Yield function respect net stress
+      real(dp), dimension(2) :: DFDSP !Derivatives Yield function respect Soft Parameters
+      real(dp), dimension(6,6) :: Dep !Elastoplastic Constitutive Matrix
       !In Variables
-      double precision, intent(in) :: c,phi,psi !Softening parameters
-      double precision, intent(in) :: D1,D2,GG !Elastic parameters
-      double precision, intent(in), dimension(6):: DEpsPEqDPS
-      double precision, intent(in), dimension(6) :: Sig
-      double precision, intent(in), dimension(3) :: DSPDPEq !Derivatives respect Equivalent Plastic Strain
-      double precision, intent(in), dimension(6) :: DEps
+      real(dp), intent(in) :: c,phi,psi !Softening parameters
+      real(dp), intent(in) :: D1,D2,GG !Elastic parameters
+      real(dp), intent(in), dimension(6):: DEpsPEqDPS
+      real(dp), intent(in), dimension(6) :: Sig
+      real(dp), intent(in), dimension(3) :: DSPDPEq !Derivatives respect Equivalent Plastic Strain
+      real(dp), intent(in), dimension(6) :: DEps
       integer, intent(in) :: IntGlo !Global ID of Gauss point or particle
       !Out Variables
-      double precision, intent(out), dimension(6) :: DSig
-      double precision, intent(out), dimension(6) :: DEpsP
+      real(dp), intent(out), dimension(6) :: DSig
+      real(dp), intent(out), dimension(6) :: DEpsP
 
       call CalculateInvariants(IntGlo,Sig,p,J,Lode,S3TA)
       call CalculateDerivativesYieldFunctAndPlasticPotential(Sig,p,J,Lode,S3TA,c,phi,psi,DFDSig,DPPDSig)
@@ -1202,13 +1203,13 @@ contains
       implicit none
 
       !Local variables
-      double precision, dimension(3) :: xN1,xN2,xN3
-      double precision :: Sig1,Sig2,Sig3,p,q
+      real(dp), dimension(3) :: xN1,xN2,xN3
+      real(dp) :: Sig1,Sig2,Sig3,p,q
       !In Variables
       integer, intent(in) :: IntGlo ! Global ID of Gauss point or particle
-      double precision, intent(in), dimension(6) :: Sig
+      real(dp), intent(in), dimension(6) :: Sig
       !Out Variables
-      double precision, intent(out), dimension(6) :: SigPrin
+      real(dp), intent(out), dimension(6) :: SigPrin
 
       call PrincipalSig(1,Sig,xN1,xN2,xN3,Sig1,Sig2,Sig3,P,Q)
 
@@ -1251,10 +1252,10 @@ contains
 
       integer :: iOPt
       ! Pricipal stress values
-      double precision :: s1, s2, s3
+      real(dp) :: s1, s2, s3
       ! Stress invariants
-      double precision :: P, Q
-      double precision ::  S(:), xN1(:), xN2(:), xN3(:)
+      real(dp) :: P, Q
+      real(dp) ::  S(:), xN1(:), xN2(:), xN3(:)
 
       If (iOpt.Eq.1) Then
          ! Calculates Eigenvalues and eigenvectors
@@ -1272,10 +1273,10 @@ contains
 
       integer :: iOpt, i, j, k, it, itmax, is3, is2, is1, iq, ip, sign_tau
       ! ^ Optional Integer value (Not used)
-      double precision :: v3p, v2p, v1p, t, tol, tau, s, s1, s2, s3, c, ap1, ap2, ap3, abs_max_s, a1p, a2p, a3p
+      real(dp) :: v3p, v2p, v1p, t, tol, tau, s, s1, s2, s3, c, ap1, ap2, ap3, abs_max_s, a1p, a2p, a3p
       ! Stress invariants p, q
-      double precision :: P, Q
-      double precision :: St(6),A(3,3),V(3,3),xN1(3),xN2(3),xN3(3)
+      real(dp) :: P, Q
+      real(dp) :: St(6),A(3,3),V(3,3),xN1(3),xN2(3),xN3(3)
       !     *          xN1(3),xN2(3),xN3(3)
       !
       ! Get Eigenvalues/Eigenvectors for 3*3 matrix
@@ -1425,16 +1426,16 @@ contains
       integer :: iOpt
 
       ! Principal stress values
-      double precision :: s1, s2, s3
+      real(dp) :: s1, s2, s3
 
       ! Stress invariants
-      double precision :: P, Q
+      real(dp) :: P, Q
 
-      double precision :: St(6),A(3,3)   !  V(3,3),xN1(3),xN2(3),xN3(3)
+      real(dp) :: St(6),A(3,3)   !  V(3,3),xN1(3),xN2(3),xN3(3)
 
       ! Local Variables
       integer :: i, j, k, it, itmax, is3, is2, is1, iq, ip, sign_tau
-      double precision :: v3p, v2p, v1p, t, tol, tau, s, c, ap1, ap2, ap3, abs_max_s, a1p, a2p, a3p
+      real(dp) :: v3p, v2p, v1p, t, tol, tau, s, c, ap1, ap2, ap3, abs_max_s, a1p, a2p, a3p
 
       ! Get Eigenvalues ( no Eigenvectors) for 3*3 matrix
       ! Wim Bomhof 15/11/'01
