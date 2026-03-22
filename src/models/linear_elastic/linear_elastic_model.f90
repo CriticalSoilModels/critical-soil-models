@@ -3,8 +3,9 @@
 ! Used to validate the abstract base + integrator stack end-to-end.
 
 module mod_linear_elastic_model
-   use stdlib_kinds, only: dp
-   use mod_csm_model, only: csm_model_t
+   use stdlib_kinds,      only: dp
+   use mod_csm_model,     only: csm_model_t
+   use mod_elastic_utils, only: calc_stiffness_GK, calc_K_from_G_nu
    implicit none
 
    type, extends(csm_model_t) :: linear_elastic_model_t
@@ -57,15 +58,7 @@ contains
       class(linear_elastic_model_t), intent(in) :: self
       real(dp) :: stiff_e(6,6)
 
-      real(dp) :: lame_1, lame_2
-
-      lame_1 = 2.0_dp*self%G*(1.0_dp - self%nu) / (1.0_dp - 2.0_dp*self%nu)
-      lame_2 = 2.0_dp*self%G*self%nu             / (1.0_dp - 2.0_dp*self%nu)
-
-      stiff_e          = 0.0_dp
-      stiff_e(1:3,1:3) = lame_2
-      stiff_e(1,1) = lame_1;  stiff_e(2,2) = lame_1;  stiff_e(3,3) = lame_1
-      stiff_e(4,4) = self%G;  stiff_e(5,5) = self%G;  stiff_e(6,6) = self%G
+      stiff_e = calc_stiffness_GK(self%G, calc_K_from_G_nu(self%G, self%nu))
 
    end function le_elastic_stiffness
 

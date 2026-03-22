@@ -7,6 +7,7 @@
 module mod_mcss_model
    use stdlib_kinds,          only: dp
    use mod_csm_model,         only: csm_model_t
+   use mod_elastic_utils,     only: calc_stiffness_GK, calc_K_from_G_nu
    use mod_stress_invariants, only: calc_sig_invariants
    implicit none
 
@@ -178,16 +179,9 @@ contains
    function mcss_elastic_stiffness(self) result(stiff_e)
       class(mcss_model_t), intent(in) :: self
       real(dp) :: stiff_e(6,6)
-      real(dp) :: lame_1, lame_2
 
-      ! Params accessed flat — self%G, self%nu (no self%params% needed)
-      lame_1 = 2*self%G*(1.0_dp - self%nu) / (1.0_dp - 2.0_dp*self%nu)
-      lame_2 = 2*self%G*self%nu             / (1.0_dp - 2.0_dp*self%nu)
+      stiff_e = calc_stiffness_GK(self%G, calc_K_from_G_nu(self%G, self%nu))
 
-      stiff_e          = 0.0_dp
-      stiff_e(1:3,1:3) = lame_2
-      stiff_e(1,1) = lame_1;  stiff_e(2,2) = lame_1;  stiff_e(3,3) = lame_1
-      stiff_e(4,4) = self%G;  stiff_e(5,5) = self%G;  stiff_e(6,6) = self%G
    end function mcss_elastic_stiffness
 
    ! ---------------------------------------------------------------------------
