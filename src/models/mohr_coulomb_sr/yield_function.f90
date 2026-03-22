@@ -54,36 +54,6 @@ contains
 
    end subroutine calc_dF_by_dsig
 
-   subroutine calc_dF_by_dsig_3(M_tc, eta_y, sig, n_vec)
-      !! Non-pure variant of calc_dF_by_dsig (allows I/O for debugging)
-      implicit none
-      real(dp), intent(in)  :: M_tc, eta_y, sig(6)
-      real(dp), intent(out) :: n_vec(6)
-
-      real(dp) :: p, q, lode_angle, J2, J3
-      real(dp) :: dJ3_by_dsig(6), dF_by_dtheta, dp_by_dsig(6), dq_by_dsig(6)
-      real(dp) :: dev(6), dlode_angle_by_dsig(6)
-
-      call calc_sig_invariants(sig, p, q, lode_angle)
-
-      dF_by_dtheta = calc_dF_by_dtheta(M_tc, p, lode_angle)
-
-      dp_by_dsig = calc_dp_by_dsig()
-
-      dev = calc_dev_stress(sig, p)
-
-      dq_by_dsig = calc_dq_by_dsig(dev, q)
-
-      J2 = calc_J2(dev)
-      J3 = calc_J3(dev)
-
-      dJ3_by_dsig = calc_dJ3_by_dsig(dev)
-
-      dlode_angle_by_dsig = calc_dlode_angle_by_dsig(dJ3_by_dsig, dev, J3, J2, lode_angle)
-
-      n_vec = (eta_y * dp_by_dsig) + dq_by_dsig + (dF_by_dtheta * dlode_angle_by_dsig)
-
-   end subroutine calc_dF_by_dsig_3
 
    pure subroutine calc_yield_function(q, p, eta_y, F)
       !! Returns the value of the yield function F = q + eta_y * p

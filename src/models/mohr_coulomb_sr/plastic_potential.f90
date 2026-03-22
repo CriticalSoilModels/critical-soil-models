@@ -9,7 +9,7 @@ module mod_plastic_potential
 
 contains
 
-   subroutine calc_dg_by_dsig(dilation, sig, m_vec)
+   subroutine calc_dg_plas_by_dsig(dilation, sig, m_vec)
       !! Returns dP/dsig = dP/dp * dp/dsig + dP/dq * dq/dsig
       !! where dP/dp = -dilation and dP/dq = 1
       !! m_vec is a 6-vector in Voigt notation
@@ -29,6 +29,6 @@ contains
 
       m_vec = (-dilation * dp_by_dsig) + dq_by_dsig
 
-   end subroutine calc_dg_by_dsig
+   end subroutine calc_dg_plas_by_dsig
 
 end module mod_plastic_potential

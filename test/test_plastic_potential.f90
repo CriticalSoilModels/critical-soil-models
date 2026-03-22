@@ -6,7 +6,7 @@ module mod_test_plastic_potential_suite
     use mod_stress_invariants, only: calc_q, calc_mean_stress, calc_J2
     use mod_voigt_utils, only: calc_dev_stress
     use mod_stress_invar_deriv, only: calc_dq_by_dsig, calc_dp_by_dsig
-    use mod_plastic_potential, only: calc_dg_by_dsig
+    use mod_plastic_potential, only: calc_dg_plas_by_dsig
     use mod_tensor_value_checker, only: check_tensor_values
 
     use testdrive, only : new_unittest, unittest_type, error_type, check
@@ -39,7 +39,7 @@ contains
         dilatancy = -0.1
         
         ! Calc the value
-        call calc_dg_by_dsig(dilatancy, stress, m_vec)
+        call calc_dg_plas_by_dsig(dilatancy, stress, m_vec)
         
         mean_stress = calc_mean_stress(stress)
         dev = calc_dev_stress(stress, mean_stress)

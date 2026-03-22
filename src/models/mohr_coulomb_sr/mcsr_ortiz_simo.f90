@@ -7,7 +7,7 @@ module mod_SRMC_Ortiz_Simo
    use mod_stress_invariants , only: calc_sig_invariants
    use mod_strain_invariants , only: calc_eps_invariants
    use mod_yield_function    , only: calc_yield_function, calc_dF_by_dsig
-   use mod_plastic_potential , only: calc_dg_by_dsig
+   use mod_plastic_potential , only: calc_dg_plas_by_dsig
 
    implicit none
 
@@ -182,7 +182,7 @@ contains
       do while (abs(F) >= FTOL .and. counter <= max_stress_iters)
          !---------------------Begin Compute derivatives--------------------------!
          call calc_dF_by_dsig(Mu, eta_yu, Sigu, n_vec) !n=dF/dSig
-         call calc_dg_by_dsig(dil_u, Sigu, m_vec) !m=dP/dSig
+         call calc_dg_plas_by_dsig(dil_u, Sigu, m_vec) !m=dP/dSig
          L = -p * (1-No) !dF/Xs = dF/ddilation = Xi in Ortiz & Simo
 
          !-----------------------End Compute derivatives--------------------------!

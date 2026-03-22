@@ -6,7 +6,7 @@ module mod_SRMC_Substepping
     use mod_strain_invar_deriv, only: calc_deps_q_by_deps
     use mod_stress_invariants, only : calc_sig_invariants                           
     use mod_yield_function, only: calc_dF_by_dsig, calc_yield_function
-    use mod_plastic_potential, only: calc_dg_by_dsig
+    use mod_plastic_potential, only: calc_dg_plas_by_dsig
     use mod_state_params_deriv, only: calc_ddil_by_deps_p, calc_ddil_by_dI
 
     implicit none
@@ -215,7 +215,7 @@ contains
     call calc_sig_invariants(Sig, p, q, dummyvar)
     call calc_eps_invariants(EpsP, epsv_p, epsq_p)
     call calc_dF_by_dsig(M_tc, eta_y, Sig, n_vec) !n=dFdSig
-    call calc_dg_by_dsig(dilation, Sig, m_vec) !m=dP/dSig
+    call calc_dg_plas_by_dsig(dilation, Sig, m_vec) !m=dP/dSig
     L = -p*(1.0-No) !L=dF/dXs
     call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
        EpsP, I, ApplyStrainRateUpdate, a) !a=ddil/dEpsq^p
@@ -366,7 +366,7 @@ contains
        call calc_sig_invariants(Sig, p, q, dummyvar)
        call calc_eps_invariants(EpsP, epsv_p, epsq_p)
        call calc_dF_by_dsig(M_tc, eta_y, Sig, n_vec) !n=dFdSig
-       call calc_dg_by_dsig(dilation, Sig, m_vec) !m=dP/dSig
+       call calc_dg_plas_by_dsig(dilation, Sig, m_vec) !m=dP/dSig
        L=-p*(1.0-No) !L=dF/dXs
        call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &
           EpsP, I_f, ApplyStrainRateUpdate, a) !a=ddil/dEpsq^p

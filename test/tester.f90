@@ -8,7 +8,7 @@ program tester
     use mod_test_stress_invar_deriv_suite, only: collect_stress_invar_deriv_suite
     use mod_test_strain_invariants_suite, only: collect_strain_invariants_suite
     use mod_test_strain_invar_deriv_suite, only: collect_strain_invar_deriv_suite
-    ! use mod_test_yield_function, only : collect_yield_function_suite
+    use mod_test_yield_function, only : collect_yield_function_suite
     use mod_test_plastic_potential_suite, only: collect_plastic_potential_suite
     implicit none
     integer :: stat, is
@@ -27,7 +27,7 @@ program tester
       new_testsuite("test_stress_invar_deriv_suite", collect_stress_invar_deriv_suite), &
       new_testsuite("test_strain_invar_suite", collect_strain_invariants_suite),&
       new_testsuite("test_strain_invar_deriv_suite", collect_strain_invar_deriv_suite), &
-      ! new_testsuite("test_yield_function", collect_yield_function_suite), &
+      new_testsuite("test_yield_function", collect_yield_function_suite), &
       new_testsuite("test_plastic_potential", collect_plastic_potential_suite) &
       ]
     ! Make the output colorful
