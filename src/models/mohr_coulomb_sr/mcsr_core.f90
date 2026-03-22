@@ -63,7 +63,7 @@ contains
       !local variables
       integer:: counter, MAXITER, SubStepping_MaxIter
       integer, parameter :: Substepping = 0, Ortiz_Simo = 1  
-      double precision:: p, q, theta, M, I_act, I_0, Gu, Ku, eta_yu, Du, dI, &
+      double precision:: p, q, lode_angle, M, I_act, I_0, Gu, Ku, eta_yu, Du, dI, &
          G1, K1, eta_y1, dilation1, G2, K2, eta_y2, dilation2, &
          p_t, q_t, dI_t, dI_TT, I_TT, dD1, dD2
       double precision:: epsq_rate, epsq_p, eps_v
@@ -97,11 +97,11 @@ contains
       Error_Yield_last=0.0    !max abs drift after drift correction
       !______________________________________________________________________________
       !Initialization of state variables
-      call calc_stress_invariants(Sig_0, p, q, theta)
+      call calc_stress_invariants(Sig_0, p, q, lode_angle)
       call calc_strain_invariants(EpsP, eps_v, epsq_p)!plastic deviatoric strain
       I_0=RefERate
       !call Get_I_coeff(D_part, G_s, -100.0, RefERate, I_0)!Reference inertial coefficient
-      call Get_M(M_tc, theta, M)!Get M
+      call Get_M(M_tc, lode_angle, M)!Get M
       if (G==0.0d0) then
          G=G_0
       endif
@@ -119,8 +119,8 @@ contains
 
       !print *, eta_y
       if (eta_y==0.0d0) then
-         call calc_stress_invariants(dEps, dummyvar(1), dummyvar(2), theta)
-         call Get_M(M_tc, theta, M)
+         call calc_stress_invariants(dEps, dummyvar(1), dummyvar(2), lode_angle)
+         call Get_M(M_tc, lode_angle, M)
          eta_y=M-dilation*(1.0-N)
       endif
       !print *, eta_y
@@ -201,7 +201,7 @@ contains
       Sig_t = Sig_0 + dSig_el
 
       !Get new invariant stresses
-      call calc_stress_invariants(Sig_t, p_t, q_t, theta)
+      call calc_stress_invariants(Sig_t, p_t, q_t, lode_angle)
 
       !Evaluate yield function
       call YieldFunction(q_t, p_t, eta_yu, FT)
@@ -295,7 +295,7 @@ contains
 
                !=================================================================================
                !Store max F1 comment if not needed
-               call calc_stress_invariants(Sig1, p, q, theta)
+               call calc_stress_invariants(Sig1, p, q, lode_angle)
                call YieldFunction(q, p, eta_y1, FT)
                ! if (abs(FT)>abs(Error_yield_1)) Error_yield_1=abs(FT)
                !=================================================================================
@@ -319,7 +319,7 @@ contains
 
                !=================================================================================
                !Store max F2 comment if not needed
-               call calc_stress_invariants(Sig2, p, q, theta)
+               call calc_stress_invariants(Sig2, p, q, lode_angle)
                call YieldFunction(q, p, eta_y2, FT)
                ! if (abs(FT)>abs(Error_yield_2)) Error_yield_2=abs(FT)
                !=================================================================================
@@ -364,7 +364,7 @@ contains
                   !________________________________________________________________________________
                   !***********************Stress drift correction**********************************
                   !________________________________________________________________________________
-                  call calc_stress_invariants(Sig, p, q, theta) !stress invariants
+                  call calc_stress_invariants(Sig, p, q, lode_angle) !stress invariants
                   call YieldFunction(q, p, eta_y, F0) !Initial drift
                   !print *, "F0:", F0
                   !=================================================================================

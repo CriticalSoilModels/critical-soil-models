@@ -130,9 +130,9 @@ contains
       class(mcss_model_t), intent(in) :: self
       real(dp), intent(in) :: sig(6)
       real(dp) :: F
-      real(dp) :: p, q, theta
+      real(dp) :: p, q, lode_angle
 
-      call calc_stress_invariants(sig, p, q, theta)
+      call calc_stress_invariants(sig, p, q, lode_angle)
       ! Mohr-Coulomb: F = q - eta*p - c
       ! where eta = M(theta) derived from phi
       ! (simplified here — real version uses Lode-angle-dependent M)

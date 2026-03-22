@@ -1,7 +1,8 @@
 module mod_test_strain_invar_deriv_suite
     ! Local imports
     use stdlib_kinds, only: dp, i32 => int32
-    use mod_strain_invar_deriv, only : calc_deps_q_by_deps, calc_deps_q_by_deps_full
+    use mod_strain_invar_deriv, only : calc_deps_q_by_deps
+    use mod_strain_invar_refs, only: calc_deps_q_by_deps_full
     use mod_strain_invariants, only: calc_eps_q_invariant, calc_dev_strain, calc_strain_invariants
     use mod_check_NaN_and_tensor_value, only : check_NaN_and_tensor_value
 

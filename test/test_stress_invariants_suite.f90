@@ -147,17 +147,17 @@ contains
       type(error_type), allocatable, intent(out) :: error
 
       ! Local varaibles
-      real(kind = dp) :: stress(6), p, q, theta
+      real(kind = dp) :: stress(6), p, q, lode_angle
       real(kind = dp), parameter :: &
          exp_p     = 3.0_dp , &
          exp_q     = 32.07802986469088_dp
 
-      real(kind = dp) :: exp_theta, dev(6), J3, J2
+      real(kind = dp) :: exp_lode_angle, dev(6), J3, J2
 
       stress = [1.0_dp, 3.0_dp, 5.0_dp, 7.0_dp, 11.0_dp, 13.0_dp]
 
       ! Calc the stress invariants
-      call calc_stress_invariants(stress, p, q, theta)
+      call calc_stress_invariants(stress, p, q, lode_angle)
 
       ! Check the mean stress
       call check(error, p, exp_p, more = "Mean Stress Test^")
@@ -168,16 +168,16 @@ contains
       if(allocated(error)) return
 
       ! Check the lode angle
-      ! See function calc_theta_s for more information about the lode angle used here
-   
+      ! See function calc_lode_angle for more information about the lode angle used here
+
       dev = calc_dev_stress(stress, p)
       J3 = calc_J3(dev)
       J2 = calc_J2(dev)
 
       ! Formula from Potts and Zdravković
-      exp_theta = - asin(3.0_dp * sqrt(3.0_dp) / 2.0_dp * J3 / J2**1.5_dp) / 3.0_dp
-      
-      call check(error, theta, exp_theta)
+      exp_lode_angle = - asin(3.0_dp * sqrt(3.0_dp) / 2.0_dp * J3 / J2**1.5_dp) / 3.0_dp
+
+      call check(error, lode_angle, exp_lode_angle)
       if(allocated(error)) return
 
    end subroutine test_main_stress_invariant

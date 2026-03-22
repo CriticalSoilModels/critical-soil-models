@@ -67,7 +67,7 @@ a single variable named `sig_kappa`.
 |---|---|---|
 | p (mean stress) | `p` | Tension positive internally |
 | q (deviatoric stress) | `q` | |
-| θ (Lode angle) | `theta` | |
+| θ (Lode angle) | `lode_angle` | |
 
 ### Material Parameters (Elastic)
 
@@ -143,5 +143,5 @@ The following renames apply when migrating legacy code to the new architecture:
 | `RAD` | `DEG_TO_RAD` | Clear direction |
 | `dlambda` | `dlambda` | Already correct |
 | `eps_p`, `deps_p` | `eps_p`, `deps_p` | Already correct |
-| `p`, `q`, `theta` | `p`, `q`, `theta` | Standard — keep |
+| `p`, `q`, `theta` | `p`, `q`, `lode_angle` | Renamed for clarity |
 | `G`, `nu`, `c`, `phi`, `psi` | keep | Universal symbols |

@@ -79,53 +79,10 @@ contains
 
    end function calc_dJ3_by_dsig
 
-   pure function calc_dJ3_by_dsig_full(stress) result(dJ3_by_dsig)
-      ! This function calculates dJ3/dSigma assuming that the input voigt vector follows incremental driver convention
-      ! As such the output follows incremental driver convention as well
-
-      real(dp), intent(in) :: stress(6)
-      real(dp) :: dJ3_by_dsig(6)
-
-      ! Local variables
-      real(kind=  dp) :: t(6)
-      real(dp),parameter :: ONE_NINTH = 1.0_dp/9.0_dp, &
-         ONE_THIRD = 1.0_dp/3.0_dp, &
-         TWO       = 2.0_dp, &
-         FOUR      = 4.0_dp
-
-      ! Store the stress in a shorter name to make it easier to type
-      t = stress
-
-      ! Calc dJ3/dSigma_{11}
-      dJ3_by_dsig(1) = ONE_NINTH * (TWO * t(1)**2 - t(2)**2 - t(3)**2 - &
-         TWO * t(1) * t(2) - 2 * t(1) * t(3) + FOUR * t(2) * t(3)) + &
-         ONE_THIRD * (t(4)**2 + t(5)**2 - TWO * t(6)**2)
-
-      ! Calc dJ3/dSigma_{22}
-      dJ3_by_dsig(2) = ONE_NINTH * (-t(1)**2 + TWO * t(2)**2 - t(3)**2 - &
-         TWO * t(1) * t(2) + FOUR * t(1) * t(3) - TWO * t(2) * t(3)) + &
-         ONE_THIRD * (t(4)**2 - TWO * t(5)**2 + t(6)**2)
-
-      ! Calc dJ3/dSigma_{33}
-      dJ3_by_dsig(3) = ONE_NINTH * (-t(1)**2 -t(2)**2 + TWO * t(3)**2 + &
-         FOUR * t(1) * t(2) - TWO * t(1) * t(3) - TWO * t(2) * t(3)) + &
-         ONE_THIRD * (-TWO * t(4)**2 + t(5)**2 + t(6)**2)
-
-      ! Calc dJ3/dSigma_{12}
-      dJ3_by_dsig(4) = ONE_THIRD * (TWO * t(1) * t(4) + TWO * t(4) * t(2) - FOUR * t(4) * t(3)) + TWO * t(5) * t(6)
-
-      ! Calc dJ3/dSigma_{13}
-      dJ3_by_dsig(5) = ONE_THIRD * (TWO * t(1) * t(5) - FOUR * t(5) * t(2) + TWO * t(5) * t(3)) + TWO * t(4) * t(6)
-
-      ! Calc dJ3/dSigma_{23}
-      dJ3_by_dsig(6) = ONE_THIRD * (-FOUR * t(1) * t(6) + TWO * t(2) * t(6) + TWO * t(6) * t(3)) + TWO * t(4) * t(5)
-
-   end function calc_dJ3_by_dsig_full
-
-   pure function calc_dtheta_by_dsig(dJ3_by_dsig, dev, J3, J2, theta) result(dtheta_by_dsig)
+   pure function calc_dlode_angle_by_dsig(dJ3_by_dsig, dev, J3, J2, lode_angle) result(dlode_angle_by_dsig)
       real(dp), intent(in) :: dJ3_by_dsig(6), dev(6)
-      real(dp), intent(in) :: J3, J2, theta
-      real(dp) :: dtheta_by_dsig(6)
+      real(dp), intent(in) :: J3, J2, lode_angle
+      real(dp) :: dlode_angle_by_dsig(6)
 
       ! Local variables
       real(dp) :: cos_term, outside_term, inside_term_1(6), dJ2_dSigma(6)
@@ -133,8 +90,8 @@ contains
       real(dp), parameter :: THREE = 3.0_dp, &
          TWO   = 2.0_dp, &
          ZERO  = 0.0_dp
-      ! Calc cos(3 \theta)
-      cos_term = cos(3 * theta)
+      ! Calc cos(3 * lode_angle)
+      cos_term = cos(3.0_dp * lode_angle)
 
       ! TODO: Turn the tolerance back on once I've checked that they match
       ! ! If cos term is zero( Trx compression or tension) set to tiny value
@@ -151,8 +108,8 @@ contains
       inside_term_1 = THREE * J3 / (2 * J2) * dJ2_dSigma
 
       ! Calc the full term
-      dtheta_by_dsig = outside_term * (inside_term_1 - dJ3_by_dsig)
+      dlode_angle_by_dsig = outside_term * (inside_term_1 - dJ3_by_dsig)
 
-   end function calc_dtheta_by_dsig
+   end function calc_dlode_angle_by_dsig
 
 end module mod_stress_invar_deriv

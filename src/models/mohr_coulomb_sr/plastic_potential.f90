@@ -22,10 +22,10 @@ contains
       real(dp), intent(out) :: m_vec(6)
 
       !local variables
-      real(dp):: p, q, theta, dpdsig(6), dev(6), dqdSig(6)
-      
+      real(dp):: p, q, lode_angle, dpdsig(6), dev(6), dqdSig(6)
+
       ! Get the invariants
-      call calc_stress_invariants(Sig, p, q, theta)
+      call calc_stress_invariants(Sig, p, q, lode_angle)
 
       !Get dP/dp=-D and dF/dq=1
       !___________________________________________________________________________

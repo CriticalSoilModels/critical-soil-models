@@ -114,16 +114,15 @@ contains
 
    end function calc_q
 
-   pure subroutine calc_stress_invariants(Sig, p, q, theta)
+   pure subroutine calc_stress_invariants(Sig, p, q, lode_angle)
       !*********************************************************************
-      ! Takes the stress tensor Sig and return invariants p, q, and theta  *
+      ! Takes the stress tensor Sig and return invariants p, q, and lode_angle *
       !																	 *
       !*********************************************************************
-      implicit none
       !input variables
       real(dp), dimension(6), intent(in) :: Sig
       !output variables
-      real(dp), intent(out) :: p, q, theta
+      real(dp), intent(out) :: p, q, lode_angle
       !local variables
       real(dp) :: dev(6), J2, J3
 
@@ -138,7 +137,7 @@ contains
       !J3 stress invariant
       J3 = calc_J3(dev)
 
-      theta = calc_lode_angle(J2, J3) !Lode's angle
+      lode_angle = calc_lode_angle(J2, J3) !Lode's angle
 
    end subroutine calc_stress_invariants
 

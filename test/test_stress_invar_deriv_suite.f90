@@ -4,7 +4,8 @@ module mod_test_stress_invar_deriv_suite
     use mod_stress_invariants, only: calc_mean_stress, calc_q, calc_J2, &
                                      calc_J3, calc_lode_angle
     use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig, calc_dJ2_by_dsig, calc_dJ3_by_dsig, &
-                                      calc_dJ3_by_dsig_full, calc_dtheta_by_dsig
+                                      calc_dlode_angle_by_dsig
+    use mod_stress_invar_refs, only: calc_dJ3_by_dsig_full
     use mod_voigt_utils   , only: calc_dev_stress
     use mod_tensor_value_checker, only: check_tensor_values
 
@@ -26,7 +27,7 @@ contains
             new_unittest("dq/dSigma" , test_dq_to_dSigma),  &
             new_unittest("dJ2/dSigma", test_dJ2_to_dSigma), &
             new_unittest("dJ3/dSigma", test_dJ3_to_dSigma), &
-            new_unittest("dtheta_dSigma", test_dtheta_to_dSigma) &
+            new_unittest("dlode_angle_dSigma", test_dlode_angle_to_dSigma) &
             ]
 
     end subroutine collect_stress_invar_deriv_suite
@@ -160,13 +161,13 @@ contains
 
     end subroutine test_dJ3_to_dSigma
 
-    subroutine test_dtheta_to_dSigma(error)
+    subroutine test_dlode_angle_to_dSigma(error)
         type(error_type), allocatable, intent(out) ::  error
 
         ! Local variables
-        real(kind = dp) :: exp_dtheta_dSigma(6), dtheta_dSigma(6)
+        real(kind = dp) :: exp_dlode_angle_by_dsig(6), dlode_angle_by_dsig(6)
         real(kind = dp) :: stress(6), dev(6), mean_stress
-        real(kind = dp) :: J2, J3, theta, dJ3_dSigma(6)
+        real(kind = dp) :: J2, J3, lode_angle, dJ3_dSigma(6)
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
 
@@ -178,27 +179,27 @@ contains
 
         J2 = calc_J2(dev)
         J3 = calc_J3(dev)
-        theta = calc_lode_angle(J2, J3)
+        lode_angle = calc_lode_angle(J2, J3)
         dJ3_dSigma = calc_dJ3_by_dsig(dev)
 
         ! Calc the value using the function
-        dtheta_dSigma = calc_dtheta_by_dsig(dJ3_dSigma, dev, J3, J2, theta)
+        dlode_angle_by_dsig = calc_dlode_angle_by_dsig(dJ3_dSigma, dev, J3, J2, lode_angle)
 
         ! Calc the value using the local reference function
-        exp_dtheta_dSigma = dtheta_reference(dJ3_dSigma, dev, J3, J2)
+        exp_dlode_angle_by_dsig = dlode_angle_reference(dJ3_dSigma, dev, J3, J2)
 
         ! Check that all the values are the same within a tolerance
-        call check_tensor_values(dtheta_dSigma, exp_dtheta_dSigma, tol, passed)
+        call check_tensor_values(dlode_angle_by_dsig, exp_dlode_angle_by_dsig, tol, passed)
 
         ! Check that the check passed
-        call check(error, passed, .True., more = "Indiv. dtheta/dSigma test")
+        call check(error, passed, .True., more = "Indiv. dlode_angle/dSigma test")
         if(allocated(error)) return
 
-    end subroutine test_dtheta_to_dSigma
+    end subroutine test_dlode_angle_to_dSigma
 
-    pure function dtheta_reference(dJ3_dSigma, dev, J3, J2) result(dtheta_dSigma)
+    pure function dlode_angle_reference(dJ3_dSigma, dev, J3, J2) result(dlode_angle_by_dsig)
        real(dp), intent(in) :: dJ3_dSigma(6), dev(6), J3, J2
-       real(dp) :: dtheta_dSigma(6)
+       real(dp) :: dlode_angle_by_dsig(6)
        real(dp) :: outside_term_1, outside_term_2, inside(6)
        real(dp) :: dJ2_dSigma(6)
        real(dp), parameter :: THREE = 3.0_dp, TWO = 2.0_dp
@@ -206,7 +207,7 @@ contains
        outside_term_2 = 1/sqrt( 1 - (THREE * sqrt(THREE)/TWO * J3/J2**1.5)**2 )
        dJ2_dSigma = calc_dJ2_by_dsig(dev)
        inside = THREE / TWO * J3/J2 * dJ2_dSigma - dJ3_dSigma
-       dtheta_dSigma = outside_term_1 * outside_term_2 * inside
-    end function dtheta_reference
+       dlode_angle_by_dsig = outside_term_1 * outside_term_2 * inside
+    end function dlode_angle_reference
 
 end module mod_test_stress_invar_deriv_suite
