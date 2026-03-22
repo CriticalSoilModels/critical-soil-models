@@ -6,7 +6,7 @@ module mod_strain_invar_deriv
    implicit none
 
 contains
-   subroutine Get_dEpsq_to_dEps(Epsq, Eps, dEqdEpsq)
+   subroutine calc_deps_q_by_deps(Epsq, Eps, deps_q_by_deps)
       !************************************************************************
       ! Returns the derivative of the deviatoric strain with respect to the   *
       ! deviatoric strain	tensor						     					*
@@ -16,7 +16,7 @@ contains
       !input
       real(dp), intent(in):: Epsq, Eps(6)
       !output
-      real(dp), intent(out):: dEqdEpsq(6)
+      real(dp), intent(out):: deps_q_by_deps(6)
       !local variables
       real(dp):: evol, dev(6)
 
@@ -25,26 +25,26 @@ contains
       dev=calc_dev_strain(Eps, evol)
 
       if (Epsq>0.0d0) then !in case of zero plastic strain
-         dEqdEpsq=(2.0/(3.0*Epsq))*dev
+         deps_q_by_deps=(2.0/(3.0*Epsq))*dev
       else
-         dEqdEpsq=0.0d0
+         deps_q_by_deps=0.0d0
       endif
-   end subroutine Get_dEpsq_to_dEps
+   end subroutine calc_deps_q_by_deps
 
-   pure function calc_inc_driver_dEpsq_to_dEps(Eps) result(dEq_dEps)
+   pure function calc_deps_q_by_deps_full(Eps) result(deps_q_by_deps)
       ! Function calculates the dEpsq/dEps for incremental driver voigt ordering
       ! This is just to check the general version of the dEpsq/dEps function
       ! The values for this derivative come from python using sympy in Epsq_derivative_check.ipynb
    
       real(dp), intent(in) :: Eps(6)
-      real(dp) :: dEq_dEps(6)
+      real(dp) :: deps_q_by_deps(6)
 
       ! Local variables
       real(dp), parameter :: TWO = 2.0_dp, &
          THREE = 3.0_dp, &
          FOUR = 4.0_dp
 
-      dEq_dEps(1) = FOUR*Eps(1)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
+      deps_q_by_deps(1) = FOUR*Eps(1)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)) &
          - TWO*Eps(2)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)) &
@@ -52,7 +52,7 @@ contains
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2))
 
 
-      dEq_dEps(2) = -TWO*Eps(1)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
+      deps_q_by_deps(2) = -TWO*Eps(1)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)) &
          + FOUR*Eps(2)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)) &
@@ -60,7 +60,7 @@ contains
          + FOUR*Eps(2)**2 - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2))
 
 
-      dEq_dEps(3) = -TWO*Eps(1)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
+      deps_q_by_deps(3) = -TWO*Eps(1)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)) &
          - TWO*Eps(2)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)) &
@@ -68,20 +68,20 @@ contains
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2))
 
 
-      dEq_dEps(4) = TWO*Eps(4)/sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) &
+      deps_q_by_deps(4) = TWO*Eps(4)/sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) &
          + FOUR*Eps(2)**2 - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 &
          + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)
 
 
-      dEq_dEps(5) = TWO*Eps(5)/sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) &
+      deps_q_by_deps(5) = TWO*Eps(5)/sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) &
          + FOUR*Eps(2)**2 - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 &
          + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)
 
 
-      dEq_dEps(6) = TWO*Eps(6)/sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) &
+      deps_q_by_deps(6) = TWO*Eps(6)/sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) &
          + FOUR*Eps(2)**2 - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 &
          + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)
 
 
-   end function calc_inc_driver_dEpsq_to_dEps
+   end function calc_deps_q_by_deps_full
 end module mod_strain_invar_deriv

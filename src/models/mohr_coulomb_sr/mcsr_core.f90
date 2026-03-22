@@ -1,10 +1,10 @@
 module mod_SRMC
    use mod_SRMC_funcs, only: MatVec
-   use mod_strain_invariants, only: Get_strain_invariants
-   use mod_stress_invariants, only : Get_invariants                             
+   use mod_strain_invariants, only: calc_strain_invariants
+   use mod_stress_invariants, only : calc_stress_invariants
    use mod_state_params     , only: Get_I_coeff, Get_M, Get_dilation, check4crossing, Update_GK, Check_Unloading
    use mod_yield_function   , only: YieldFunction
-   use mod_voight_funcs, only: TwoNormTensor, TwoNormTensor_strain
+   use mod_voigt_utils, only: calc_two_norm_tensor, calc_two_norm_tensor_strain
    use mod_SRMC_Substepping, only: Euler_Algorithm, Newton_Raphson, Stress_Drift_Correction
 
    use mod_SRMC_Ortiz_Simo, only: Ortiz_Simo_Integration
@@ -97,8 +97,8 @@ contains
       Error_Yield_last=0.0    !max abs drift after drift correction
       !______________________________________________________________________________
       !Initialization of state variables
-      call Get_invariants(Sig_0, p, q, theta)
-      call Get_strain_invariants(EpsP, eps_v, epsq_p)!plastic deviatoric strain
+      call calc_stress_invariants(Sig_0, p, q, theta)
+      call calc_strain_invariants(EpsP, eps_v, epsq_p)!plastic deviatoric strain
       I_0=RefERate
       !call Get_I_coeff(D_part, G_s, -100.0, RefERate, I_0)!Reference inertial coefficient
       call Get_M(M_tc, theta, M)!Get M
@@ -119,7 +119,7 @@ contains
 
       !print *, eta_y
       if (eta_y==0.0d0) then
-         call Get_invariants(dEps, dummyvar(1), dummyvar(2), theta)
+         call calc_stress_invariants(dEps, dummyvar(1), dummyvar(2), theta)
          call Get_M(M_tc, theta, M)
          eta_y=M-dilation*(1.0-N)
       endif
@@ -133,7 +133,7 @@ contains
       !_____________________________________________________________________________
       !Compute the current deviatoric strain rate
 
-      call TwoNormTensor_strain(Erate,6,dummyvar(1))!Norm of the strain rate
+      call calc_two_norm_tensor_strain(Erate,6,dummyvar(1))!Norm of the strain rate
 
       !Compute a smoothed strain rate if switch_smooth is true
       if (switch_smooth) then
@@ -154,7 +154,7 @@ contains
          else
             Erate=(dummyvar(2)/dummyvar(1))*Erate !corrected strain rate tensor
          endif
-         call TwoNormTensor_strain(Erate,6,dummyvar(1)) ! recalculate the two norm so the updated erate value can be tracked
+         call calc_two_norm_tensor_strain(Erate,6,dummyvar(1)) ! recalculate the two norm so the updated erate value can be tracked
       endif
 
       !________________________________________________________________________________
@@ -166,7 +166,7 @@ contains
       eta_yu=eta_y
       Du=dilation
 
-      call Get_strain_invariants(Erate, dummyvar(1), epsq_rate)! deviatoric strain rate
+      call calc_strain_invariants(Erate, dummyvar(1), epsq_rate)! deviatoric strain rate
       ! print *, "dev. strain rate invariant", epsq_rate
 
       call Get_I_coeff(D_part, G_s, p, epsq_rate, I_act)!actual inertial coefficient
@@ -201,7 +201,7 @@ contains
       Sig_t = Sig_0 + dSig_el
 
       !Get new invariant stresses
-      call Get_invariants(Sig_t, p_t, q_t, theta)
+      call calc_stress_invariants(Sig_t, p_t, q_t, theta)
 
       !Evaluate yield function
       call YieldFunction(q_t, p_t, eta_yu, FT)
@@ -295,7 +295,7 @@ contains
 
                !=================================================================================
                !Store max F1 comment if not needed
-               call Get_invariants(Sig1, p, q, theta)
+               call calc_stress_invariants(Sig1, p, q, theta)
                call YieldFunction(q, p, eta_y1, FT)
                ! if (abs(FT)>abs(Error_yield_1)) Error_yield_1=abs(FT)
                !=================================================================================
@@ -319,7 +319,7 @@ contains
 
                !=================================================================================
                !Store max F2 comment if not needed
-               call Get_invariants(Sig2, p, q, theta)
+               call calc_stress_invariants(Sig2, p, q, theta)
                call YieldFunction(q, p, eta_y2, FT)
                ! if (abs(FT)>abs(Error_yield_2)) Error_yield_2=abs(FT)
                !=================================================================================
@@ -331,8 +331,8 @@ contains
                dilation1=dilation+0.5*(dD1+dD2) !Updated dilation
                eta_y1=M-dilation1
            
-               call TwoNormTensor((dSig1-dSig2), 6, dummyvar(1)) !norm(Delta Sigma)
-               call TwoNormTensor(Sig_t, 6, dummyvar(2)) !norm(Sig_T+DT)
+               call calc_two_norm_tensor((dSig1-dSig2), 6, dummyvar(1)) !norm(Delta Sigma)
+               call calc_two_norm_tensor(Sig_t, 6, dummyvar(2)) !norm(Sig_T+DT)
                R_TT=0.5*max(dummyvar(1)/dummyvar(2), abs(dD1-dD2)/abs(eta_y1)) !Relative residual error
                !________________________________________________________________________________
 
@@ -356,7 +356,7 @@ contains
                   EpsP=EpsP+ 0.5*(dEpsp1+dEpsp2)
                   G=0.5*(G1+G2)
                   K=0.5*(K1+K2)
-                  call Get_strain_invariants(EpsP, eps_v, epsq_p)
+                  call calc_strain_invariants(EpsP, eps_v, epsq_p)
                   call Get_dilation(h, D_min, I_TT, I_0,  epsq_p, alpha_D, ApplyStrainRateUpdates, dilation)
                   eta_y=M-dilation*(1.0-N)
                   !__________________________________________________________________________
@@ -364,7 +364,7 @@ contains
                   !________________________________________________________________________________
                   !***********************Stress drift correction**********************************
                   !________________________________________________________________________________
-                  call Get_invariants(Sig, p, q, theta) !stress invariants
+                  call calc_stress_invariants(Sig, p, q, theta) !stress invariants
                   call YieldFunction(q, p, eta_y, F0) !Initial drift
                   !print *, "F0:", F0
                   !=================================================================================

@@ -1,11 +1,11 @@
 module mod_test_stress_invariants_suite
    ! Local imports
    use stdlib_kinds, only: dp, i32 => int32
-   use mod_strain_invariants, only : Get_strain_invariants
-   use mod_stress_invariants, only : Get_invariants, calc_theta_s, calc_J2_invariant, &
-                                     calc_inc_driver_J3_invariant, calc_mean_stress
+   use mod_strain_invariants, only : calc_strain_invariants
+   use mod_stress_invariants, only : calc_stress_invariants, calc_lode_angle, calc_J2, &
+                                     calc_J3, calc_mean_stress
    use stdlib_linalg        , only : det
-   use mod_voight_funcs  , only : inc_driver_voigt_2_matrix, calc_dev_stress
+   use mod_voigt_utils  , only : calc_voigt_to_matrix, calc_dev_stress
 
    ! Testdrive imports
    use testdrive, only : new_unittest, unittest_type, error_type, check
@@ -66,7 +66,7 @@ contains
 
       dev_stress = calc_dev_stress(stress, mean_stress)
       
-      J2 = calc_J2_invariant(dev_stress)
+      J2 = calc_J2(dev_stress)
 
       ! Square all the terms
       dev_stress = dev_stress**2
@@ -90,12 +90,12 @@ contains
       dev_stress = calc_dev_stress( stress, calc_mean_stress(stress) )
 
       ! Form the full matrix
-      dev_matrix = inc_driver_voigt_2_matrix(dev_stress)
+      dev_matrix = calc_voigt_to_matrix(dev_stress)
 
       ! Calc the determinant of the matrix
       exp_J3 = det(dev_matrix)
 
-      J3 = calc_inc_driver_J3_invariant(dev_stress)
+      J3 = calc_J3(dev_stress)
 
       call check(error, J3, exp_J3, more = "Indiv. J3 test")
       if(allocated(error)) return
@@ -119,7 +119,7 @@ contains
       ! Test for triaxial compression (expected Lode angle is -pi/6)
       mean_stress = calc_mean_stress(trx_compression)
       dev = calc_dev_stress(trx_compression, mean_stress)
-      compress_lode = calc_theta_s(calc_J2_invariant(dev), calc_inc_driver_J3_invariant(dev))
+      compress_lode = calc_lode_angle(calc_J2(dev), calc_J3(dev))
 
       call check(error, compress_lode, -PI / 6.0_dp, more = "compression lode angle")
       if (allocated(error)) return
@@ -127,7 +127,7 @@ contains
       ! Test for triaxial extension (expected Lode angle is pi/6)
       mean_stress = calc_mean_stress(trx_extension)
       dev = calc_dev_stress(trx_extension, mean_stress)
-      exten_lode = calc_theta_s(calc_J2_invariant(dev), calc_inc_driver_J3_invariant(dev))
+      exten_lode = calc_lode_angle(calc_J2(dev), calc_J3(dev))
 
       call check(error, exten_lode, PI / 6.0_dp, more = "extension lode angle")
       if (allocated(error)) return
@@ -135,14 +135,14 @@ contains
       ! Test for shear stress (expected Lode angle is 0)
       mean_stress = calc_mean_stress(shear)
       dev = calc_dev_stress(shear, mean_stress)
-      shear_lode = calc_theta_s(calc_J2_invariant(dev), calc_inc_driver_J3_invariant(dev))
+      shear_lode = calc_lode_angle(calc_J2(dev), calc_J3(dev))
 
       call check(error, shear_lode, 0.0_dp, more = "shear lode angle")
       if (allocated(error)) return
    
    end subroutine test_lode_angle
 
-   ! Test the Get_invariants functions. This is some what redundant due to the above tests but it makes it easier to test each of them individually
+   ! Test the calc_stress_invariants functions. This is some what redundant due to the above tests but it makes it easier to test each of them individually
    subroutine test_main_stress_invariant(error)
       type(error_type), allocatable, intent(out) :: error
 
@@ -157,7 +157,7 @@ contains
       stress = [1.0_dp, 3.0_dp, 5.0_dp, 7.0_dp, 11.0_dp, 13.0_dp]
 
       ! Calc the stress invariants
-      call Get_invariants(stress, p, q, theta)
+      call calc_stress_invariants(stress, p, q, theta)
 
       ! Check the mean stress
       call check(error, p, exp_p, more = "Mean Stress Test^")
@@ -171,8 +171,8 @@ contains
       ! See function calc_theta_s for more information about the lode angle used here
    
       dev = calc_dev_stress(stress, p)
-      J3 = calc_inc_driver_J3_invariant(dev)
-      J2 = calc_J2_invariant(dev)
+      J3 = calc_J3(dev)
+      J2 = calc_J2(dev)
 
       ! Formula from Potts and Zdravković
       exp_theta = - asin(3.0_dp * sqrt(3.0_dp) / 2.0_dp * J3 / J2**1.5_dp) / 3.0_dp

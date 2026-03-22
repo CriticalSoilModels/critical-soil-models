@@ -1,9 +1,9 @@
-module mod_voight_funcs
+module mod_voigt_utils
    use stdlib_kinds, only: dp, i32 => int32
    implicit none
    private
-   public :: calc_dev_stress, TwoNormTensor, TwoNormTensor_strain, inc_driver_voigt_2_matrix, sym_matrix_2_inc_driver_voigt, &
-   square_inc_driver_voigt_vector, TensorInnerProduct
+   public :: calc_dev_stress, calc_two_norm_tensor, calc_two_norm_tensor_strain, calc_voigt_to_matrix, calc_matrix_to_voigt, &
+   calc_voigt_square, calc_tensor_inner_product
 contains
 
    pure function calc_dev_stress(stress, mean_stress) result(dev_stress)
@@ -23,7 +23,7 @@ contains
 
    end function calc_dev_stress
 
-   pure Subroutine TwoNormTensor(Tensor, N, TwoNorm)
+   pure Subroutine calc_two_norm_tensor(Tensor, N, TwoNorm)
       !***********************************************************************
       !     ! WaveHello: This is actually the frobenius norm
       !     Calculate 2NormTensor = sqrt(A:A)
@@ -52,9 +52,9 @@ contains
       end do
       TwoNorm=sqrt(TwoNorm)
 
-   end subroutine TwoNormTensor
+   end subroutine calc_two_norm_tensor
 
-   pure Subroutine TwoNormTensor_strain(Tensor, N, TwoNorm)
+   pure Subroutine calc_two_norm_tensor_strain(Tensor, N, TwoNorm)
       !***********************************************************************
       !     ! WaveHello: This is actually the frobenius norm
       !     Calculate 2NormTensor = sqrt(A:A)
@@ -84,9 +84,9 @@ contains
       end do
       TwoNorm=sqrt(TwoNorm)
 
-   end subroutine TwoNormTensor_strain
+   end subroutine calc_two_norm_tensor_strain
 
-   pure function inc_driver_voigt_2_matrix(voigt_vector) result(matrix)
+   pure function calc_voigt_to_matrix(voigt_vector) result(matrix)
 
       real(kind = dp), intent(in) :: voigt_vector(6)
       real(kind = dp) :: matrix(3, 3)
@@ -104,9 +104,9 @@ contains
       matrix(3, 1) = voigt_vector(5)
       matrix(2, 3) = voigt_vector(6)
       matrix(3, 2) = voigt_vector(6)
-   end function inc_driver_voigt_2_matrix
+   end function calc_voigt_to_matrix
 
-   pure function sym_matrix_2_inc_driver_voigt(matrix) result(voigt_vector)
+   pure function calc_matrix_to_voigt(matrix) result(voigt_vector)
 
       real(kind = dp), intent(in) :: matrix(3,3)
       real(kind = dp) :: voigt_vector(6)
@@ -135,9 +135,9 @@ contains
       voigt_vector(4) = matrix(1, 2)
       voigt_vector(5) = matrix(1, 3)
       voigt_vector(6) = matrix(2, 3)
-   end function sym_matrix_2_inc_driver_voigt
+   end function calc_matrix_to_voigt
 
-   pure function square_inc_driver_voigt_vector(voigt) result(voigt2)
+   pure function calc_voigt_square(voigt) result(voigt2)
       ! Multies a voigt vector using matrix multiplication against itself
       ! Assumes incremental driver ordering for the voigt vector
       real(kind = dp), intent(in) :: voigt(6)
@@ -149,9 +149,9 @@ contains
       voigt2(4)=voigt(4) * ( voigt(1) + voigt(2) ) + voigt(5)*voigt(6)
       voigt2(5)=voigt(5) * ( voigt(1) + voigt(3) ) + voigt(4)*voigt(6)
       voigt2(6)=voigt(6) * ( voigt(2) + voigt(3) ) + voigt(4)*voigt(5)
-   end function square_inc_driver_voigt_vector
+   end function calc_voigt_square
 
-   pure Subroutine TensorInnerProduct(TensorA, TensorB, N, Re)
+   pure Subroutine calc_tensor_inner_product(TensorA, TensorB, N, Re)
       !***********************************************************************
       !
       !     Calculate 2NormTensor = sqrt(A:A)
@@ -179,6 +179,6 @@ contains
       Do I=X+1,N
          Re=Re+2*(TensorA(I)*TensorB(I))
       end do
-   end subroutine TensorInnerProduct
+   end subroutine calc_tensor_inner_product
 
-end module mod_voight_funcs
+end module mod_voigt_utils

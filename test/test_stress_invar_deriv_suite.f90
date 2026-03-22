@@ -1,22 +1,22 @@
 module mod_test_stress_invar_deriv_suite
     ! Imports
     use stdlib_kinds, only: dp, i32 => int32
-    use mod_stress_invariants, only: calc_mean_stress, calc_q_invariant, calc_J2_invariant, &
-                                     calc_inc_driver_J3_invariant, calc_theta_s
-    use mod_stress_invar_deriv, only: calc_mean_stress_to_dSigma, calc_dq_to_dSigma, calc_dJ2_to_dSigma, calc_dJ3_to_dSigma, &
-                                      calc_inc_driver_dJ3_to_dSigma, calc_dtheta_to_dSigma, calc_dtheta_to_dSigma_2
-    use mod_voight_funcs   , only: calc_dev_stress
+    use mod_stress_invariants, only: calc_mean_stress, calc_q, calc_J2, &
+                                     calc_J3, calc_lode_angle
+    use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig, calc_dJ2_by_dsig, calc_dJ3_by_dsig, &
+                                      calc_dJ3_by_dsig_full, calc_dtheta_by_dsig
+    use mod_voigt_utils   , only: calc_dev_stress
     use mod_tensor_value_checker, only: check_tensor_values
 
     ! Testdrive imports
     use testdrive, only : new_unittest, unittest_type, error_type, check
 
     implicit none
-    
+
     private
     public :: collect_stress_invar_deriv_suite
 contains
-    
+
     subroutine collect_stress_invar_deriv_suite(testsuite)
         type(unittest_type), allocatable, intent(out) ::  testsuite(:)
 
@@ -28,7 +28,7 @@ contains
             new_unittest("dJ3/dSigma", test_dJ3_to_dSigma), &
             new_unittest("dtheta_dSigma", test_dtheta_to_dSigma) &
             ]
-        
+
     end subroutine collect_stress_invar_deriv_suite
 
     subroutine test_dMean_Stress_to_dSigma(error)
@@ -38,56 +38,56 @@ contains
         real(kind = dp) :: exp_dmean_dSigma(6), dmean_dSigma(6)
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
-        
+
         ! Calc the value using the function
-        dmean_dSigma = calc_mean_stress_to_dSigma()
-        
+        dmean_dSigma = calc_dp_by_dsig()
+
         ! Calc the value using another method
         exp_dmean_dSigma(:) = 0.0
         exp_dmean_dSigma(1:3) = 1.0_dp / 3.0_dp
-        
+
         ! Check that all the values are the same within a tolerance
         call check_tensor_values(dmean_dSigma, exp_dmean_dSigma, tol, passed)
-        
+
         ! Check that the check passed
         call check(error, passed, .True., more = "Indiv. dP/dSigma test")
         if(allocated(error)) return
-        
+
     end subroutine test_dMean_Stress_to_dSigma
 
     subroutine test_dq_to_dSigma(error)
         type(error_type), allocatable, intent(out) ::  error
-    
+
         ! Local variables
         real(kind = dp) :: exp_dq_dSigma(6), dq_dSigma(6)
         real(kind = dp) :: stress(6), dev_stress(6)
         real(kind = dp) :: mean_stress, J2, q
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
-        
+
         call random_number(stress)
-        
+
         stress = stress - [0.5, 0.0, 0.5, 0.0, 0.5, 0.0]
         mean_stress = calc_mean_stress(stress)
 
         dev_stress = calc_dev_stress(stress, mean_stress)
-        
-        J2 = calc_J2_invariant(dev_stress)
 
-        q = calc_q_invariant(J2)
+        J2 = calc_J2(dev_stress)
+
+        q = calc_q(J2)
 
         ! Calc the value using the function
-        dq_dSigma = calc_dq_to_dSigma(dev_stress, q)
+        dq_dSigma = calc_dq_by_dsig(dev_stress, q)
 
         ! Calc the value using another method
         exp_dq_dSigma = 3.0_dp/(2.0_dp * q) * dev_stress
-        
+
         ! Double the shear terms
-        exp_dq_dSigma(4:6) = 2.0_dp * exp_dq_dSigma(4:6) 
-        
+        exp_dq_dSigma(4:6) = 2.0_dp * exp_dq_dSigma(4:6)
+
         ! Check that all the values are the same within a tolerance
         call check_tensor_values(dq_dSigma, exp_dq_dSigma, tol, passed)
-        
+
         ! Check that the check passed
         call check(error, passed, .True., more = "Indiv. dq/dSigma test")
         if(allocated(error)) return
@@ -96,7 +96,7 @@ contains
 
     subroutine test_dJ2_to_dSigma(error)
         type(error_type), allocatable, intent(out) ::  error
-    
+
         ! Local variables
         real(kind = dp) :: exp_dJ2_dSigma(6), dJ2_dSigma(6)
         real(kind = dp) :: stress(6), dev_stress(6), mean_stress
@@ -108,36 +108,36 @@ contains
         mean_stress = calc_mean_stress(stress)
 
         dev_stress = calc_dev_stress(stress, mean_stress)
-        
+
         ! Calc the value using the function
-        dJ2_dSigma = calc_dJ2_to_dSigma(dev_stress)
+        dJ2_dSigma = calc_dJ2_by_dsig(dev_stress)
 
         ! Calc the value using another method
         exp_dJ2_dSigma(1) = dev_stress(1)
         exp_dJ2_dSigma(2) = dev_stress(2)
-        exp_dJ2_dSigma(3) = dev_stress(3) 
+        exp_dJ2_dSigma(3) = dev_stress(3)
         exp_dJ2_dSigma(4) = 2.0_dp * dev_stress(4)
         exp_dJ2_dSigma(5) = 2.0_dp * dev_stress(5)
         exp_dJ2_dSigma(6) = 2.0_dp * dev_stress(6)
 
         ! Check that all the values are the same within a tolerance
         call check_tensor_values(dJ2_dSigma, exp_dJ2_dSigma, tol, passed)
-        
+
         ! Check that the check passed
         call check(error, passed, .True., more = "Indiv. dJ2/dSigma test")
         if(allocated(error)) return
-        
+
     end subroutine test_dJ2_to_dSigma
 
     subroutine test_dJ3_to_dSigma(error)
         type(error_type), allocatable, intent(out) ::  error
-    
+
         ! Local variables
         real(kind = dp) :: exp_dJ3_dSigma(6), dJ3_dSigma(6)
         real(kind = dp) :: stress(6), dev(6), mean_stress
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
-        
+
         call random_number(stress)
 
         mean_stress = calc_mean_stress(stress)
@@ -145,55 +145,68 @@ contains
         dev = calc_dev_stress(stress, mean_stress)
 
         ! Calc the value using the function
-        dJ3_dSigma = calc_dJ3_to_dSigma(dev)
+        dJ3_dSigma = calc_dJ3_by_dsig(dev)
 
         ! Calc the value using another method
-        exp_dJ3_dSigma = calc_inc_driver_dJ3_to_dSigma(stress)
+        exp_dJ3_dSigma = calc_dJ3_by_dsig_full(stress)
 
         ! Check that all the values are the same within a tolerance
         call check_tensor_values(dJ3_dSigma, exp_dJ3_dSigma , tol, passed)
-        
+
         ! Check that the check passed
         call check(error, passed, .True., more = "Indiv. dJ3/dSigma test")
         if(allocated(error)) return
-        
-    
+
+
     end subroutine test_dJ3_to_dSigma
 
     subroutine test_dtheta_to_dSigma(error)
         type(error_type), allocatable, intent(out) ::  error
-    
+
         ! Local variables
         real(kind = dp) :: exp_dtheta_dSigma(6), dtheta_dSigma(6)
         real(kind = dp) :: stress(6), dev(6), mean_stress
         real(kind = dp) :: J2, J3, theta, dJ3_dSigma(6)
         real(kind = dp), parameter :: tol = 1e-9
         logical :: passed = .False.
-                
+
         call random_number(stress)
 
         mean_stress = calc_mean_stress(stress)
 
         dev = calc_dev_stress(stress, mean_stress)
-        
-        J2 = calc_J2_invariant(dev)
-        J3 = calc_inc_driver_J3_invariant(dev)
-        theta = calc_theta_s(J2, J3)
-        dJ3_dSigma = calc_dJ3_to_dSigma(dev)
+
+        J2 = calc_J2(dev)
+        J3 = calc_J3(dev)
+        theta = calc_lode_angle(J2, J3)
+        dJ3_dSigma = calc_dJ3_by_dsig(dev)
 
         ! Calc the value using the function
-        dtheta_dSigma = calc_dtheta_to_dSigma(dJ3_dSigma, dev, J3, J2, theta)
-        
-        ! Calc the value using another method
-        exp_dtheta_dSigma = calc_dtheta_to_dSigma_2(dJ3_dSigma, dev, J3, J2)
+        dtheta_dSigma = calc_dtheta_by_dsig(dJ3_dSigma, dev, J3, J2, theta)
+
+        ! Calc the value using the local reference function
+        exp_dtheta_dSigma = dtheta_reference(dJ3_dSigma, dev, J3, J2)
 
         ! Check that all the values are the same within a tolerance
         call check_tensor_values(dtheta_dSigma, exp_dtheta_dSigma, tol, passed)
-        
+
         ! Check that the check passed
         call check(error, passed, .True., more = "Indiv. dtheta/dSigma test")
         if(allocated(error)) return
-        
+
     end subroutine test_dtheta_to_dSigma
+
+    pure function dtheta_reference(dJ3_dSigma, dev, J3, J2) result(dtheta_dSigma)
+       real(dp), intent(in) :: dJ3_dSigma(6), dev(6), J3, J2
+       real(dp) :: dtheta_dSigma(6)
+       real(dp) :: outside_term_1, outside_term_2, inside(6)
+       real(dp) :: dJ2_dSigma(6)
+       real(dp), parameter :: THREE = 3.0_dp, TWO = 2.0_dp
+       outside_term_1 = sqrt(THREE) / ( 2.0 * J2**(1.5) )
+       outside_term_2 = 1/sqrt( 1 - (THREE * sqrt(THREE)/TWO * J3/J2**1.5)**2 )
+       dJ2_dSigma = calc_dJ2_by_dsig(dev)
+       inside = THREE / TWO * J3/J2 * dJ2_dSigma - dJ3_dSigma
+       dtheta_dSigma = outside_term_1 * outside_term_2 * inside
+    end function dtheta_reference
 
 end module mod_test_stress_invar_deriv_suite

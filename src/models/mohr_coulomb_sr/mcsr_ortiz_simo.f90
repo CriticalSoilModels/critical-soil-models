@@ -3,11 +3,10 @@ module mod_SRMC_Ortiz_Simo
    use mod_SRMC_funcs        , only: MatVec, DotProduct_2 ! Subroutines that are required for calculations
    use mod_state_params      , only: check4crossing, Update_GK, get_dilation, Get_M
    use mod_state_params_deriv, only: Get_dD_to_dEpsP
-   use mod_stress_invariants , only: Get_invariants
-   use mod_strain_invariants , only: Get_strain_invariants
+   use mod_stress_invariants , only: calc_stress_invariants
+   use mod_strain_invariants , only: calc_strain_invariants
    use mod_yield_function    , only: YieldFunction, Get_dF_to_dSigma
    use mod_plastic_potential , only: Get_dP_to_dSigma
-   use mod_stress_invariants , only : Get_invariants
 
    implicit none
 
@@ -106,7 +105,7 @@ contains
       ! Apply strain rate updates
       I_f=I+dI
       call check4crossing(I,  I_f, dI, I_0, ApplyStrainRateUpdate)
-      call Get_strain_invariants(EpsPu, epsv_p, epsq_p)
+      call calc_strain_invariants(EpsPu, epsv_p, epsq_p)
       call Update_GK(G_0, nu, I_f, I_0, k_G, k_K, G, K)
       call get_dilation(h, D_min, I_f, I_0, epsq_p, k_D, ApplyStrainRateUpdate, Du) ! Need this for the strain rate but also to actually calculate Du
       eta_yu = Mu-du*(1.0 * No)
@@ -141,7 +140,7 @@ contains
       !-------------------Begin Yielding Check--------------------------!
 
       ! Compute stress invariants
-      call Get_invariants(Sigu, p, q, dummyVal)
+      call calc_stress_invariants(Sigu, p, q, dummyVal)
 
       ! M = M_tc*(1 + 0.25(cos(1.5 * theta + 0.25 *pi))
       call Get_M(M_tc, dummyVal, Mu)
@@ -177,7 +176,7 @@ contains
          dEpsPu, I, ApplyStrainRateUpdate, a) !a=dD/dEpsP
 
       ! Compute stress invariants
-      call Get_invariants(Sigu, p, q, dummyVal)
+      call calc_stress_invariants(Sigu, p, q, dummyVal)
 
       do while (abs(F) >= FTOL .and. counter <= max_stress_iters)
          !---------------------Begin Compute derivatives--------------------------!
@@ -209,7 +208,7 @@ contains
          Sigu = Sigu - dLambda * DE_m
 
          ! Compute stress invariants
-         call Get_invariants(Sigu, p, q, dummyVal)
+         call calc_stress_invariants(Sigu, p, q, dummyVal)
 
          ! Update M
          call Get_M(M_tc, dummyVal, Mu)
@@ -221,7 +220,7 @@ contains
          EpsPu = EpsPu + dEpsPu
 
          ! Calc strain invariants
-         ! call Get_strain_invariants(EpsPu, epsv_p, epsq_p)
+         ! call calc_strain_invariants(EpsPu, epsv_p, epsq_p)
 
          ! ! Calc a = dD/dEpsP
          ! call Get_dD_to_dEpsP(D_min, h, I_0, k_D, epsq_p, epsv_p, &

@@ -1,8 +1,8 @@
 module mod_test_strain_invar_deriv_suite
     ! Local imports
     use stdlib_kinds, only: dp, i32 => int32
-    use mod_strain_invar_deriv, only : Get_dEpsq_to_dEps, calc_inc_driver_dEpsq_to_dEps
-    use mod_strain_invariants, only: calc_eps_q_invariant, calc_dev_strain, Get_strain_invariants
+    use mod_strain_invar_deriv, only : calc_deps_q_by_deps, calc_deps_q_by_deps_full
+    use mod_strain_invariants, only: calc_eps_q_invariant, calc_dev_strain, calc_strain_invariants
     use mod_check_NaN_and_tensor_value, only : check_NaN_and_tensor_value
 
     ! Testdrive imports
@@ -40,12 +40,12 @@ module mod_test_strain_invar_deriv_suite
         real(dp), parameter :: tol = 1e-9_dp
         Eps = [1.0, 3.0, 5.0, 7.0, 11.0, 13.0]
         
-        call Get_strain_invariants(Eps, Eps_v, Eps_q)
+        call calc_strain_invariants(Eps, Eps_v, Eps_q)
     
         ! Calc the value
-        call Get_dEpsq_to_dEps(Eps_q, Eps, dEq_dEpsq)
+        call calc_deps_q_by_deps(Eps_q, Eps, dEq_dEpsq)
         
-        exp_dEq_dEpsq = calc_inc_driver_dEpsq_to_dEps(Eps)
+        exp_dEq_dEpsq = calc_deps_q_by_deps_full(Eps)
 
         ! Check the values and make sure there isn't a NaN
         call check_NaN_and_tensor_value(dEq_dEpsq, exp_dEq_dEpsq, tol, passed)

@@ -3,7 +3,7 @@
 module mod_state_params
    use stdlib_kinds, only: dp
    use mod_yield_function, only: Get_dF_to_dSigma
-   use mod_voight_funcs, only: TwoNormTensor, TensorInnerProduct
+   use mod_voigt_utils, only: calc_two_norm_tensor, calc_tensor_inner_product
    implicit none
 
 contains
@@ -27,9 +27,9 @@ contains
       deta=eta_yu-eta_y!change in state parameter
 
       call Get_dF_to_dSigma(M_tc, eta_yu, Sig, n_vec)!Normal to surface
-      call TwoNormTensor(n_vec, 6, n_norm) !norm of n_vec
-      call TwoNormTensor(dSig, 6, Sig_norm) !norm of dSig
-      call TensorInnerProduct(dSig, n_vec, 6,dSIg_inner_n) !inner product
+      call calc_two_norm_tensor(n_vec, 6, n_norm) !norm of n_vec
+      call calc_two_norm_tensor(dSig, 6, Sig_norm) !norm of dSig
+      call calc_tensor_inner_product(dSig, n_vec, 6,dSIg_inner_n) !inner product
 
       beta=acos(deta/(n_norm*Sig_norm))!conical aperture is a plane for inviscid mat.
       

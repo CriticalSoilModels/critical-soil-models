@@ -14,6 +14,10 @@
 !   9. Compute DDSDDE
 !
 ! Everything below this layer uses named fields and 6-component internal vectors.
+!
+! enforce_plane_stress is an internal subroutine (after contains) so it:
+!   - inherits all use-associated names including dp
+!   - has an automatic explicit interface (needed for the polymorphic argument)
 ! =============================================================================
 
 subroutine umat_mc_strain_softening(STRESS, STATEV, DDSDDE,       &
@@ -109,67 +113,65 @@ subroutine umat_mc_strain_softening(STRESS, STATEV, DDSDDE,       &
    D6 = model%elastic_stiffness()
    DDSDDE(1:NTENS, 1:NTENS) = deflate_stiffness(D6, ptype)
 
+contains
+
+   ! ==========================================================================
+   ! Plane stress enforcement — wrapper-level Newton iteration.
+   ! Finds eps_33 such that sig_33 = 0 after a full stress update.
+   ! Internal subroutine: inherits dp and use-associations from the host.
+   !
+   ! Algorithm:
+   !   Given sig_33 = f(eps_33), solve f(eps_33) = 0 by Newton's method.
+   !   Jacobian df/d(eps_33) approximated from the elastic stiffness column.
+   ! ==========================================================================
+   subroutine enforce_plane_stress(mdl, sig6_ps, dstran6_ps, ftol)
+      class(mcss_model_t), intent(inout) :: mdl
+      real(dp),            intent(inout) :: sig6_ps(6), dstran6_ps(6)
+      real(dp),            intent(in)    :: ftol
+
+      integer,  parameter :: MAX_ITER = 20
+      real(dp), parameter :: TOL = 1.0e-10_dp
+
+      real(dp) :: sig_trial(6), dstran_trial(6)
+      real(dp) :: sig33, d_sig33_d_eps33
+      real(dp) :: D6_ps(6,6)
+      real(dp) :: deps33
+      real(dp), allocatable :: state_saved(:)
+      integer  :: iter
+
+      ! Elastic stiffness column 3 gives dsig_33/deps_33 (approximate Jacobian)
+      D6_ps           = mdl%elastic_stiffness()
+      d_sig33_d_eps33 = D6_ps(3, 3)
+
+      ! Initial guess: eps_33 = 0 (already set by inflate)
+      do iter = 1, MAX_ITER
+
+         ! Trial update with current eps_33 guess
+         sig_trial    = sig6_ps
+         dstran_trial = dstran6_ps
+
+         call mdl%snapshot(state_saved)
+         call euler_substep(mdl, sig_trial, dstran_trial, ftol=ftol, stol=1.0e-4_dp)
+         call mdl%restore(state_saved)
+
+         ! Check sig_33
+         sig33 = sig_trial(3)
+         if (abs(sig33) < TOL) then
+            dstran6_ps = dstran_trial
+            sig6_ps    = sig_trial
+            return
+         end if
+
+         ! Newton update: eps_33 -= sig_33 / (dsig_33/deps_33)
+         deps33           = -sig33 / d_sig33_d_eps33
+         dstran6_ps(3)    = dstran6_ps(3) + deps33
+
+      end do
+
+      ! Converged solution already stored in sig_trial/dstran_trial on last accepted iter
+      sig6_ps    = sig_trial
+      dstran6_ps = dstran_trial
+
+   end subroutine enforce_plane_stress
+
 end subroutine umat_mc_strain_softening
-
-
-! =============================================================================
-! Plane stress enforcement — wrapper-level Newton iteration
-! Finds eps_33 such that sig_33 = 0 after a full stress update.
-! The model and integrator are called as black boxes; they remain unaware.
-!
-! Algorithm:
-!   Given sig_33 = f(eps_33), solve f(eps_33) = 0 by Newton's method.
-!   Jacobian df/d(eps_33) approximated from the elastic stiffness column.
-! =============================================================================
-subroutine enforce_plane_stress(model, sig6, dstran6, ftol)
-   use mod_csm_model,     only: csm_model_t
-   use mod_euler_substep, only: euler_substep
-
-   class(csm_model_t), intent(inout) :: model
-   real(dp),           intent(inout) :: sig6(6), dstran6(6)
-   real(dp),           intent(in)    :: ftol
-
-   integer,  parameter :: MAX_ITER = 20
-   real(dp), parameter :: TOL = 1.0e-10_dp
-
-   real(dp) :: sig_trial(6), dstran_trial(6)
-   real(dp) :: sig33, d_sig33_d_eps33
-   real(dp) :: D6(6,6)
-   real(dp) :: deps33
-   real(dp), allocatable :: state_saved(:)
-   integer  :: iter
-
-   ! Elastic stiffness column 3 gives dsig_33/deps_33 (approximate Jacobian)
-   D6 = model%elastic_stiffness()
-   d_sig33_d_eps33 = D6(3, 3)
-
-   ! Initial guess: eps_33 = 0 (already set by inflate)
-   do iter = 1, MAX_ITER
-
-      ! Trial update with current eps_33 guess
-      sig_trial    = sig6
-      dstran_trial = dstran6
-
-      call model%snapshot(state_saved)
-      call euler_substep(model, sig_trial, dstran_trial, ftol=ftol, stol=1.0e-4_dp)
-      call model%restore(state_saved)
-
-      ! Check sig_33
-      sig33 = sig_trial(3)
-      if (abs(sig33) < TOL) then
-         dstran6 = dstran_trial
-         sig6    = sig_trial
-         return
-      end if
-
-      ! Newton update: eps_33 -= sig_33 / (dsig_33/deps_33)
-      deps33         = -sig33 / d_sig33_d_eps33
-      dstran6(3)     = dstran6(3) + deps33
-
-   end do
-
-   ! Converged solution already stored in sig_trial/dstran_trial on last accepted iter
-   sig6    = sig_trial
-   dstran6 = dstran_trial
-
-end subroutine enforce_plane_stress

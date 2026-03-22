@@ -1,11 +1,11 @@
 ! Module for the the functions for the strain invariants
 module mod_strain_invariants
    use stdlib_kinds, only: dp
-   use mod_voight_funcs  , only: TwoNormTensor_strain
+   use mod_voigt_utils  , only: calc_two_norm_tensor_strain
    implicit none
 
 contains
-   Subroutine Get_strain_invariants(Eps, Eps_v, Eps_q)
+   Subroutine calc_strain_invariants(Eps, Eps_v, Eps_q)
       !*********************************************************************
       ! Takes the strain tensor and returns deviatoric and vol. strain     *
       !																	 *
@@ -29,7 +29,7 @@ contains
       ! call TwoNormTensor_strain(dev, 6, Eps_q)
       ! Eps_q=Eps_q*sqrt(2.0/3.0) ! dev strain
       Eps_q = calc_eps_q_invariant(dev)
-   end subroutine  Get_strain_invariants
+   end subroutine  calc_strain_invariants
 
    pure function calc_eps_vol_invariant(strain) result(eps_vol)
       ! Calc the volumetric strain invariant
@@ -66,7 +66,7 @@ contains
       real(dp), intent(in) :: dev_strain(6)
       real(dp) :: eps_q
 
-      call TwoNormTensor_strain(dev_strain, 6, eps_q)
+      call calc_two_norm_tensor_strain(dev_strain, 6, eps_q)
 
       eps_q = eps_q * sqrt(2.0_dp / 3.0_dp)
    end function calc_eps_q_invariant

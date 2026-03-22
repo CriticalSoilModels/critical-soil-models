@@ -3,9 +3,9 @@
 module mod_test_plastic_potential_suite
     use stdlib_kinds, only: dp
     use ieee_arithmetic, only: ieee_is_nan
-    use mod_stress_invariants, only: calc_q_invariant, calc_mean_stress, calc_J2_invariant
-    use mod_voight_funcs, only: calc_dev_stress 
-    use mod_stress_invar_deriv, only: calc_dq_to_dSigma, calc_mean_stress_to_dSigma
+    use mod_stress_invariants, only: calc_q, calc_mean_stress, calc_J2
+    use mod_voigt_utils, only: calc_dev_stress
+    use mod_stress_invar_deriv, only: calc_dq_by_dsig, calc_dp_by_dsig
     use mod_plastic_potential, only: Get_dP_to_dSigma
     use mod_tensor_value_checker, only: check_tensor_values
 
@@ -43,11 +43,11 @@ contains
         
         mean_stress = calc_mean_stress(stress)
         dev = calc_dev_stress(stress, mean_stress)
-        J2 = calc_J2_invariant(dev)
-        q = calc_q_invariant(J2)
+        J2 = calc_J2(dev)
+        q = calc_q(J2)
 
         ! Set the expected value from a hand calc
-        exp_m_vec =  -dilatancy * calc_mean_stress_to_dSigma() + calc_dq_to_dSigma(dev, q)
+        exp_m_vec =  -dilatancy * calc_dp_by_dsig() + calc_dq_by_dsig(dev, q)
 
         if (all(ieee_is_nan(m_vec) .eqv. .False.)) then
             call check_tensor_values(m_vec, exp_m_vec, tol, passed)

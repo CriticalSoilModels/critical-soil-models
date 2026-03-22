@@ -1,9 +1,9 @@
 module mod_SRMC_Substepping
     use mod_SRMC_funcs, only:  MatVec,  DotProduct_2
     use mod_state_params, only: check4crossing, Update_GK, get_dilation, Check_Unloading
-    use mod_strain_invariants, only: Get_strain_invariants
-    use mod_strain_invar_deriv, only: Get_dEpsq_to_dEps
-    use mod_stress_invariants, only : Get_invariants                           
+    use mod_strain_invariants, only: calc_strain_invariants
+    use mod_strain_invar_deriv, only: calc_deps_q_by_deps
+    use mod_stress_invariants, only : calc_stress_invariants                           
     use mod_yield_function, only: Get_dF_to_dSigma, YieldFunction
     use mod_plastic_potential, only: Get_dP_to_dSigma
     use mod_state_params_deriv, only: Get_dD_to_dEpsP, Get_dD_to_dI
@@ -104,7 +104,7 @@ contains
        Sig_alpha = Sig_0 + dSig_alpha
        !___________________________________________________________
        !Evaluate yield function
-       call Get_invariants(Sig_alpha, p_alpha, q_alpha, dummyvar)
+       call calc_stress_invariants(Sig_alpha, p_alpha, q_alpha, dummyvar)
        call YieldFunction(q_alpha, p_alpha, eta_yu, FT)
 
        !Evaluate n=dF/dSig and L=dF/dXs
@@ -211,8 +211,8 @@ contains
 
     !________________________________________________________________________
     !Compute invariants and derivatives
-    call Get_invariants(Sig, p, q, dummyvar)
-    call Get_strain_invariants(EpsP, epsv_p, epsq_p)
+    call calc_stress_invariants(Sig, p, q, dummyvar)
+    call calc_strain_invariants(EpsP, epsv_p, epsq_p)
     call Get_dF_to_dSigma(M_tc, eta_y, Sig, n_vec) !n=dFdSig
     call Get_dP_to_dSigma(Dp, Sig, m_vec) !m=dP/dSig
     L = -p*(1.0-No) !L=dF/dXs
@@ -262,8 +262,8 @@ contains
 
     if ((ApplyStrainRateUpdate).and.(switch_original)) then !original
        !compute viscous hardening modulus Hvp=-L.bv.m/(dt*DT)
-       call Get_strain_invariants(erate,dummyvar,erate_q)
-       call Get_dEpsq_to_dEps(erate_q,erate,dummyvec)
+       call calc_strain_invariants(erate,dummyvar,erate_q)
+       call calc_deps_q_by_deps(erate_q,erate,dummyvec)
        dummyvec=b*Dpart*sqrt(Gs/abs(p))*dummyvec
        call DotProduct_2(dummyvec, m_vec, 6, dummyvar)
        Hvp=-L*dummyvar/(dtime*DT)
@@ -362,8 +362,8 @@ contains
 
        !________________________________________________________________________
        !Compute invariants and derivatives
-       call Get_invariants(Sig, p, q, dummyvar)
-       call Get_strain_invariants(EpsP, epsv_p, epsq_p)
+       call calc_stress_invariants(Sig, p, q, dummyvar)
+       call calc_strain_invariants(EpsP, epsv_p, epsq_p)
        call Get_dF_to_dSigma(M_tc, eta_y, Sig, n_vec) !n=dFdSig
        call Get_dP_to_dSigma(Dp, Sig, m_vec) !m=dP/dSig
        L=-p*(1.0-No) !L=dF/dXs
@@ -398,8 +398,8 @@ contains
 
        if ((ApplyStrainRateUpdate).and.(switch_original)) then !original
           !compute viscous hardening modulus Hvp=-L.bdI/dErate.m/(dt*DT)
-          call Get_strain_invariants(erate,dummyvar,erate_q)
-          call Get_dEpsq_to_dEps(erate_q,erate,dummyvec)
+          call calc_strain_invariants(erate,dummyvar,erate_q)
+          call calc_deps_q_by_deps(erate_q,erate,dummyvec)
           dummyvec=b*Dpart*sqrt(Gs/abs(p))*dummyvec
           call DotProduct_2(dummyvec, m_vec, 6, dummyvar)
           Hvp=-L*dummyvar/(dtime*DT)
@@ -425,7 +425,7 @@ contains
 
        !__________________________________________________________________
        !Evaluate yield function
-       call Get_invariants(Sigu, p, q, dummyvar)
+       call calc_stress_invariants(Sigu, p, q, dummyvar)
        call YieldFunction(q, p, eta_yu, FC)
        !__________________________________________________________________
        !Evaluate change direction

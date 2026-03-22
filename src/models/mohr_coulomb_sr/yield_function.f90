@@ -1,9 +1,9 @@
 ! Module holds the yield function equation and the derivatives of the yield function
 module mod_yield_function
    use stdlib_kinds, only: dp
-   use mod_stress_invariants, only : calc_inc_driver_J3_invariant, Get_invariants, calc_J2_invariant
-   use mod_stress_invar_deriv, only: calc_mean_stress_to_dSigma, calc_dq_to_dSigma, calc_dJ3_to_dSigma, calc_dtheta_to_dSigma
-   use mod_voight_funcs   , only: calc_dev_stress
+   use mod_stress_invariants, only : calc_J3, calc_stress_invariants, calc_J2
+   use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig, calc_dJ3_by_dsig, calc_dtheta_by_dsig
+   use mod_voigt_utils   , only: calc_dev_stress
    implicit none
 
 contains
@@ -41,7 +41,7 @@ contains
          dpdsig(6), dqdsig(6), dev(6), dthetadSig(6)
 
       !Get the invariants
-      call Get_invariants(Sig, p, q, theta)
+      call calc_stress_invariants(Sig, p, q, theta)
 
       !Get dF/dp=eta_y and dF/dq=1
       !Get dF/dtheta
@@ -49,22 +49,22 @@ contains
 
       !___________________________________________________________________________
       !1) Get dp/dSig=1/3 Imat
-      dpdsig = calc_mean_stress_to_dSigma()
+      dpdsig = calc_dp_by_dsig()
 
       dev= calc_dev_stress(Sig, p)
 
       !2) Get dq/dsig
-      dqdSig = calc_dq_to_dSigma(dev, q)
+      dqdSig = calc_dq_by_dsig(dev, q)
 
       !3) Get dtheta/dSigma
-      J2 = calc_J2_invariant(dev)
+      J2 = calc_J2(dev)
 
-      J3 = calc_inc_driver_J3_invariant( dev )
+      J3 = calc_J3( dev )
 
-      dJ3dsig = calc_dJ3_to_dSigma(dev)
+      dJ3dsig = calc_dJ3_by_dsig(dev)
 
       !Compute dtheta/dsig
-      dthetadSig = calc_dtheta_to_dSigma(dJ3dsig, dev, J3, J2, theta)
+      dthetadSig = calc_dtheta_by_dsig(dJ3dsig, dev, J3, J2, theta)
 
       !Get n_vec=dF/dSig
       n_vec = ( eta_y * dpdsig ) + dqdSig + ( dfdtheta * dthetadSig) !n_vec=dF/dSig
@@ -87,7 +87,7 @@ contains
          dpdsig(6), dqdsig(6), dev(6), dthetadSig(6)
 
       !Get the invariants
-      call Get_invariants(Sig, p, q, theta)
+      call calc_stress_invariants(Sig, p, q, theta)
 
       !Get dF/dp=eta_y and dF/dq=1
       !Get dF/dtheta
@@ -95,22 +95,22 @@ contains
 
       !___________________________________________________________________________
       !1) Get dp/dSig=1/3 Imat
-      dpdsig = calc_mean_stress_to_dSigma()
+      dpdsig = calc_dp_by_dsig()
 
       dev= calc_dev_stress(Sig, p)
 
       !2) Get dq/dsig
-      dqdSig = calc_dq_to_dSigma(dev, q)
+      dqdSig = calc_dq_by_dsig(dev, q)
 
       !3) Get dtheta/dSigma
-      J2 = calc_J2_invariant(dev)
+      J2 = calc_J2(dev)
 
-      J3 = calc_inc_driver_J3_invariant( dev )
+      J3 = calc_J3( dev )
 
-      dJ3dsig = calc_dJ3_to_dSigma(dev)
+      dJ3dsig = calc_dJ3_by_dsig(dev)
 
       !Compute dtheta/dsig
-      dthetadSig = calc_dtheta_to_dSigma(dJ3dsig, dev, J3, J2, theta)
+      dthetadSig = calc_dtheta_by_dsig(dJ3dsig, dev, J3, J2, theta)
 
       !Get n_vec=dF/dSig
       n_vec = ( eta_y * dpdsig ) + dqdSig + ( dfdtheta * dthetadSig) !n_vec=dF/dSig

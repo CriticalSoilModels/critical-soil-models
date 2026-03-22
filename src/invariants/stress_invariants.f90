@@ -1,7 +1,7 @@
 module mod_stress_invariants
    use stdlib_kinds, only: dp, i32 => int32
 
-   use mod_voight_funcs, only : TwoNormTensor, TwoNormTensor_strain, calc_dev_stress
+   use mod_voigt_utils, only : calc_two_norm_tensor, calc_two_norm_tensor_strain, calc_dev_stress
 
    implicit none
 
@@ -24,7 +24,7 @@ contains
       mean_stress = mean_stress / 3.0_dp
    end function calc_mean_stress
 
-   pure function calc_theta_s(J2, J3) result(lode_angle)
+   pure function calc_lode_angle(J2, J3) result(lode_angle)
       real(kind=dp), intent(in) :: J2, J3
       real(kind=dp) :: lode_angle
 
@@ -35,11 +35,11 @@ contains
       ! Formula for Lode angle: Potts and Zdravković page 186
       ! Information on bounding and intuition: Potts and Zdravković page 116
       ! Wikipedia has information but I think they messed up the bounds
-      
+
       ! Trx compression: s1 >= s2 = s3    => -PI/6
       ! Shear          : s2 = (s1 + s3)/2 =>  0
       ! Trx Extension  : s1 = s2 >= s3    =>  PI/6
-      
+
       if (J2 > 0.0_dp) then
          ! Ensure correct scaling for sin(3*theta)
          sin3theta = 0.5_dp * J3 * (3.0_dp / J2)**1.5_dp
@@ -55,9 +55,9 @@ contains
       ! Lode angle calculation
       lode_angle = -asin(sin3theta) / 3.0_dp
 
-   end function calc_theta_s
+   end function calc_lode_angle
 
-   pure function calc_inc_driver_J3_invariant(dev) result(J3)
+   pure function calc_J3(dev) result(J3)
       real(kind = dp), intent(in) :: dev(6)
       real(kind = dp) :: J3
 
@@ -93,71 +93,53 @@ contains
 
       J3 = first_term + second_term + third_term + fourth_term + fifth_term
 
-   end function calc_inc_driver_J3_invariant
+   end function calc_J3
 
-   pure function calc_J2_invariant(dev) result(J2)
+   pure function calc_J2(dev) result(J2)
       real(kind = dp), intent(in) :: dev(6)
       real(kind = dp) :: J2
 
       ! Calc the sqrt of the J2 invariant
-      ! TwoNormTensor calculates the sqrt{inner product of a symmetric stress tensor}
-      call TwoNormTensor(dev, 6, J2)
+      ! calc_two_norm_tensor calculates the sqrt{inner product of a symmetric stress tensor}
+      call calc_two_norm_tensor(dev, 6, J2)
 
       J2 = 0.5_dp * J2**2
-   end function calc_J2_invariant
+   end function calc_J2
 
-   pure function calc_q_invariant(J2) result(q)
+   pure function calc_q(J2) result(q)
       real(kind = dp), intent(in) :: J2
       real(kind = dp) :: q
 
       q = sqrt(3.0_dp * J2)
 
-   end function calc_q_invariant
+   end function calc_q
 
-   pure function calc_Zam_J3_invariant(stress) result(J3)
-      real(kind = dp), intent(in) :: stress(6)
-      real(kind = dp) :: J3
-
-      ! Local variables
-      real(kind = dp) :: dev(6)
-
-      ! store a copy of the stress
-      dev = stress
-
-      ! Remove the pressure
-      dev(1:3) = dev(1:3) - sum(stress(1:3)) / 3.0_dp
-
-      ! Calc the J3 Stress invariant
-      J3 = dev(1)*dev(2)*dev(3) - dev(1)*dev(6)**2 - dev(2)*dev(4)**2 - dev(3)*dev(5)**2 + 2.0*dev(4)*dev(5)*dev(6)
-
-   end function calc_Zam_J3_invariant
-
-   pure subroutine Get_invariants(Sig, p, q, theta)
+   pure subroutine calc_stress_invariants(Sig, p, q, theta)
       !*********************************************************************
       ! Takes the stress tensor Sig and return invariants p, q, and theta  *
       !																	 *
       !*********************************************************************
       implicit none
       !input variables
-      double precision, dimension(6), intent(in):: Sig
+      real(dp), dimension(6), intent(in) :: Sig
       !output variables
-      double precision, intent(out)::p, q, theta
+      real(dp), intent(out) :: p, q, theta
       !local variables
-      double precision:: dev(6), J2, J3
+      real(dp) :: dev(6), J2, J3
 
       p = calc_mean_stress(Sig)
 
       dev = calc_dev_stress(Sig, p)
 
-      J2 = calc_J2_invariant(dev)
+      J2 = calc_J2(dev)
 
-      q = calc_q_invariant(J2) ! deviatoric stress
+      q = calc_q(J2) ! deviatoric stress
 
       !J3 stress invariant
-      J3 = calc_inc_driver_J3_invariant(dev)
+      J3 = calc_J3(dev)
 
-      theta = calc_theta_s(J2, J3) !Lode's angle
+      theta = calc_lode_angle(J2, J3) !Lode's angle
 
-   end subroutine Get_invariants
-   
+   end subroutine calc_stress_invariants
+
 end module mod_stress_invariants

@@ -10,7 +10,7 @@
 module mod_mcss_model
    use iso_fortran_env, only: dp => real64
    use mod_csm_model
-   use mod_stress_invariants, only: get_invariants
+   use mod_stress_invariants, only: calc_stress_invariants
    implicit none
 
    real(dp), parameter :: DEG_TO_RAD = acos(-1.0_dp) / 180.0_dp
@@ -54,6 +54,8 @@ module mod_mcss_model
       procedure :: snapshot          => mcss_snapshot
       procedure :: restore           => mcss_restore
    end type mcss_model_t
+
+contains
 
    ! ---------------------------------------------------------------------------
    ! UMAT boundary helpers — only place PROPS/STATEV index magic lives
@@ -120,8 +122,6 @@ module mod_mcss_model
       statev(4:9) = model%state%eps_p
    end subroutine mcss_save_state
 
-contains
-
    ! ---------------------------------------------------------------------------
    ! Implementations of the five deferred procedures
    ! ---------------------------------------------------------------------------
@@ -132,7 +132,7 @@ contains
       real(dp) :: F
       real(dp) :: p, q, theta
 
-      call get_invariants(sig, p, q, theta)
+      call calc_stress_invariants(sig, p, q, theta)
       ! Mohr-Coulomb: F = q - eta*p - c
       ! where eta = M(theta) derived from phi
       ! (simplified here — real version uses Lode-angle-dependent M)
@@ -172,12 +172,10 @@ contains
       eps_p_eq = sqrt(2.0_dp/3.0_dp * dot_product(self%state%eps_p, self%state%eps_p))
 
       ! Softening: interpolate c, phi, psi between peak and residual values
-      call calc_softening_params(eps_p_eq,            &
-                                 self%c_peak,   self%c_res,   &
-                                 self%phi_peak, self%phi_res, &
-                                 self%psi_peak, self%psi_res, &
-                                 self%shape_factor,           &
-                                 self%state%c, self%state%phi, self%state%psi)
+      ! call calc_softening_params(eps_p_eq, self%c_peak, self%c_res, &
+      !    self%phi_peak, self%phi_res, self%psi_peak, self%psi_res,  &
+      !    self%shape_factor, self%state%c, self%state%phi, self%state%psi)
+      ! TODO: implement mcss_functions.f90 and use it here
    end subroutine mcss_update_hardening
 
    function mcss_elastic_stiffness(self) result(stiff_e)
