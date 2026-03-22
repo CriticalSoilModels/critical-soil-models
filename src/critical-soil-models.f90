@@ -3,6 +3,7 @@ module critical_soil_models
    use mod_lin_elastic, only: umat_linear => UMAT
    use mod_bingham, only: umat_bingham => umat
    use mod_mc_strain_rate, only: umat_mc_strain_rate
+   ! use mod_norsand, only: umat_norsand => UMAT
    implicit none
 
 contains
