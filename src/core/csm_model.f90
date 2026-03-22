@@ -37,32 +37,32 @@ module mod_csm_model
 
    abstract interface
 
-      ! F = model%yield_fn(stress)
+      ! F = model%yield_fn(sig)
       ! Returns scalar yield function value. F < 0 = elastic, F = 0 = on surface.
-      function yield_fn_iface(self, stress) result(F)
+      function yield_fn_iface(self, sig) result(F)
          import :: csm_model_t, dp
          class(csm_model_t), intent(in) :: self
-         real(dp), intent(in) :: stress(6)   ! internal Voigt convention
+         real(dp), intent(in) :: sig(6)   ! internal Voigt convention
          real(dp) :: F
       end function yield_fn_iface
 
-      ! df_dsig = model%flow_rule(stress)
+      ! dF_by_dsig = model%flow_rule(sig)
       ! Gradient of the yield surface — used for the consistency condition.
-      function flow_rule_iface(self, stress) result(df_dsig)
+      function flow_rule_iface(self, sig) result(dF_by_dsig)
          import :: csm_model_t, dp
          class(csm_model_t), intent(in) :: self
-         real(dp), intent(in) :: stress(6)
-         real(dp) :: df_dsig(6)
+         real(dp), intent(in) :: sig(6)
+         real(dp) :: dF_by_dsig(6)
       end function flow_rule_iface
 
-      ! dg_dsig = model%plastic_potential(stress)
+      ! dG_by_dsig = model%plastic_potential(sig)
       ! Flow direction. For associated flow: identical to flow_rule.
       ! For non-associated flow (e.g. MC): uses dilation angle instead of friction angle.
-      function plastic_pot_iface(self, stress) result(dg_dsig)
+      function plastic_pot_iface(self, sig) result(dG_by_dsig)
          import :: csm_model_t, dp
          class(csm_model_t), intent(in) :: self
-         real(dp), intent(in) :: stress(6)
-         real(dp) :: dg_dsig(6)
+         real(dp), intent(in) :: sig(6)
+         real(dp) :: dG_by_dsig(6)
       end function plastic_pot_iface
 
       ! call model%update_hardening(deps_p)
@@ -74,13 +74,13 @@ module mod_csm_model
          real(dp), intent(in) :: deps_p(6)
       end subroutine harden_iface
 
-      ! D = model%elastic_stiffness()
+      ! stiff_e = model%elastic_stiffness()
       ! Returns the 6x6 elastic stiffness matrix.
       ! For models with pressure-dependent stiffness this uses current state.
-      function stiffness_iface(self) result(D)
+      function stiffness_iface(self) result(stiff_e)
          import :: csm_model_t, dp
          class(csm_model_t), intent(in) :: self
-         real(dp) :: D(6,6)
+         real(dp) :: stiff_e(6,6)
       end function stiffness_iface
 
       ! call model%snapshot(saved)

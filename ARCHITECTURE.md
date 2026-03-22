@@ -80,16 +80,16 @@ contains
     ! F = model%yield_fn(stress)
 
   procedure(flow_iface),      deferred :: flow_rule
-    ! df_dsig = model%flow_rule(stress)      [yield surface gradient]
+    ! dF_by_dsig = model%flow_rule(sig)      [yield surface gradient]
 
   procedure(potential_iface), deferred :: plastic_potential
-    ! dg_dsig = model%plastic_potential(stress)  [flow direction, non-associated]
+    ! dG_by_dsig = model%plastic_potential(sig)  [flow direction, non-associated]
 
   procedure(harden_iface),    deferred :: update_hardening
     ! call model%update_hardening(deps_p)    [updates internal state]
 
   procedure(stiff_iface),     deferred :: elastic_stiffness
-    ! D = model%elastic_stiffness()          [6x6, depends only on current state]
+    ! stiff_e = model%elastic_stiffness()    [6x6, depends only on current state]
 
 end type
 ```
@@ -125,32 +125,32 @@ model-specific code.
 
 ```fortran
 ! src/integrators/euler_substep.f90
-subroutine euler_substep(model, stress, dstrain, ftol, stol)
+subroutine euler_substep(model, sig, deps, ftol, stol)
   class(csm_model_t), intent(inout) :: model
-  real(dp), intent(inout) :: stress(6)
-  real(dp), intent(in)    :: dstrain(6)
+  real(dp), intent(inout) :: sig(6)
+  real(dp), intent(in)    :: deps(6)
   real(dp), intent(in)    :: ftol, stol
 
   ! 1. elastic predictor
-  D      = model%elastic_stiffness()
-  sig_tr = stress + matmul(D, dstrain)
+  stiff_e = model%elastic_stiffness()
+  sig_tr  = sig + matmul(stiff_e, deps)
 
   ! 2. check yield
   F = model%yield_fn(sig_tr)
   if (F < ftol) then
-    stress = sig_tr; return   ! elastic step
+    sig = sig_tr; return   ! elastic step
   end if
 
-  ! 3. find elastic/plastic split (alpha)
+  ! 3. find elastic/plastic split (alpha_ep)
   ! ... pegasus / Newton on model%yield_fn ...
 
   ! 4. substep loop
-  do while (T < 1.0)
-    dg = model%plastic_potential(stress)
-    df = model%flow_rule(stress)
-    ! ... compute dSig1, dSig2, error ...
-    call model%update_hardening(dEpsP)
-    ! ... accept/reject step, adjust DT ...
+  do while (t_sub < 1.0)
+    dG_by_dsig = model%plastic_potential(sig)
+    dF_by_dsig = model%flow_rule(sig)
+    ! ... compute dsig_1, dsig_2, err_rel ...
+    call model%update_hardening(deps_p)
+    ! ... accept/reject step, adjust dt_sub ...
   end do
 
 end subroutine
@@ -171,11 +171,11 @@ subroutine umat_mc_strain_softening(STRESS, STATEV, DDSDDE, ..., PROPS, ...)
   call mcss_load_state(model, STATEV)  ! state
 
   ! 2. Translate to internal convention
-  sig    = to_internal(STRESS, ANURA3D_ORDER)
-  dstran = to_internal(DSTRAN, ANURA3D_ORDER)
+  sig  = to_internal(STRESS, ANURA3D_ORDER)
+  deps = to_internal(DSTRAN, ANURA3D_ORDER)
 
   ! 3. Integrate (choice of integrator is a parameter)
-  call euler_substep(model, sig, dstran, ftol=PROPS(11), stol=1e-4_dp)
+  call euler_substep(model, sig, deps, ftol=PROPS(11), stol=1e-4_dp)
   ! or: call ortiz_simo(model, sig, dstran, ...)
 
   ! 4. Translate back
@@ -185,7 +185,7 @@ subroutine umat_mc_strain_softening(STRESS, STATEV, DDSDDE, ..., PROPS, ...)
   call mcss_save_state(model, STATEV)
 
   ! 6. Tangent stiffness
-  DDSDDE = model%elastic_stiffness()
+  DDSDDE = deflate_stiffness(model%elastic_stiffness(), ptype)
 
 end subroutine
 ```
@@ -331,7 +331,7 @@ use critical_soil_models, only: mcss_model_t, mcss_from_props, &
 type(mcss_model_t) :: model
 model = mcss_from_props(props)
 call mcss_load_state(model, statev)
-call euler_substep(model, stress, dstrain, ftol=1e-8_wp, stol=1e-4_wp)
+call euler_substep(model, sig, deps, ftol=1e-8_dp, stol=1e-4_dp)
 ```
 
 **Level 2 — UMAT wrappers (solver integration)**

@@ -100,8 +100,9 @@ a single variable named `sig_kappa`.
 | κ (hardening variable) | `kappa` | Model-specific meaning |
 | εᵖ_eq (equiv. plastic strain) | `eps_p_eq` | |
 | α (elastic-plastic split) | `alpha_ep` | In `[0,1]` |
-| **D**ₑ (elastic stiffness) | `D_e(6,6)` | `_e` distinguishes from elastoplastic tangent |
-| **D**ₑₚ (elastoplastic tangent) | `D_ep(6,6)` | Consistent tangent |
+| **D**ₑ (elastic stiffness) | `stiff_e(6,6)` | `D` is ambiguous (stiffness or compliance in different texts) |
+| **D**ₑₚ (elastoplastic tangent) | `stiff_ep(6,6)` | Consistent tangent |
+| ∂G/∂σ (plastic potential gradient) | `dG_by_dsig(6)` | G implicit in procedure name `plastic_potential`; `G_val` if scalar value ever needed |
 
 ### Integrator Variables
 
@@ -131,7 +132,8 @@ The following renames apply when migrating legacy code to the new architecture:
 |---|---|---|
 | `stress` | `sig` | Matches σ notation |
 | `dstrain` / `DSTRAN` | `deps` | Matches δε notation |
-| `D` | `D_e` | Distinguishes from elastoplastic tangent |
+| `D`, `D_e` | `stiff_e` | `D` is ambiguous (stiffness or compliance in different texts) |
+| `D_ep` | `stiff_ep` | Consistent with `stiff_e` |
 | `F1`, `F2` | `lame_1`, `lame_2` | Avoids collision with yield function `F` |
 | `T`, `DT` | `t_sub`, `dt_sub` | Fixes uppercase violation |
 | `R` (error) | `err_rel` | Descriptive |

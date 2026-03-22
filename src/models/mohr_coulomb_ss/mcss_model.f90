@@ -13,7 +13,7 @@ module mod_mcss_model
    use mod_stress_invariants, only: get_invariants
    implicit none
 
-   real(dp), parameter :: RAD = 45.0_dp / atan(1.0_dp)
+   real(dp), parameter :: DEG_TO_RAD = acos(-1.0_dp) / 180.0_dp
 
    ! ---------------------------------------------------------------------------
    ! State type — separate so it can be copied cleanly for integrator rollback
@@ -82,10 +82,10 @@ module mod_mcss_model
       model%nu           = props(2)
       model%c_peak       = props(3)
       model%c_res        = props(4)
-      model%phi_peak     = props(5) / RAD
-      model%phi_res      = props(6) / RAD
-      model%psi_peak     = props(7) / RAD
-      model%psi_res      = props(8) / RAD
+      model%phi_peak     = props(5) * DEG_TO_RAD
+      model%phi_res      = props(6) * DEG_TO_RAD
+      model%psi_peak     = props(7) * DEG_TO_RAD
+      model%psi_res      = props(8) * DEG_TO_RAD
       model%shape_factor = props(9)
       model%yield_tol    = props(11)
       model%max_iters    = int(props(12))
@@ -93,15 +93,9 @@ module mod_mcss_model
    end function mcss_from_props
 
    ! STATEV layout for MCSS:
-   !   1: c      current cohesion
-   !   2: phi    current friction angle
-   !   3: psi    current dilation angle
-   !  4-9: eps_p  accumulated plastic strain (Voigt)
-
-   ! STATEV layout for MCSS:
    !   1:   c      current cohesion
-   !   2:   phi    current friction angle
-   !   3:   psi    current dilation angle
+   !   2:   phi    current friction angle (radians)
+   !   3:   psi    current dilation angle (radians)
    !   4-9: eps_p  accumulated plastic strain (Voigt, internal convention)
    !
    ! This is the ONLY place STATEV indices appear for this model.
@@ -132,39 +126,39 @@ contains
    ! Implementations of the five deferred procedures
    ! ---------------------------------------------------------------------------
 
-   function mcss_yield_fn(self, stress) result(F)
+   function mcss_yield_fn(self, sig) result(F)
       class(mcss_model_t), intent(in) :: self
-      real(dp), intent(in) :: stress(6)
+      real(dp), intent(in) :: sig(6)
       real(dp) :: F
       real(dp) :: p, q, theta
 
-      call get_invariants(stress, p, q, theta)
+      call get_invariants(sig, p, q, theta)
       ! Mohr-Coulomb: F = q - eta*p - c
       ! where eta = M(theta) derived from phi
       ! (simplified here — real version uses Lode-angle-dependent M)
       F = q - self%state%phi * p - self%state%c
    end function mcss_yield_fn
 
-   function mcss_flow_rule(self, stress) result(df_dsig)
+   function mcss_flow_rule(self, sig) result(dF_by_dsig)
       class(mcss_model_t), intent(in) :: self
-      real(dp), intent(in) :: stress(6)
-      real(dp) :: df_dsig(6)
+      real(dp), intent(in) :: sig(6)
+      real(dp) :: dF_by_dsig(6)
 
-      ! dF/dsigma — gradient of yield surface w.r.t. stress
+      ! ∂F/∂σ — gradient of yield surface w.r.t. stress
       ! Uses self%state%phi (current friction angle)
       ! ... invariant chain rule ...
-      df_dsig = 0.0_dp   ! placeholder
+      dF_by_dsig = 0.0_dp   ! placeholder
    end function mcss_flow_rule
 
-   function mcss_plastic_potential(self, stress) result(dg_dsig)
+   function mcss_plastic_potential(self, sig) result(dG_by_dsig)
       class(mcss_model_t), intent(in) :: self
-      real(dp), intent(in) :: stress(6)
-      real(dp) :: dg_dsig(6)
+      real(dp), intent(in) :: sig(6)
+      real(dp) :: dG_by_dsig(6)
 
-      ! dG/dsigma — flow direction
+      ! ∂G/∂σ — flow direction
       ! Non-associated: same form as flow_rule but uses self%state%psi not phi
       ! ... invariant chain rule ...
-      dg_dsig = 0.0_dp   ! placeholder
+      dG_by_dsig = 0.0_dp   ! placeholder
    end function mcss_plastic_potential
 
    subroutine mcss_update_hardening(self, deps_p)
@@ -186,19 +180,19 @@ contains
                                  self%state%c, self%state%phi, self%state%psi)
    end subroutine mcss_update_hardening
 
-   function mcss_elastic_stiffness(self) result(D)
+   function mcss_elastic_stiffness(self) result(stiff_e)
       class(mcss_model_t), intent(in) :: self
-      real(dp) :: D(6,6)
-      real(dp) :: F1, F2
+      real(dp) :: stiff_e(6,6)
+      real(dp) :: lame_1, lame_2
 
       ! Params accessed flat — self%G, self%nu (no self%params% needed)
-      F1 = 2*self%G*(1.0_dp - self%nu) / (1.0_dp - 2.0_dp*self%nu)
-      F2 = 2*self%G*self%nu             / (1.0_dp - 2.0_dp*self%nu)
+      lame_1 = 2*self%G*(1.0_dp - self%nu) / (1.0_dp - 2.0_dp*self%nu)
+      lame_2 = 2*self%G*self%nu             / (1.0_dp - 2.0_dp*self%nu)
 
-      D          = 0.0_dp
-      D(1:3,1:3) = F2
-      D(1,1) = F1;  D(2,2) = F1;  D(3,3) = F1
-      D(4,4) = self%G;  D(5,5) = self%G;  D(6,6) = self%G
+      stiff_e          = 0.0_dp
+      stiff_e(1:3,1:3) = lame_2
+      stiff_e(1,1) = lame_1;  stiff_e(2,2) = lame_1;  stiff_e(3,3) = lame_1
+      stiff_e(4,4) = self%G;  stiff_e(5,5) = self%G;  stiff_e(6,6) = self%G
    end function mcss_elastic_stiffness
 
    ! ---------------------------------------------------------------------------
