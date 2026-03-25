@@ -1,9 +1,8 @@
+! Top-level library module — exports model types for programmatic use.
+! UMATs are accessed through the single UMAT entry point in src/umat.f90.
 module critical_soil_models
-   ! use mod_mcss_esm, only: umat_mc_strain_softening => UMAT_MohrCoulombStrainSoftening  ! legacy — moved to legacy/mohr_coulomb_ss/
-   use mod_lin_elastic, only: umat_linear => UMAT
-   use mod_bingham, only: umat_bingham => umat
-   use mod_mc_strain_rate, only: umat_mc_strain_rate
-   ! use mod_norsand, only: umat_norsand => UMAT
+   use mod_linear_elastic_model, only: linear_elastic_model_t
+   use mod_mcss_model,           only: mcss_model_t
    implicit none
 
 contains

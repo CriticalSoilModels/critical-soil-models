@@ -1,3 +1,10 @@
+module mod_umat_mcss
+   implicit none
+   private
+   public :: umat_mcss
+
+contains
+
 ! UMAT wrapper for the MCSS model under the new architecture.
 !
 ! Responsibilities of this wrapper — and ONLY this wrapper:
@@ -18,7 +25,7 @@
 !   - has an automatic explicit interface (needed for the polymorphic argument)
 ! =============================================================================
 
-subroutine umat_mc_strain_softening(STRESS, STATEV, DDSDDE,       &
+subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
                                      SSE, SPD, SCD,                 &
                                      RPL, DDSDDT, DRPLDE, DRPLDT,  &
                                      STRAN, DSTRAN,                 &
@@ -34,6 +41,8 @@ subroutine umat_mc_strain_softening(STRESS, STATEV, DDSDDE,       &
    use mod_mcss_model,        only: mcss_model_t, mcss_from_props, &
                                     mcss_load_state, mcss_save_state
    use mod_euler_substep,     only: euler_substep
+   use mod_integrate_stress,  only: integrate_stress
+   use mod_cmname_parser,     only: integrator_name
    use mod_voigt_conventions, only: to_internal, from_internal, ANURA3D_ORDER, &
                                     problem_type, inflate, deflate, deflate_stiffness, &
                                     PROBLEM_PLANE_STRESS
@@ -91,9 +100,10 @@ subroutine umat_mc_strain_softening(STRESS, STATEV, DDSDDE,       &
    ! -----------------------------------------------------------------------
    ! 6. Integrate — integrator and model work entirely in 6-component space
    ! -----------------------------------------------------------------------
-   call euler_substep(model, sig6, dstran6,   &
-                      ftol=model%yield_tol,    &
-                      stol=1.0e-4_dp)
+   call integrate_stress(model, sig6, dstran6,              &
+                         ftol=model%yield_tol,              &
+                         stol=1.0e-4_dp,                    &
+                         method=integrator_name(CMNAME))
 
    ! -----------------------------------------------------------------------
    ! 7. Deflate and reorder back to solver convention
@@ -172,4 +182,6 @@ contains
 
    end subroutine enforce_plane_stress
 
-end subroutine umat_mc_strain_softening
+end subroutine umat_mcss
+
+end module mod_umat_mcss

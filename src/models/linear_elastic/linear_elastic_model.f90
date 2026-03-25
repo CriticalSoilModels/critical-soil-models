@@ -7,6 +7,12 @@ module mod_linear_elastic_model
    use mod_csm_model,     only: csm_model_t
    use mod_elastic_utils, only: calc_stiffness_GK, calc_K_from_G_nu
    implicit none
+   private
+   public :: linear_elastic_model_t, le_from_props
+
+   ! PROPS layout:
+   !   1: G   shear modulus [kPa]
+   !   2: nu  Poisson's ratio [-]
 
    type, extends(csm_model_t) :: linear_elastic_model_t
       real(dp) :: G   !! Shear modulus [kPa]
@@ -22,6 +28,13 @@ module mod_linear_elastic_model
    end type linear_elastic_model_t
 
 contains
+
+   function le_from_props(props) result(model)
+      real(dp), intent(in) :: props(:)
+      type(linear_elastic_model_t) :: model
+      model%G  = props(1)
+      model%nu = props(2)
+   end function le_from_props
 
    function le_yield_fn(self, sig) result(F)
       !! Always returns -1: linear elastic material never yields

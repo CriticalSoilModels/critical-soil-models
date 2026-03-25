@@ -11,6 +11,7 @@ program tester
     use mod_test_yield_function, only : collect_yield_function_suite
     use mod_test_plastic_potential_suite, only: collect_plastic_potential_suite
     use mod_test_linear_elastic_suite, only: collect_linear_elastic_suite
+    use mod_test_cmname_parser_suite,  only: collect_cmname_parser_suite
     implicit none
     integer :: stat, is
     
@@ -30,7 +31,8 @@ program tester
       new_testsuite("test_strain_invar_deriv_suite", collect_strain_invar_deriv_suite), &
       new_testsuite("test_yield_function", collect_yield_function_suite), &
       new_testsuite("test_plastic_potential", collect_plastic_potential_suite), &
-      new_testsuite("test_linear_elastic",   collect_linear_elastic_suite) &
+      new_testsuite("test_linear_elastic",   collect_linear_elastic_suite), &
+      new_testsuite("test_cmname_parser",    collect_cmname_parser_suite)   &
       ]
     ! Make the output colorful
     call init_color_output(.True.)
