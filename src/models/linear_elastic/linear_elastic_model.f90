@@ -10,10 +10,10 @@
 !   2: nu  Poisson's ratio [-]
 
 module mod_linear_elastic_model
-   use mod_csm_kinds,   only: wp
-   use mod_csm_model,   only: csm_model_t
-   use mod_le_functions, only: le_params_t, le_state_t, &
-                                le_yield_fn, le_flow_rule, le_plastic_potential, &
+   use mod_csm_kinds,    only: wp
+   use mod_csm_model,    only: csm_model_t
+   use mod_le_types,     only: le_params_t, le_state_t
+   use mod_le_functions, only: le_yield_fn, le_flow_rule, le_plastic_potential, &
                                 le_update_hardening, le_elastic_stiffness
    implicit none
    private

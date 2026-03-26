@@ -9,6 +9,7 @@
 
 module mod_le_functions
    use mod_csm_kinds,     only: wp
+   use mod_le_types,      only: le_params_t, le_state_t
    use mod_elastic_utils, only: calc_stiffness_GK, calc_K_from_G_nu
    implicit none
    private
@@ -19,17 +20,6 @@ module mod_le_functions
    public :: le_plastic_potential
    public :: le_update_hardening
    public :: le_elastic_stiffness
-
-   type :: le_params_t
-      real(wp) :: G   !! Shear modulus [kPa]
-      real(wp) :: nu  !! Poisson's ratio [-]
-   end type le_params_t
-
-   type :: le_state_t
-      !! Linear elastic has no internal state variables.
-      !! Empty type preserves the uniform (params, state, ...) call signature
-      !! across all models so flat integrators follow the same pattern.
-   end type le_state_t
 
 contains
 
