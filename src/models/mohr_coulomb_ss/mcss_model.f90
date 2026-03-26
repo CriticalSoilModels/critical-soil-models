@@ -4,19 +4,29 @@
 ! The deferred procedure implementations here are thin wrappers only.
 !
 ! PROPS layout:
-!   1:  G          shear modulus [kPa]
-!   2:  nu         Poisson's ratio [-]
-!   3:  c_peak     peak cohesion [kPa]
-!   4:  c_res      residual cohesion [kPa]
-!   5:  phi_peak   peak friction angle [degrees]
-!   6:  phi_res    residual friction angle [degrees]
-!   7:  psi_peak   peak dilation angle [degrees]
-!   8:  psi_res    residual dilation angle [degrees]
-!   9:  factor     softening rate shape parameter [-]
-!  10:  (integrator flag — consumed by umat_mcss, not stored here)
-!  11:  yield_tol
-!  12:  max_iters
-!  13:  dt_min
+!   Required (1–13):
+!    1:  G          shear modulus [kPa]
+!    2:  nu         Poisson's ratio [-]
+!    3:  c_peak     peak cohesion [kPa]
+!    4:  c_res      residual cohesion [kPa]
+!    5:  phi_peak   peak friction angle [degrees]
+!    6:  phi_res    residual friction angle [degrees]
+!    7:  psi_peak   peak dilation angle [degrees]
+!    8:  psi_res    residual dilation angle [degrees]
+!    9:  factor     softening rate shape parameter [-]
+!   10:  (integrator flag — consumed by umat_mcss, not stored here)
+!   11:  yield_tol
+!   12:  max_iters
+!   13:  dt_min
+!
+!   Optional Abbo & Sloan smoothing (14–19):
+!   If omitted or zero, DEFAULT_AS_PARAMS values are used (LodeT = 29.5 deg).
+!   14:  lode_t       transition Lode angle [rad]
+!   15:  A1           corner-rounding constant
+!   16:  A2           corner-rounding constant
+!   17:  B1           corner-rounding constant
+!   18:  B2           corner-rounding constant
+!   19:  smooth_coeff tip smoothing coefficient [-]
 !
 ! STATEV layout (9 entries):
 !   1:   c      current cohesion [kPa]
@@ -27,7 +37,7 @@
 module mod_mcss_model
    use mod_csm_kinds,      only: wp
    use mod_csm_model,      only: csm_model_t
-   use mod_mcss_types,     only: mcss_params_t, mcss_state_t
+   use mod_mcss_types,     only: mcss_params_t, mcss_state_t, abbo_sloan_params_t, DEFAULT_AS_PARAMS
    use mod_mcss_functions, only: mcss_yield_fn, mcss_flow_rule, mcss_plastic_potential, &
                                   mcss_update_hardening, mcss_elastic_stiffness
    implicit none
@@ -75,7 +85,37 @@ contains
       model%yield_tol       = props(11)
       model%max_iters       = int(props(12))
       model%dt_min          = props(13)
+
+      model%params%as_params = mcss_as_params_from_props(props)
    end function mcss_from_props
+
+   !> Build abbo_sloan_params_t from PROPS(14:19).
+   !> Any entry that is missing (array too short) or zero uses the default value.
+   pure function mcss_as_params_from_props(props) result(asp)
+      real(wp), intent(in) :: props(:)
+      type(abbo_sloan_params_t) :: asp
+
+      asp = DEFAULT_AS_PARAMS   ! start from defaults
+
+      if (size(props) >= 14) then
+         if (props(14) /= 0.0_wp) asp%lode_t       = props(14)
+      end if
+      if (size(props) >= 15) then
+         if (props(15) /= 0.0_wp) asp%A1           = props(15)
+      end if
+      if (size(props) >= 16) then
+         if (props(16) /= 0.0_wp) asp%A2           = props(16)
+      end if
+      if (size(props) >= 17) then
+         if (props(17) /= 0.0_wp) asp%B1           = props(17)
+      end if
+      if (size(props) >= 18) then
+         if (props(18) /= 0.0_wp) asp%B2           = props(18)
+      end if
+      if (size(props) >= 19) then
+         if (props(19) /= 0.0_wp) asp%smooth_coeff = props(19)
+      end if
+   end function mcss_as_params_from_props
 
    subroutine mcss_load_state(model, statev)
       type(mcss_model_t), intent(inout) :: model
