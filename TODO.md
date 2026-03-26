@@ -72,6 +72,15 @@ confirm the sign convention matches physical softening behaviour in a single-ele
 
 ---
 
+## Voigt shear ordering — review needed
+
+`calc_J3_inv` and `calc_voigt_square` hardcode the `[11,22,33,12,13,23]` shear pairing
+in their arithmetic. Everything else (J2, p, q, elastic stiffness) is already agnostic.
+Review and find a better approach to make J3 and the lode angle independent of shear
+slot ordering.
+
+---
+
 ## Longer term
 
 - Pull NorSand into the new architecture (currently legacy only)
