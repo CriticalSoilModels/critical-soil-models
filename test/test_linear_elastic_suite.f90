@@ -1,7 +1,7 @@
 module mod_test_linear_elastic_suite
    use mod_csm_kinds,             only: wp
    use mod_linear_elastic_model,  only: linear_elastic_model_t, le_from_props
-   use mod_euler_substep,         only: euler_substep
+   use mod_euler_substep,         only: euler_substep, integrator_params_t
    use mod_tensor_value_checker,  only: check_tensor_values
    use testdrive, only: new_unittest, unittest_type, error_type, check
 
@@ -45,7 +45,8 @@ contains
       ! 3K = 5G = 50000; dsig_ii = 50000 * 1e-4 = 5.0
       expected = [5.0_wp, 5.0_wp, 5.0_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
-      call euler_substep(model, sig, deps, FTOL, STOL)
+      call euler_substep(model, sig, deps, &
+                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp))
 
       call check_tensor_values(sig, expected, TOL, passed)
       call check(error, passed, .true., more="volumetric: sig /= D_e * deps")
@@ -68,7 +69,8 @@ contains
       ! dsig_12 = G * g = 10000 * 1e-4 = 1.0
       expected = [0.0_wp, 0.0_wp, 0.0_wp, 1.0_wp, 0.0_wp, 0.0_wp]
 
-      call euler_substep(model, sig, deps, FTOL, STOL)
+      call euler_substep(model, sig, deps, &
+                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp))
 
       call check_tensor_values(sig, expected, TOL, passed)
       call check(error, passed, .true., more="pure shear: sig /= D_e * deps")
@@ -92,7 +94,8 @@ contains
       ! dsig = [30000, 10000, 10000, 0, 0, 0] * 1e-4 = [3.0, 1.0, 1.0, 0, 0, 0]
       expected = [3.0_wp, 1.0_wp, 1.0_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
-      call euler_substep(model, sig, deps, FTOL, STOL)
+      call euler_substep(model, sig, deps, &
+                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp))
 
       call check_tensor_values(sig, expected, TOL, passed)
       call check(error, passed, .true., more="uniaxial: sig /= D_e * deps")

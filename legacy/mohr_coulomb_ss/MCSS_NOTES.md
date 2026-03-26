@@ -96,6 +96,37 @@ eps_p_eq = sqrt( (2/3)*(e_p(1)²+e_p(2)²+e_p(3)²)
 
 Note: shear components get factor 4/3 = 2*(2/3) because engineering shear strain is 2*tensorial shear strain.
 
+> **⚠ BUG — incorrect shear factor**
+>
+> The 4/3 shear factor above is wrong when the Voigt vector stores **engineering shear strains**
+> (γ = 2ε_tensor), which is the convention used throughout this codebase.
+>
+> Correct derivation: ε:ε in full-tensor form includes a factor of 2 for each off-diagonal pair,
+> so ε:ε = ε₁₁²+ε₂₂²+ε₃₃² + 2(ε₁₂²+ε₁₃²+ε₂₃²). Substituting γᵢⱼ = 2εᵢⱼ:
+>
+> ```
+> ε:ε = ε₁₁²+ε₂₂²+ε₃₃² + γ₁₂²/2 + γ₁₃²/2 + γ₂₃²/2
+> ```
+>
+> Therefore the correct formula with engineering shear strains is:
+>
+> ```
+> eps_p_eq = sqrt( (2/3)*(e_p(1)²+e_p(2)²+e_p(3)²)
+>                + (1/3)*(eps_p(4)²+eps_p(5)²+eps_p(6)²) )
+> ```
+>
+> The 4/3 factor is only correct if the Voigt vector stores **tensor** (non-doubled) shear
+> components — a different convention.
+>
+> This was confirmed by porting the reference Python implementation
+> (`calc_dev_strain_invariant`) to Fortran and comparing against `calc_eps_q_inv`
+> from the invariant library, which uses `calc_two_norm_tensor_strain` (applies 0.5
+> to shear terms, equivalent to the 1/3 shear factor above). Both agreed. The 4/3
+> formula gave values ~2× larger for states with significant shear plastic strain.
+>
+> **Fixed in**: `src/models/mohr_coulomb_ss/mcss_functions.f90` — hardening now uses
+> `calc_eps_q_inv(calc_dev_strain(eps_p, calc_eps_vol_inv(eps_p)))` from the library.
+
 Derivative `d(eps_p_eq)/d(eps_p)` — see `CalculateDerivativesEquivalentPlasticStrainRespectPlasticStrain`.
 
 ---
@@ -151,7 +182,7 @@ Exponential decay with a single `factor` (shape parameter). All three strength p
 - `calc_yield_fn_mcss(p, J, lode, s3ta, c, phi)` — pure function
 - `calc_dF_by_dsig_mcss(sig, c, phi, psi)` — subroutine
 - `calc_dg_plas_by_dsig_mcss(sig, c, phi, psi)` — subroutine
-- `calc_eps_p_eq(eps_p)` — pure function
+- `calc_eps_p_eq(eps_p)` — **do not port**; use `calc_eps_q_inv(calc_dev_strain(...))` from the invariant library (see shear factor bug note above)
 - `calc_softening_params(eps_p_eq, ...)` — pure function
 - `calc_dsoftening_by_deps_p_eq(...)` — pure function
 

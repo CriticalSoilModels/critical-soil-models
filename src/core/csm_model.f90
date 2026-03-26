@@ -24,8 +24,9 @@ module mod_csm_model
       procedure(plastic_pot_iface), deferred :: plastic_potential
       procedure(harden_iface),      deferred :: update_hardening
       procedure(stiffness_iface),   deferred :: elastic_stiffness
-      procedure(snapshot_iface),    deferred :: snapshot
-      procedure(restore_iface),     deferred :: restore
+      procedure(snapshot_iface),     deferred :: snapshot
+      procedure(restore_iface),      deferred :: restore
+      procedure(harden_mod_iface),   deferred :: hardening_modulus
    end type csm_model_t
 
    ! ---------------------------------------------------------------------------
@@ -98,6 +99,18 @@ module mod_csm_model
          class(csm_model_t), intent(inout) :: self
          real(wp),            intent(in)   :: saved(:)
       end subroutine restore_iface
+
+      ! H = model%hardening_modulus(sig, dg_by_dsig)
+      ! Returns the hardening modulus H = ∂F/∂κ · dκ/dλ for the consistency condition.
+      ! H > 0 for softening (yield surface shrinks), H < 0 for hardening (yield expands),
+      ! H = 0 for perfectly plastic models.
+      ! dg_by_dsig is the plastic flow direction (dG/dσ); needed to compute deps_p_eq/dλ.
+      function harden_mod_iface(self, sig, dg_by_dsig) result(H)
+         import :: csm_model_t, wp
+         class(csm_model_t), intent(in) :: self
+         real(wp),           intent(in) :: sig(6), dg_by_dsig(6)
+         real(wp) :: H
+      end function harden_mod_iface
 
    end interface
 

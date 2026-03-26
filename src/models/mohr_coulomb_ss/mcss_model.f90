@@ -39,7 +39,8 @@ module mod_mcss_model
    use mod_csm_model,      only: csm_model_t
    use mod_mcss_types,     only: mcss_params_t, mcss_state_t, abbo_sloan_params_t, DEFAULT_AS_PARAMS
    use mod_mcss_functions, only: mcss_yield_fn, mcss_flow_rule, mcss_plastic_potential, &
-                                  mcss_update_hardening, mcss_elastic_stiffness
+                                  mcss_update_hardening, mcss_elastic_stiffness, &
+                                  mcss_hardening_modulus
    implicit none
    private
 
@@ -59,8 +60,9 @@ module mod_mcss_model
       procedure :: plastic_potential => mcss_plastic_potential_method
       procedure :: update_hardening  => mcss_update_hardening_method
       procedure :: elastic_stiffness => mcss_elastic_stiffness_method
-      procedure :: snapshot          => mcss_snapshot
-      procedure :: restore           => mcss_restore
+      procedure :: snapshot           => mcss_snapshot
+      procedure :: restore            => mcss_restore
+      procedure :: hardening_modulus  => mcss_hardening_modulus_method
    end type mcss_model_t
 
 contains
@@ -173,6 +175,13 @@ contains
       real(wp) :: stiff_e(6,6)
       stiff_e = mcss_elastic_stiffness(self%params, self%state)
    end function mcss_elastic_stiffness_method
+
+   function mcss_hardening_modulus_method(self, sig, dg_by_dsig) result(H)
+      class(mcss_model_t), intent(in) :: self
+      real(wp), intent(in) :: sig(6), dg_by_dsig(6)
+      real(wp) :: H
+      H = mcss_hardening_modulus(self%params, self%state, sig, dg_by_dsig)
+   end function mcss_hardening_modulus_method
 
    ! ---------------------------------------------------------------------------
    ! snapshot / restore — for integrator rollback

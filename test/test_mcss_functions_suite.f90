@@ -2,7 +2,8 @@ module mod_test_mcss_functions_suite
    use mod_csm_kinds,      only: wp
    use mod_mcss_types,     only: mcss_params_t, mcss_state_t, DEFAULT_AS_PARAMS
    use mod_mcss_functions, only: mcss_yield_fn, mcss_flow_rule, &
-                                  mcss_plastic_potential, mcss_update_hardening
+                                  mcss_plastic_potential, mcss_update_hardening, &
+                                  mcss_hardening_modulus
    use ieee_arithmetic,    only: ieee_is_nan
    use testdrive,          only: new_unittest, unittest_type, error_type, check
    implicit none
@@ -33,8 +34,11 @@ contains
          new_unittest("yield_fn: plastic state",          test_yield_fn_plastic),      &
          new_unittest("hardening: zero plastic strain",   test_hardening_peak),        &
          new_unittest("hardening: exponential softening", test_hardening_softening),   &
-         new_unittest("flow_rule: no NaN",                test_flow_rule_no_nan),      &
-         new_unittest("plastic_potential: no NaN",        test_plastic_potential_no_nan) &
+         new_unittest("flow_rule: no NaN",                test_flow_rule_no_nan),           &
+         new_unittest("plastic_potential: no NaN",        test_plastic_potential_no_nan),  &
+         new_unittest("hardening_modulus: H=0 at residual",  test_hmod_residual_zero),     &
+         new_unittest("hardening_modulus: H>0 at peak",       test_hmod_peak_positive),    &
+         new_unittest("hardening_modulus: no NaN at J=0",     test_hmod_no_nan_hydrostatic) &
       ]
    end subroutine collect_mcss_functions_suite
 
@@ -234,5 +238,84 @@ contains
       call check(error, all(.not. ieee_is_nan(m)), .true., &
          more="plastic_potential: NaN at hydrostatic (J=0) state")
    end subroutine test_plastic_potential_no_nan
+
+   ! ---------------------------------------------------------------------------
+   ! Hardening modulus tests
+   ! ---------------------------------------------------------------------------
+
+   pure function make_residual_state() result(s)
+      !! State at residual strength — no further softening possible.
+      type(mcss_state_t) :: s
+      s%c     = C_RES
+      s%phi   = PHI_RES
+      s%psi   = PSI_RES
+      s%eps_p = 0.0_wp
+   end function make_residual_state
+
+   subroutine test_hmod_residual_zero(error)
+      !! At residual state c = c_res and phi = phi_res, so dc/deps = 0 and
+      !! dphi/deps = 0 => H = 0 exactly, independent of stress or flow direction.
+      type(error_type), allocatable, intent(out) :: error
+
+      type(mcss_params_t) :: params
+      type(mcss_state_t)  :: state
+      real(wp) :: sig(6), dg(6), H
+      real(wp) :: p_val, J_yield
+
+      params  = make_params()
+      state   = make_residual_state()
+      p_val   = -200.0_wp
+      J_yield = C_RES * cos(PHI_RES) - p_val * sin(PHI_RES)
+
+      sig = [p_val + J_yield, p_val, p_val - J_yield, 0.0_wp, 0.0_wp, 0.0_wp]
+      dg  = mcss_plastic_potential(params, state, sig)
+
+      H = mcss_hardening_modulus(params, state, sig, dg)
+
+      call check(error, H == 0.0_wp, .true., more="residual: H should be exactly 0")
+   end subroutine test_hmod_residual_zero
+
+   subroutine test_hmod_peak_positive(error)
+      !! At peak state on the yield surface, softening rates are non-zero and
+      !! both ∂F/∂c and ∂F/∂φ have the right signs to give H > 0 (softening).
+      type(error_type), allocatable, intent(out) :: error
+
+      type(mcss_params_t) :: params
+      type(mcss_state_t)  :: state
+      real(wp) :: sig(6), dg(6), H
+      real(wp) :: p_val, J_yield
+
+      params  = make_params()
+      state   = make_peak_state()
+      p_val   = -200.0_wp
+      J_yield = C_PEAK * cos(PHI_PEAK) - p_val * sin(PHI_PEAK)
+
+      sig = [p_val + J_yield, p_val, p_val - J_yield, 0.0_wp, 0.0_wp, 0.0_wp]
+      dg  = mcss_plastic_potential(params, state, sig)
+
+      H = mcss_hardening_modulus(params, state, sig, dg)
+
+      call check(error, H > 0.0_wp, .true., more="peak: H should be > 0 for softening material")
+   end subroutine test_hmod_peak_positive
+
+   subroutine test_hmod_no_nan_hydrostatic(error)
+      !! At J = 0 the h_kernel branch short-circuits to H = 0 — no NaN.
+      type(error_type), allocatable, intent(out) :: error
+
+      type(mcss_params_t) :: params
+      type(mcss_state_t)  :: state
+      real(wp) :: sig(6), dg(6), H
+
+      params = make_params()
+      state  = make_peak_state()
+
+      sig = [-200.0_wp, -200.0_wp, -200.0_wp, 0.0_wp, 0.0_wp, 0.0_wp]
+      dg  = [1.0_wp, 1.0_wp, 1.0_wp, 0.0_wp, 0.0_wp, 0.0_wp] / 3.0_wp
+
+      H = mcss_hardening_modulus(params, state, sig, dg)
+
+      call check(error, .not. ieee_is_nan(H), .true., &
+         more="hardening_modulus: NaN at hydrostatic (J=0) state")
+   end subroutine test_hmod_no_nan_hydrostatic
 
 end module mod_test_mcss_functions_suite

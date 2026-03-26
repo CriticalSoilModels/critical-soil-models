@@ -7,9 +7,13 @@
 ! Smoothing constants live in mcss_params_t%as_params (abbo_sloan_params_t).
 ! Default values (LodeT = 29.5 degrees) are in mod_mcss_types as DEFAULT_AS_PARAMS.
 module mod_mcss_functions
-   use mod_csm_kinds,     only: wp
-   use mod_mcss_types,    only: mcss_params_t, mcss_state_t, abbo_sloan_params_t
-   use mod_elastic_utils, only: calc_stiffness_GK, calc_K_from_G_nu
+   use mod_csm_kinds,          only: wp
+   use mod_mcss_types,         only: mcss_params_t, mcss_state_t, abbo_sloan_params_t
+   use mod_elastic_utils,      only: calc_stiffness_GK, calc_K_from_G_nu
+   use mod_stress_invariants,  only: calc_sig_inv, calc_J_inv
+   use mod_voigt_utils,        only: calc_dev_stress
+   use mod_strain_invariants,  only: calc_eps_vol_inv, calc_dev_strain, calc_eps_q_inv
+   use mod_stress_invar_deriv, only: calc_dp_by_dsig
    implicit none
    private
 
@@ -19,6 +23,7 @@ module mod_mcss_functions
    public :: mcss_plastic_potential
    public :: mcss_update_hardening
    public :: mcss_elastic_stiffness
+   public :: mcss_hardening_modulus
 
    real(wp), parameter :: INV_SQRT3   = 0.577350269189626_wp   !! 1/sqrt(3)
    real(wp), parameter :: SQRT3_OVER2 = 0.866025403784439_wp   !! sqrt(3)/2
@@ -37,14 +42,17 @@ contains
       real(wp),            intent(in) :: sig(6)
       real(wp) :: F
 
-      real(wp) :: p, J, lode, s3ta, K, a, asphi2
+      real(wp) :: p, q, lode, J, s3ta, K, a, a_sphi_sq
 
-      call calc_invariants(sig, p, J, lode, s3ta)
-      K      = calc_K(params%as_params, lode, s3ta, sin(state%phi))
-      a      = calc_a_smooth(params%as_params, state%c, state%phi)
-      asphi2 = a * a * sin(state%phi)**2
+      call calc_sig_inv(sig, p, q, lode)
+      J    = calc_J_inv(q)
+      s3ta = sin(3.0_wp * lode)
 
-      F = p * sin(state%phi) + sqrt(J*J * K*K + asphi2) - state%c * cos(state%phi)
+      K        = calc_K(params%as_params, lode, s3ta, sin(state%phi))
+      a        = calc_a_smooth(params%as_params, state%c, state%phi)
+      a_sphi_sq = a * a * sin(state%phi)**2
+
+      F = p * sin(state%phi) + sqrt(J*J * K*K + a_sphi_sq) - state%c * cos(state%phi)
    end function mcss_yield_fn
 
    ! ---------------------------------------------------------------------------
@@ -56,9 +64,15 @@ contains
       real(wp),            intent(in) :: sig(6)
       real(wp) :: dF_by_dsig(6)
 
-      real(wp) :: p, J, lode, s3ta
-      call calc_invariants(sig, p, J, lode, s3ta)
-      dF_by_dsig = calc_dF_dsig_abbo(params%as_params, sig, p, J, lode, s3ta, state%c, state%phi)
+      real(wp) :: p, q, lode, J, s3ta, dev(6)
+
+      call calc_sig_inv(sig, p, q, lode)
+      J    = calc_J_inv(q)
+      s3ta = sin(3.0_wp * lode)
+      ! dp/dsig == dp/ds: mean stress is independent of deviatoric stress
+      dev  = calc_dev_stress(sig, p)
+
+      dF_by_dsig = calc_dF_dsig_abbo(params%as_params, J, dev, lode, s3ta, state%c, state%phi)
    end function mcss_flow_rule
 
    ! ---------------------------------------------------------------------------
@@ -71,9 +85,13 @@ contains
       real(wp),            intent(in) :: sig(6)
       real(wp) :: dG_by_dsig(6)
 
-      real(wp) :: p, J, lode, s3ta, psi_eff
+      real(wp) :: p, q, lode, J, s3ta, dev(6), psi_eff
 
-      call calc_invariants(sig, p, J, lode, s3ta)
+      call calc_sig_inv(sig, p, q, lode)
+      J    = calc_J_inv(q)
+      s3ta = sin(3.0_wp * lode)
+      ! dp/dsig == dp/ds: mean stress is independent of deviatoric stress
+      dev  = calc_dev_stress(sig, p)
 
       if (J < J0) then
          psi_eff = state%phi - J * (state%phi - state%psi) / J0
@@ -81,7 +99,7 @@ contains
          psi_eff = state%psi
       end if
 
-      dG_by_dsig = calc_dF_dsig_abbo(params%as_params, sig, p, J, lode, s3ta, state%c, psi_eff)
+      dG_by_dsig = calc_dF_dsig_abbo(params%as_params, J, dev, lode, s3ta, state%c, psi_eff)
    end function mcss_plastic_potential
 
    ! ---------------------------------------------------------------------------
@@ -95,12 +113,94 @@ contains
       real(wp) :: eps_p_eq
 
       state%eps_p = state%eps_p + deps_p
-      eps_p_eq    = calc_eps_p_eq(state%eps_p)
+      eps_p_eq    = calc_eps_q_inv(calc_dev_strain(state%eps_p, calc_eps_vol_inv(state%eps_p)))
 
       state%c   = params%c_res   + (params%c_peak   - params%c_res)   * exp(-params%factor * eps_p_eq)
       state%phi = params%phi_res + (params%phi_peak  - params%phi_res) * exp(-params%factor * eps_p_eq)
       state%psi = params%psi_res + (params%psi_peak  - params%psi_res) * exp(-params%factor * eps_p_eq)
    end subroutine mcss_update_hardening
+
+   ! ---------------------------------------------------------------------------
+   ! Hardening modulus: H = ∂F/∂κ · dκ/dλ
+   !
+   ! For the consistency condition dlambda = (n·De·dε) / (n·De·m - H).
+   ! H > 0 for softening (yield surface shrinks with plastic flow).
+   !
+   ! Derivation:
+   !   H = (∂F/∂c · dc/deps_p_eq + ∂F/∂φ · dφ/deps_p_eq) · deps_p_eq/dλ
+   !
+   !   dc/deps_p_eq  = -factor·(c - c_res)        [exponential softening rate]
+   !   dφ/deps_p_eq  = -factor·(φ - φ_res)
+   !   deps_p_eq/dλ  = calc_eps_q_inv(dev(dg/dσ)) [equivalent strain per unit λ]
+   !
+   !   ∂F/∂c = -cos(φ) + a²·sin²(φ) / (c·H_kernel)
+   !   ∂F/∂φ = p·cos(φ) + c·sin(φ)
+   !         + (J²·K·∂K/∂φ + a·sin²(φ)·∂a/∂φ + a²·sin(φ)·cos(φ)) / H_kernel
+   ! ---------------------------------------------------------------------------
+   pure function mcss_hardening_modulus(params, state, sig, dg_by_dsig) result(H)
+      type(mcss_params_t), intent(in) :: params
+      type(mcss_state_t),  intent(in) :: state
+      real(wp),            intent(in) :: sig(6), dg_by_dsig(6)
+      real(wp) :: H
+
+      real(wp) :: p, q, lode, J, s3ta, K, a, h_kernel
+      real(wp) :: dK_dphi, da_dphi
+      real(wp) :: dF_dc, dF_dphi
+      real(wp) :: dc_deps, dphi_deps, deps_eq_rate
+      real(wp) :: dev_dg(6)
+
+      call calc_sig_inv(sig, p, q, lode)
+      J    = calc_J_inv(q)
+      s3ta = sin(3.0_wp * lode)
+
+      K        = calc_K(params%as_params, lode, s3ta, sin(state%phi))
+      a        = calc_a_smooth(params%as_params, state%c, state%phi)
+      h_kernel = sqrt(J*J * K*K + a*a * sin(state%phi)**2)
+
+      if (h_kernel < 1.0e-14_wp) then
+         H = 0.0_wp
+         return
+      end if
+
+      ! TODO: verify this hardening modulus implementation against a reference
+      !       solution before using in production runs.
+
+      ! ∂F/∂c = -cos(φ) + a²·sin²(φ) / (c·H_kernel)
+      dF_dc = -cos(state%phi) + a*a * sin(state%phi)**2 / (state%c * h_kernel)
+
+      ! ∂K/∂φ through sin(φ) — inner vs outer Abbo-Sloan region
+      if (abs(lode) < params%as_params%lode_t) then
+         dK_dphi = -INV_SQRT3 * cos(state%phi) * sin(lode)
+      else
+         dK_dphi = (params%as_params%A2 * sign(1.0_wp, lode) &
+                  - params%as_params%B2 * s3ta) * cos(state%phi)
+      end if
+
+      ! ∂a/∂φ: a = smooth_coeff·c·cos(φ)/sin(φ)  →  da/dφ = -smooth_coeff·c/sin²(φ)
+      if (abs(state%phi) < 1.0e-14_wp) then
+         da_dphi = 0.0_wp
+      else
+         da_dphi = -params%as_params%smooth_coeff * state%c / sin(state%phi)**2
+      end if
+
+      ! ∂F/∂φ = p·cos(φ) + c·sin(φ)
+      !       + (J²·K·∂K/∂φ + a·sin²(φ)·∂a/∂φ + a²·sin(φ)·cos(φ)) / H_kernel
+      dF_dphi = p * cos(state%phi) + state%c * sin(state%phi) &
+              + (J*J * K * dK_dphi                            &
+                 + a * sin(state%phi)**2 * da_dphi            &
+                 + a*a * sin(state%phi) * cos(state%phi)) / h_kernel
+
+      ! Softening rates from exponential law: dκ/deps_p_eq = -factor·(κ - κ_res)
+      dc_deps   = -params%factor * (state%c   - params%c_res)
+      dphi_deps = -params%factor * (state%phi - params%phi_res)
+
+      ! deps_p_eq/dλ: equivalent plastic strain per unit plastic multiplier
+      dev_dg       = calc_dev_strain(dg_by_dsig, calc_eps_vol_inv(dg_by_dsig))
+      deps_eq_rate = calc_eps_q_inv(dev_dg)
+
+      H = (dF_dc * dc_deps + dF_dphi * dphi_deps) * deps_eq_rate
+
+   end function mcss_hardening_modulus
 
    ! ---------------------------------------------------------------------------
    ! Elastic stiffness
@@ -113,73 +213,47 @@ contains
    end function mcss_elastic_stiffness
 
    ! ===========================================================================
-   ! Private helpers
+   ! Private helpers (Abbo & Sloan model-specific)
    ! ===========================================================================
 
-   pure subroutine calc_invariants(sig, p, J, lode, s3ta)
-      real(wp), intent(in)  :: sig(6)
-      real(wp), intent(out) :: p, J, lode, s3ta
-
-      real(wp) :: Sx, Sy, Sz, J2, J3, h1, h2
-
-      p  = ONE_THIRD * (sig(1) + sig(2) + sig(3))
-      Sx = sig(1) - p
-      Sy = sig(2) - p
-      Sz = sig(3) - p
-
-      J2 = (1.0_wp/6.0_wp) * ((sig(1)-sig(2))**2 + (sig(1)-sig(3))**2 + (sig(2)-sig(3))**2) &
-           + sig(4)**2 + sig(5)**2 + sig(6)**2
-      J  = sqrt(J2)
-
-      J3 = Sx*Sy*Sz + 2.0_wp*sig(4)*sig(5)*sig(6) &
-           - Sx*sig(5)**2 - Sy*sig(6)**2 - Sz*sig(4)**2
-
-      if (J2 > 0.0_wp) then
-         h1   = -3.0_wp / (2.0_wp * INV_SQRT3)
-         h2   = J3 / J**3
-         s3ta = h1 * h2
-         s3ta = max(-1.0_wp, min(1.0_wp, s3ta))
-         lode = ONE_THIRD * asin(s3ta)
-      else
-         lode = 0.0_wp
-         s3ta = 0.0_wp
-      end if
-   end subroutine calc_invariants
-
-   pure function calc_K(asp, lode, s3ta, sphi) result(K)
+   pure function calc_K(asp, lode, s3ta, sin_angle) result(K)
+      !! Abbo-Sloan smoothing function K(θ, φ).
+      !! Inner region: exact Mohr-Coulomb expression.
+      !! Outer region: quadratic fit that avoids singularity at corners.
       type(abbo_sloan_params_t), intent(in) :: asp
-      real(wp), intent(in) :: lode, s3ta, sphi
-      real(wp) :: K, A, B, sgn
+      real(wp), intent(in) :: lode, s3ta, sin_angle
+      real(wp) :: K, sgn, a_coeff, b_coeff
 
       if (abs(lode) < asp%lode_t) then
-         K = cos(lode) - INV_SQRT3 * sphi * sin(lode)
+         K = cos(lode) - INV_SQRT3 * sin_angle * sin(lode)
       else
-         sgn = sign(1.0_wp, lode)
-         A   = asp%A1 + asp%A2 * sgn * sphi
-         B   = asp%B1 * sgn + asp%B2 * sphi
-         K   = A - B * s3ta
+         sgn     = sign(1.0_wp, lode)
+         a_coeff = asp%A1 + asp%A2 * sgn * sin_angle
+         b_coeff = asp%B1 * sgn + asp%B2 * sin_angle
+         K       = a_coeff - b_coeff * s3ta
       end if
    end function calc_K
 
-   pure function calc_dK_dlode(asp, lode, s3ta, sphi) result(dKdL)
+   pure function calc_dK_dlode(asp, lode, s3ta, sin_angle) result(dK_dlode)
+      !! Derivative of Abbo-Sloan K with respect to lode angle.
       type(abbo_sloan_params_t), intent(in) :: asp
-      real(wp), intent(in) :: lode, s3ta, sphi
-      real(wp) :: dKdL, cta, sta, c3ta, sgn, B
+      real(wp), intent(in) :: lode, s3ta, sin_angle
+      real(wp) :: dK_dlode, cos_lode, cos_3lode, sgn, b_coeff
 
       if (abs(lode) < asp%lode_t) then
-         cta  = cos(lode)
-         sta  = s3ta / (4.0_wp*cta*cta - 1.0_wp)
-         dKdL = -sta - INV_SQRT3 * sphi * cta
+         cos_lode = cos(lode)
+         dK_dlode = -sin(lode) - INV_SQRT3 * sin_angle * cos_lode
       else
-         sgn  = sign(1.0_wp, lode)
-         cta  = cos(lode)
-         c3ta = cta * (4.0_wp*cta*cta - 3.0_wp)
-         B    = asp%B1 * sgn + asp%B2 * sphi
-         dKdL = -3.0_wp * B * c3ta
+         sgn      = sign(1.0_wp, lode)
+         cos_lode = cos(lode)
+         cos_3lode = cos_lode * (4.0_wp*cos_lode*cos_lode - 3.0_wp)
+         b_coeff  = asp%B1 * sgn + asp%B2 * sin_angle
+         dK_dlode = -3.0_wp * b_coeff * cos_3lode
       end if
    end function calc_dK_dlode
 
    pure function calc_a_smooth(asp, c, phi) result(a)
+      !! Abbo-Sloan tip-smoothing parameter: a = smooth_coeff * c * cot(phi).
       type(abbo_sloan_params_t), intent(in) :: asp
       real(wp), intent(in) :: c, phi
       real(wp) :: a
@@ -190,73 +264,58 @@ contains
       end if
    end function calc_a_smooth
 
-   pure function calc_eps_p_eq(eps_p) result(eps_p_eq)
-      real(wp), intent(in) :: eps_p(6)
-      real(wp) :: eps_p_eq
-
-      real(wp) :: eps_pm, e1, e2, e3
-      real(wp), parameter :: TWO_THIRDS  = 2.0_wp / 3.0_wp
-      real(wp), parameter :: FOUR_THIRDS = 4.0_wp / 3.0_wp
-
-      eps_pm   = ONE_THIRD * (eps_p(1) + eps_p(2) + eps_p(3))
-      e1 = eps_p(1) - eps_pm
-      e2 = eps_p(2) - eps_pm
-      e3 = eps_p(3) - eps_pm
-
-      eps_p_eq = sqrt(TWO_THIRDS  * (e1*e1 + e2*e2 + e3*e3) + &
-                      FOUR_THIRDS * (eps_p(4)**2 + eps_p(5)**2 + eps_p(6)**2))
-   end function calc_eps_p_eq
-
-   pure function calc_dF_dsig_abbo(asp, sig, p, J, lode, s3ta, c, angle) result(dFds)
+   pure function calc_dF_dsig_abbo(asp, J, dev, lode, s3ta, c, angle) result(dF_by_dsig)
+      !! Gradient of Abbo-Sloan yield/potential surface w.r.t. stress.
+      !! dF/dsig = dF/dp * dp/dsig + dF/dJ * dJ/dsig + dF/dJ3 * dJ3/dsig
+      !!
+      !! Note: dp/dsig == dp/ds (mean stress is independent of deviatoric stress).
       type(abbo_sloan_params_t), intent(in) :: asp
-      real(wp), intent(in) :: sig(6), p, J, lode, s3ta, c, angle
-      real(wp) :: dFds(6)
+      real(wp),                  intent(in) :: J, dev(6), lode, s3ta, c, angle
+      real(wp) :: dF_by_dsig(6)
 
-      real(wp) :: sphi, cphi, K, dKdL, a, asphi2, D
-      real(wp) :: C1, C2, C3, T3TA, C3TA, J2
-      real(wp) :: Sx, Sy, Sz
-      real(wp) :: dp_ds(6), dJ_ds(6), dJ3_ds(6)
-      real(wp) :: i1, i2
+      real(wp) :: sin_angle, K, dK_dlode_val, a, a_sphi_sq, jk_over_H
+      real(wp) :: cos_3lode, tan_3lode, j2, j2_third, inv_2J
+      real(wp) :: dF_dp, dF_dJ, dF_dJ3
+      real(wp) :: dp_by_dsig(6), dJ_by_dsig(6), dJ3_by_dsig(6)
 
-      sphi   = sin(angle)
-      cphi   = cos(angle)
-      K      = calc_K(asp, lode, s3ta, sphi)
-      dKdL   = calc_dK_dlode(asp, lode, s3ta, sphi)
-      a      = calc_a_smooth(asp, c, angle)
-      asphi2 = a * a * sphi * sphi
+      sin_angle    = sin(angle)
+      K            = calc_K(asp, lode, s3ta, sin_angle)
+      dK_dlode_val = calc_dK_dlode(asp, lode, s3ta, sin_angle)
+      a            = calc_a_smooth(asp, c, angle)
+      a_sphi_sq    = a * a * sin_angle * sin_angle
 
-      J2 = max(J * J, J_TINY)
+      j2 = max(J * J, J_TINY)
 
-      C3TA = cos(lode) * (4.0_wp*cos(lode)**2 - 3.0_wp)
-      if (abs(C3TA) < 1.0e-14_wp) C3TA = sign(1.0e-14_wp, C3TA)
-      T3TA = s3ta / C3TA
+      cos_3lode = cos(3.0_wp * lode)
+      if (abs(cos_3lode) < 1.0e-14_wp) cos_3lode = sign(1.0e-14_wp, cos_3lode)
+      tan_3lode = s3ta / cos_3lode
 
-      dp_ds = [ONE_THIRD, ONE_THIRD, ONE_THIRD, 0.0_wp, 0.0_wp, 0.0_wp]
+      ! dp/dsig == dp/ds: mean stress is independent of deviatoric stress
+      dp_by_dsig = calc_dp_by_dsig()
 
-      Sx = sig(1) - p
-      Sy = sig(2) - p
-      Sz = sig(3) - p
       if (J > 1.0e-4_wp) then
-         i1 = 0.5_wp / J
+         inv_2J = 0.5_wp / J
       else
-         i1 = 0.0_wp
+         inv_2J = 0.0_wp
       end if
-      dJ_ds = [i1*Sx, i1*Sy, i1*Sz, i1*2.0_wp*sig(4), i1*2.0_wp*sig(5), i1*2.0_wp*sig(6)]
+      dJ_by_dsig = [inv_2J*dev(1),         inv_2J*dev(2),         inv_2J*dev(3), &
+                    2.0_wp*inv_2J*dev(4),   2.0_wp*inv_2J*dev(5),  2.0_wp*inv_2J*dev(6)]
 
-      i2 = ONE_THIRD * J2
-      dJ3_ds(1) = Sy*Sz - sig(5)**2 + i2
-      dJ3_ds(2) = Sx*Sz - sig(6)**2 + i2
-      dJ3_ds(3) = Sx*Sy - sig(4)**2 + i2
-      dJ3_ds(4) = 2.0_wp*(sig(5)*sig(6) - Sz*sig(4))
-      dJ3_ds(5) = 2.0_wp*(sig(6)*sig(4) - Sx*sig(5))
-      dJ3_ds(6) = 2.0_wp*(sig(4)*sig(5) - Sy*sig(6))
+      j2_third       = ONE_THIRD * j2
+      dJ3_by_dsig(1) = dev(2)*dev(3) - dev(5)**2 + j2_third
+      dJ3_by_dsig(2) = dev(1)*dev(3) - dev(6)**2 + j2_third
+      dJ3_by_dsig(3) = dev(1)*dev(2) - dev(4)**2 + j2_third
+      dJ3_by_dsig(4) = 2.0_wp*(dev(5)*dev(6) - dev(3)*dev(4))
+      dJ3_by_dsig(5) = 2.0_wp*(dev(6)*dev(4) - dev(1)*dev(5))
+      dJ3_by_dsig(6) = 2.0_wp*(dev(4)*dev(5) - dev(2)*dev(6))
 
-      D  = J * K / sqrt(J2*K*K + asphi2)
-      C1 = sphi
-      C2 = D*K - T3TA * D * dKdL
-      C3 = -SQRT3_OVER2 * dKdL * D / (J2 * C3TA)
+      jk_over_H = J * K / sqrt(j2*K*K + a_sphi_sq)
 
-      dFds = C1*dp_ds + C2*dJ_ds + C3*dJ3_ds
+      dF_dp  = sin_angle
+      dF_dJ  = jk_over_H*K - tan_3lode * jk_over_H * dK_dlode_val
+      dF_dJ3 = -SQRT3_OVER2 * dK_dlode_val * jk_over_H / (j2 * cos_3lode)
+
+      dF_by_dsig = dF_dp*dp_by_dsig + dF_dJ*dJ_by_dsig + dF_dJ3*dJ3_by_dsig
    end function calc_dF_dsig_abbo
 
 end module mod_mcss_functions

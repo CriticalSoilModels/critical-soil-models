@@ -9,6 +9,10 @@ module mod_stress_invar_deriv
 contains
 
    pure function calc_dp_by_dsig() result(dp_by_dsig)
+      !! dp/dsig = dp/ds = [1/3, 1/3, 1/3, 0, 0, 0].
+      !! Mean stress p = tr(σ)/3 depends only on normal components, so its
+      !! derivative is the same whether taken w.r.t. full stress σ or
+      !! deviatoric stress s.
       real(wp) :: dp_by_dsig(6)
 
       ! Local variables

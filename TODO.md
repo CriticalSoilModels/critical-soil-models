@@ -61,6 +61,17 @@ Once the scaffold is proven with linear elastic:
 
 ---
 
+## Hardening modulus — needs verification
+
+`mcss_hardening_modulus` in `src/models/mohr_coulomb_ss/mcss_functions.f90` computes the
+analytical H from ∂F/∂c and ∂F/∂φ (see comment block above the function). The smoke tests
+(H=0 at residual, H>0 at peak, no NaN at J=0) all pass, but the derivatives of K and a
+w.r.t. φ have not been verified against a finite-difference reference. Before production
+use, add a finite-difference gradient check (similar to the existing `dF/dSigma` test) and
+confirm the sign convention matches physical softening behaviour in a single-element driver.
+
+---
+
 ## Longer term
 
 - Pull NorSand into the new architecture (currently legacy only)

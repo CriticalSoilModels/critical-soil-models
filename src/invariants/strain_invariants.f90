@@ -2,9 +2,9 @@
 !
 ! Computation chain:
 !   eps(6)
-!     -> eps_v = calc_eps_vol_inv(eps)          ! volumetric strain = tr(ε)
-!     -> dev   = calc_dev_strain(eps, eps_v)    ! deviatoric strain tensor
-!     -> eps_q = calc_eps_q_inv(dev)            ! deviatoric strain invariant
+!     -> eps_v   = calc_eps_vol_inv(eps)          ! volumetric strain = tr(ε)
+!     -> dev     = calc_dev_strain(eps, eps_v)    ! deviatoric strain tensor
+!     -> eps_q   = calc_eps_q_inv(dev)            ! deviatoric strain invariant: sqrt(2/3 * dev:dev)
 !
 ! All-in-one: calc_eps_inv(eps, eps_v, eps_q)
 

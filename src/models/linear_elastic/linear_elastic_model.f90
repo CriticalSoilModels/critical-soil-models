@@ -28,8 +28,9 @@ module mod_linear_elastic_model
       procedure :: plastic_potential => le_plastic_potential_method
       procedure :: update_hardening  => le_update_hardening_method
       procedure :: elastic_stiffness => le_elastic_stiffness_method
-      procedure :: snapshot          => le_snapshot
-      procedure :: restore           => le_restore
+      procedure :: snapshot           => le_snapshot
+      procedure :: restore            => le_restore
+      procedure :: hardening_modulus  => le_hardening_modulus
    end type linear_elastic_model_t
 
 contains
@@ -77,6 +78,14 @@ contains
    end function le_elastic_stiffness_method
 
    ! --- OOP-only: snapshot/restore for the generic CPU integrator ---
+
+   function le_hardening_modulus(self, sig, dg_by_dsig) result(H)
+      !! Perfectly plastic — yield surface never moves, H = 0.
+      class(linear_elastic_model_t), intent(in) :: self
+      real(wp), intent(in) :: sig(6), dg_by_dsig(6)
+      real(wp) :: H
+      H = 0.0_wp
+   end function le_hardening_modulus
 
    subroutine le_snapshot(self, saved)
       !! No state to save — allocates an empty array for the integrator

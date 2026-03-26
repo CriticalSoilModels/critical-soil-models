@@ -41,7 +41,7 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
    use mod_mcss_model,        only: mcss_model_t, mcss_from_props, &
                                     mcss_load_state, mcss_save_state
    use mod_euler_substep,     only: euler_substep
-   use mod_integrate_stress,  only: integrate_stress
+   use mod_integrate_stress,  only: integrate_stress, integrator_params_t
    use mod_cmname_parser,     only: integrator_name
    use mod_voigt_conventions, only: to_internal, from_internal, ANURA3D_ORDER, &
                                     problem_type, inflate, deflate, deflate_stiffness, &
@@ -61,7 +61,8 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
    real(wp) :: PROPS(NPROPS)
 
    ! --- Local ---
-   type(mcss_model_t) :: model
+   type(mcss_model_t)       :: model
+   type(integrator_params_t) :: iparams
    integer  :: ptype
    real(wp) :: sig6(6), dstran6(6)
    real(wp) :: D6(6,6)
@@ -69,7 +70,10 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
    ! -----------------------------------------------------------------------
    ! 1. Build model from PROPS + STATEV
    ! -----------------------------------------------------------------------
-   model = mcss_from_props(PROPS)
+   model           = mcss_from_props(PROPS)
+   iparams%ftol    = model%yield_tol
+   iparams%stol    = 1.0e-4_wp
+   iparams%dt_min  = model%dt_min
    call mcss_load_state(model, STATEV)
 
    ! -----------------------------------------------------------------------
@@ -101,9 +105,8 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
    ! 6. Integrate — integrator and model work entirely in 6-component space
    ! -----------------------------------------------------------------------
    call integrate_stress(model, sig6, dstran6,              &
-                         ftol=model%yield_tol,              &
-                         stol=1.0e-4_wp,                    &
-                         method=integrator_name(CMNAME))
+                         method=integrator_name(CMNAME),   &
+                         iparams=iparams)
 
    ! -----------------------------------------------------------------------
    ! 7. Deflate and reorder back to solver convention
@@ -159,7 +162,8 @@ contains
          dstran_trial = dstran6_ps
 
          call mdl%snapshot(state_saved)
-         call euler_substep(mdl, sig_trial, dstran_trial, ftol=ftol, stol=1.0e-4_wp)
+         call euler_substep(mdl, sig_trial, dstran_trial, &
+                            iparams=integrator_params_t(ftol=ftol, stol=1.0e-4_wp, dt_min=1.0e-9_wp))
          call mdl%restore(state_saved)
 
          ! Check sig_33
