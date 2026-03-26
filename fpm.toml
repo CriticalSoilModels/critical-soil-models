@@ -13,8 +13,8 @@ module-naming = false
 
 [dependencies]
 
-# stdlib = { git = "https://github.com/fortran-lang/stdlib", branch = "stdlib-fpm" }
-stdlib = {path = "../../stdlib"}
+stdlib = { git = "https://github.com/fortran-lang/stdlib", branch = "stdlib-fpm" }
+# stdlib = {path = "../../stdlib"}
 # fortplot = { git = "https://github.com/krystophny/fortplot" }
 
 [dev-dependencies]

@@ -1,9 +1,9 @@
 module mod_test_strain_invar_deriv_suite
     ! Local imports
-    use stdlib_kinds, only: dp, i32 => int32
+    use mod_csm_kinds, only: wp
     use mod_strain_invar_deriv, only : calc_deps_q_by_deps
     use mod_strain_invar_refs, only: calc_deps_q_by_deps_full
-    use mod_strain_invariants, only: calc_eps_q, calc_dev_strain, calc_eps_invariants
+    use mod_strain_invariants, only: calc_eps_q_inv, calc_dev_strain, calc_eps_inv
     use mod_check_NaN_and_tensor_value, only : check_NaN_and_tensor_value
 
     ! Testdrive imports
@@ -34,14 +34,14 @@ module mod_test_strain_invar_deriv_suite
         type(error_type), allocatable, intent(out) :: error
 
         ! Local variables
-        real(dp) :: exp_dEq_dEpsq(6), dEq_dEpsq(6)
-        real(dp) :: Eps(6), Eps_v, Eps_q, dev_strain(6), test_arr(6)
+        real(wp) :: exp_dEq_dEpsq(6), dEq_dEpsq(6)
+        real(wp) :: Eps(6), Eps_v, Eps_q, dev_strain(6), test_arr(6)
         logical :: passed
-        real(dp) :: a
-        real(dp), parameter :: tol = 1e-9_dp
+        real(wp) :: a
+        real(wp), parameter :: tol = 1e-9_wp
         Eps = [1.0, 3.0, 5.0, 7.0, 11.0, 13.0]
         
-        call calc_eps_invariants(Eps, Eps_v, Eps_q)
+        call calc_eps_inv(Eps, Eps_v, Eps_q)
     
         ! Calc the value
         dEq_dEpsq = calc_deps_q_by_deps(Eps_q, Eps)

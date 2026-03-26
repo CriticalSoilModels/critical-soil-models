@@ -1,8 +1,8 @@
 module mod_SRMC
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
    use mod_SRMC_funcs, only: MatVec
-   use mod_strain_invariants, only: calc_eps_invariants
-   use mod_stress_invariants, only : calc_sig_invariants
+   use mod_strain_invariants, only: calc_eps_inv
+   use mod_stress_invariants, only : calc_sig_inv
    use mod_state_params     , only: Get_I_coeff, Get_M, Get_dilation, check4crossing, Update_GK, Check_Unloading
    use mod_yield_function   , only: calc_yield_function
    use mod_voigt_utils, only: calc_two_norm_tensor, calc_two_norm_tensor_strain
@@ -43,38 +43,38 @@ contains
       !input variables
       integer, intent(in) :: NOEL !Global ID of Gauss point or particle
       integer, intent(in) :: N_S, max_stress_iters, switch_plastic_integration
-      real(dp), intent(in)::  G_0, nu, M_tc, N, D_min, alpha_G, alpha_K, &
+      real(wp), intent(in)::  G_0, nu, M_tc, N, D_min, alpha_G, alpha_K, &
          alpha_D, D_part, G_s, &
          RefERate, DTIME, FTOL
-      real(dp), dimension(6), intent(in)::  dEps
-      real(dp), dimension(6), intent(inout):: Sig_0
+      real(wp), dimension(6), intent(in)::  dEps
+      real(wp), dimension(6), intent(inout):: Sig_0
 
       logical, intent(in):: switch_smooth, switch_original
 
       !output variables
       integer, intent(inout):: N_i
 
-      real(dp), intent(inout):: h, G, K, eta_y, dilation, I_coeff, &
+      real(wp), intent(inout):: h, G, K, eta_y, dilation, I_coeff, &
          Error_yield_1, Error_yield_2, Error_Euler_max,&
          Error_Yield_last, Error_Yield_max, SUM_rate
-      real(dp), dimension(6), intent(inout):: Sig, Erate, EpsP
+      real(wp), dimension(6), intent(inout):: Sig, Erate, EpsP
 
       logical, intent(inout):: switch_yield
 
       !local variables
       integer:: counter, MAXITER, SubStepping_MaxIter
       integer, parameter :: Substepping = 0, Ortiz_Simo = 1  
-      real(dp):: p, q, lode_angle, M, I_act, I_0, Gu, Ku, eta_yu, dil_u, dI, &
+      real(wp):: p, q, lode_angle, M, I_act, I_0, Gu, Ku, eta_yu, dil_u, dI, &
          G1, K1, eta_y1, dilation1, G2, K2, eta_y2, dilation2, &
          p_t, q_t, dI_t, dI_TT, I_TT, ddil1, ddil2
-      real(dp):: epsq_rate, epsq_p, eps_v
-      real(dp):: F0, FT, alpha
-      real(dp):: STOL, DTmin , LTOL, R_TT, qR, RTOL
-      real(dp):: dummyvar(3), D1, D2
-      real(dp):: DE(6,6), dSig_el(6), Sig_t(6), dEps_t(6), dEps_TT(6), &
+      real(wp):: epsq_rate, epsq_p, eps_v
+      real(wp):: F0, FT, alpha
+      real(wp):: STOL, DTmin , LTOL, R_TT, qR, RTOL
+      real(wp):: dummyvar(3), D1, D2
+      real(wp):: DE(6,6), dSig_el(6), Sig_t(6), dEps_t(6), dEps_TT(6), &
          Sig1(6), Sig2(6), dEpsp1(6), dEpsp2(6), dEpsp(6), &
          dSig1(6), dSig2(6), Epspt(6)
-      real(dp):: T, DT
+      real(wp):: T, DT
 
       logical:: ApplyStrainRateUpdates=.false., &!Check if the strain rate path crosses the reference line
          IsUnloading, & !If true material unloads (not elastic unloading)
@@ -98,8 +98,8 @@ contains
       Error_Yield_last=0.0    !max abs drift after drift correction
       !______________________________________________________________________________
       !Initialization of state variables
-      call calc_sig_invariants(Sig_0, p, q, lode_angle)
-      call calc_eps_invariants(EpsP, eps_v, epsq_p)!plastic deviatoric strain
+      call calc_sig_inv(Sig_0, p, q, lode_angle)
+      call calc_eps_inv(EpsP, eps_v, epsq_p)!plastic deviatoric strain
       I_0=RefERate
       !call Get_I_coeff(D_part, G_s, -100.0, RefERate, I_0)!Reference inertial coefficient
       call Get_M(M_tc, lode_angle, M)!Get M
@@ -120,7 +120,7 @@ contains
 
       !print *, eta_y
       if (eta_y==0.0d0) then
-         call calc_sig_invariants(dEps, dummyvar(1), dummyvar(2), lode_angle)
+         call calc_sig_inv(dEps, dummyvar(1), dummyvar(2), lode_angle)
          call Get_M(M_tc, lode_angle, M)
          eta_y=M-dilation*(1.0-N)
       endif
@@ -167,7 +167,7 @@ contains
       eta_yu=eta_y
       dil_u=dilation
 
-      call calc_eps_invariants(Erate, dummyvar(1), epsq_rate)! deviatoric strain rate
+      call calc_eps_inv(Erate, dummyvar(1), epsq_rate)! deviatoric strain rate
       ! print *, "dev. strain rate invariant", epsq_rate
 
       call Get_I_coeff(D_part, G_s, p, epsq_rate, I_act)!actual inertial coefficient
@@ -202,7 +202,7 @@ contains
       Sig_t = Sig_0 + dSig_el
 
       !Get new invariant stresses
-      call calc_sig_invariants(Sig_t, p_t, q_t, lode_angle)
+      call calc_sig_inv(Sig_t, p_t, q_t, lode_angle)
 
       !Evaluate yield function
       call calc_yield_function(q_t, p_t, eta_yu, FT)
@@ -296,7 +296,7 @@ contains
 
                !=================================================================================
                !Store max F1 comment if not needed
-               call calc_sig_invariants(Sig1, p, q, lode_angle)
+               call calc_sig_inv(Sig1, p, q, lode_angle)
                call calc_yield_function(q, p, eta_y1, FT)
                ! if (abs(FT)>abs(Error_yield_1)) Error_yield_1=abs(FT)
                !=================================================================================
@@ -320,7 +320,7 @@ contains
 
                !=================================================================================
                !Store max F2 comment if not needed
-               call calc_sig_invariants(Sig2, p, q, lode_angle)
+               call calc_sig_inv(Sig2, p, q, lode_angle)
                call calc_yield_function(q, p, eta_y2, FT)
                ! if (abs(FT)>abs(Error_yield_2)) Error_yield_2=abs(FT)
                !=================================================================================
@@ -357,7 +357,7 @@ contains
                   EpsP=EpsP+ 0.5*(dEpsp1+dEpsp2)
                   G=0.5*(G1+G2)
                   K=0.5*(K1+K2)
-                  call calc_eps_invariants(EpsP, eps_v, epsq_p)
+                  call calc_eps_inv(EpsP, eps_v, epsq_p)
                   call Get_dilation(h, D_min, I_TT, I_0,  epsq_p, alpha_D, ApplyStrainRateUpdates, dilation)
                   eta_y=M-dilation*(1.0-N)
                   !__________________________________________________________________________
@@ -365,7 +365,7 @@ contains
                   !________________________________________________________________________________
                   !***********************Stress drift correction**********************************
                   !________________________________________________________________________________
-                  call calc_sig_invariants(Sig, p, q, lode_angle) !stress invariants
+                  call calc_sig_inv(Sig, p, q, lode_angle) !stress invariants
                   call calc_yield_function(q, p, eta_y, F0) !Initial drift
                   !print *, "F0:", F0
                   !=================================================================================

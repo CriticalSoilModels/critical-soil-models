@@ -9,6 +9,58 @@
 
 ---
 
+## Model Development Workflow
+
+New constitutive models follow a five-step process that prioritises getting the physics
+right before optimising for performance.
+
+**Step 1 — Define POD structs**
+
+Write `*_params_t` and `*_state_t` as plain-old-data types: no allocatables, no
+procedure pointers, no OOP machinery. These are the primitive building blocks that
+both the OOP interface and the GPU layer will share.
+
+**Step 2 — Write the OOP interface with math inside**
+
+Implement the five deferred procedures (`yield_fn`, `flow_rule`, `plastic_potential`,
+`update_hardening`, `elastic_stiffness`) directly on the concrete model type. Put the
+full constitutive math here. This keeps the physics readable and co-located with the
+type definition during the development phase.
+
+**Step 3 — Test and iterate**
+
+Use the OOP interface and the generic `euler_substep` integrator against single-element
+drivers. All unit tests operate at this level. Iterate on the physics until the model
+behaviour is correct.
+
+**Step 4 — Extract math into pure procedures**
+
+Once the model is validated, move the constitutive math out of the OOP methods and into
+module-level `pure` functions in `*_functions.f90`. These are annotated `!$acc routine seq`
+(or equivalent) so they are GPU-callable. The functions take `params` and `state` as
+explicit arguments — no `class()`, no dynamic dispatch.
+
+**Step 5 — Make OOP methods thin wrappers**
+
+Update each deferred procedure to delegate to the corresponding pure function:
+
+```fortran
+function mcss_yield_fn_method(self, sig) result(F)
+   class(mcss_model_t), intent(in) :: self
+   real(dp),            intent(in) :: sig(6)
+   real(dp) :: F
+   F = mcss_yield_fn(self%params, self%state, sig)  ! one line
+end function
+```
+
+The OOP interface is behaviourally identical — all existing tests still pass. The pure
+functions are now independently callable from GPU kernels without any polymorphism.
+
+This workflow means the math is always visible during implementation (Step 2–3) and the
+refactor to GPU-callable form (Steps 4–5) is mechanical, not a redesign.
+
+---
+
 ## Layered Structure
 
 ```
@@ -19,26 +71,44 @@
 │  - call integrator                          │
 │  - pack STATEV, fill DDSDDE                 │
 ├─────────────────────────────────────────────┤
-│  Integrators                                │  ← src/integrators/
-│  - euler_substep                            │
+│  OOP integrators (CPU / research path)      │  ← src/integrators/
+│  - euler_substep (class(csm_model_t))       │
 │  - ortiz_simo                               │
 │  (know nothing about any specific model)    │
 ├─────────────────────────────────────────────┤
-│  Abstract model type  (csm_model_t)         │  ← src/model_base/
+│  Abstract model type  (csm_model_t)         │  ← src/core/
 │  - deferred: yield_fn, flow_rule,           │
 │    plastic_potential, update_hardening,     │
-│    elastic_stiffness                        │
+│    elastic_stiffness, snapshot, restore     │
 ├─────────────────────────────────────────────┤
-│  Concrete models                            │  ← src/linear-elastic/, src/norsand/, etc.
+│  Concrete OOP models  (*_model.f90)         │  ← src/models/*/
 │  - extend csm_model_t                       │
-│  - own params + state as named fields       │
-│  - implement deferred procedures            │
+│  - hold params_t + state_t                  │
+│  - deferred procedures are thin wrappers    │
+│    around the pure function layer below     │
+├─────────────────────────────────────────────┤
+│  Pure function layer  (*_functions.f90)     │  ← src/models/*/
+│  - no class(), no dynamic dispatch          │
+│  - !$acc routine seq — GPU callable         │
+│  - take (params_t, state_t, sig) explicitly │
+│  - model-specific flat integrators live     │
+│    here too (HPC / GPU path)                │
+├─────────────────────────────────────────────┤
+│  POD structs  (*_params_t, *_state_t)       │  ← src/models/*/
+│  - no allocatables, no procedures           │
+│  - shared by OOP and pure function layers   │
+│  - SoA building blocks for MPM consumers   │
 ├─────────────────────────────────────────────┤
 │  Shared infrastructure                      │  ← src/invariants/, src/conventions/
 │  - stress/strain invariants                 │
 │  - Voigt convention translation             │
 └─────────────────────────────────────────────┘
 ```
+
+**Two calling paths from the same library:**
+
+- **Research / prototyping:** OOP integrator → abstract type → concrete model → pure functions
+- **HPC / GPU:** flat integrator → pure functions directly (no polymorphism)
 
 ---
 
@@ -195,30 +265,59 @@ end subroutine
 ## State rollback in the integrator
 
 The modified Euler substep needs to temporarily advance state for the second estimate
-then roll back. Each model implements `snapshot` / `restore` on the abstract base.
+then roll back. The two paths handle this differently:
+
+**OOP integrator (CPU path):** uses the `snapshot` / `restore` deferred procedures.
 The integrator holds an opaque `real(dp), allocatable :: saved(:)` — it never
-interprets the contents.
+interprets the contents. Index layout lives only inside each model's implementation.
 
 ```fortran
 call model%snapshot(saved)
-call model%update_hardening(deps_p1)   ! advance for second estimate
+call model%update_hardening(deps_p1)
 call euler_step(model, sig1, ...)
-call model%restore(saved)              ! clean rollback
+call model%restore(saved)
 ```
 
-Index layout for snapshot/restore lives only inside each model's implementation —
-not in the integrator, not in the constitutive functions.
+**Flat integrator (GPU path):** because `*_state_t` is a POD type with no allocatables,
+snapshot/restore is a plain Fortran struct assignment — fixed-size, stack-allocated,
+no subroutine call needed. This is GPU-safe and avoids any heap allocation inside a kernel.
+
+```fortran
+pure subroutine mcss_euler_substep(params, state, sig, deps, ftol, stol)
+   type(mcss_state_t) :: saved_state   ! stack copy — compiler knows the size
+
+   saved_state = state                 ! snapshot
+   call mcss_update_hardening(params, state, deps_p1)
+   ! ... compute error ...
+   if (err > stol) state = saved_state ! restore
+end subroutine
+```
+
+This is the payoff of requiring POD structs: snapshot/restore on GPU costs nothing
+beyond a stack frame copy, with no abstraction overhead.
 
 ## Params vs state split
 
-- **Params** (fixed after construction from PROPS): stored flat in the model type.
-  Accessed as `self%G`, `self%phi_peak` etc. No wrapping type — params are read
-  constantly in all five procedures and the extra level adds noise for no benefit.
+Both params and state are POD types (no allocatables, no procedure pointers).
 
-- **State** (evolves during integration): a separate named type (`mcss_state_t` etc.)
-  held as `model%state`. Accessed as `self%state%c`, `self%state%eps_p` etc.
-  Separation means snapshot/restore is a clean struct copy at the model level,
-  and the integrator never needs to know what fields exist.
+- **Params** (`*_params_t`, fixed after construction from PROPS): named fields such as
+  `G`, `phi_peak`. No wrapping overhead — params are read in every procedure and the
+  extra indirection adds noise for no benefit. The OOP model holds `model%params`.
+
+- **State** (`*_state_t`, evolves during integration): separate named type held as
+  `model%state`. Accessed as `self%state%c`, `self%state%eps_p` etc. Separation means
+  snapshot/restore is a clean struct copy, and the integrator never needs to know what
+  fields exist. For the pure function layer, state is passed explicitly and returned by
+  `intent(inout)` — the caller (MPM loop) owns the storage.
+
+Both types are the SoA building blocks for MPM consumers: `real(dp) :: G(n_points)` in
+the MPM code is just the SoA version of `params%G`.
+
+**Hard rule:** `*_params_t` and `*_state_t` must never contain allocatable members,
+pointers, or type-bound procedures. This is not a style preference — it is what makes
+struct assignment a safe, fixed-size stack copy inside GPU kernels (snapshot/restore in
+the flat integrator), and what allows MPM consumers to build SoA layouts from scalar
+fields.
 
 ## Deferred procedure rules (Fortran)
 
@@ -274,10 +373,11 @@ src/
 ```
 
 Each model directory contains exactly three files:
-- `*_model.f90` — extends `csm_model_t`; named params + state; implements the five
-  deferred procedures plus snapshot/restore
-- `*_functions.f90` — pure constitutive math (yield surface, flow rule, softening);
-  callable independently for unit testing
+- `*_model.f90` — defines `*_params_t` and `*_state_t` POD structs; extends
+  `csm_model_t`; deferred procedures are thin wrappers that delegate to `*_functions.f90`
+- `*_functions.f90` — pure constitutive math (`!$acc routine seq`); takes params and
+  state as explicit arguments; no `class()`; GPU-callable; independently unit-testable;
+  also contains model-specific flat integrators for HPC use
 - `umat_*.f90` — thin wrapper; only place PROPS/STATEV indexing and solver convention
   translation appear
 

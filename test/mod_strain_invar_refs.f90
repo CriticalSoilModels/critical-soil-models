@@ -4,7 +4,7 @@
 ! Do NOT use in production code.
 
 module mod_strain_invar_refs
-   use iso_fortran_env, only: dp => real64
+   use mod_csm_kinds, only: wp
    implicit none
    private
    public :: calc_deps_q_by_deps_full
@@ -14,13 +14,13 @@ contains
    ! deps_q/deps computed via the fully-expanded sympy formula.
    ! Used as an independent cross-check in tests.
    pure function calc_deps_q_by_deps_full(Eps) result(deps_q_by_deps)
-      real(dp), intent(in) :: Eps(6)
-      real(dp) :: deps_q_by_deps(6)
+      real(wp), intent(in) :: Eps(6)
+      real(wp) :: deps_q_by_deps(6)
 
       ! Local variables
-      real(dp), parameter :: TWO = 2.0_dp, &
-         THREE = 3.0_dp, &
-         FOUR = 4.0_dp
+      real(wp), parameter :: TWO = 2.0_wp, &
+         THREE = 3.0_wp, &
+         FOUR = 4.0_wp
 
       deps_q_by_deps(1) = FOUR*Eps(1)/(THREE*sqrt(FOUR*Eps(1)**2 - FOUR*Eps(1)*Eps(2) - FOUR*Eps(1)*Eps(3) + FOUR*Eps(2)**2 &
          - FOUR*Eps(2)*Eps(3) + FOUR*Eps(3)**2 + THREE*Eps(4)**2 + THREE*Eps(5)**2 + THREE*Eps(6)**2)) &

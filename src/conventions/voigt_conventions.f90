@@ -16,7 +16,7 @@
 ! such that sig_33 = 0 — handled in the UMAT wrapper, not here.
 
 module mod_voigt_conventions
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
    implicit none
 
    ! ---------------------------------------------------------------------------
@@ -76,11 +76,11 @@ contains
    ! 3D (NTENS=6): identity (after convention reorder)
    ! ---------------------------------------------------------------------------
    function inflate(v_solver, ptype) result(v6)
-      real(dp), intent(in) :: v_solver(:)   ! NTENS components, already in internal order
+      real(wp), intent(in) :: v_solver(:)   ! NTENS components, already in internal order
       integer,  intent(in) :: ptype
-      real(dp) :: v6(6)
+      real(wp) :: v6(6)
 
-      v6 = 0.0_dp
+      v6 = 0.0_wp
 
       select case(ptype)
        case(PROBLEM_3D)
@@ -113,9 +113,9 @@ contains
    ! Deflate an internal 6-component Voigt vector back to solver-side NTENS
    ! ---------------------------------------------------------------------------
    function deflate(v6, ptype) result(v_solver)
-      real(dp), intent(in) :: v6(6)
+      real(wp), intent(in) :: v6(6)
       integer,  intent(in) :: ptype
-      real(dp), allocatable :: v_solver(:)
+      real(wp), allocatable :: v_solver(:)
 
       select case(ptype)
        case(PROBLEM_3D)
@@ -144,9 +144,9 @@ contains
    ! Deflate a 6x6 internal stiffness matrix to NTENS x NTENS solver-side form
    ! ---------------------------------------------------------------------------
    function deflate_stiffness(C6, ptype) result(C_out)
-      real(dp), intent(in) :: C6(6,6)
+      real(wp), intent(in) :: C6(6,6)
       integer,  intent(in) :: ptype
-      real(dp), allocatable :: C_out(:,:)
+      real(wp), allocatable :: C_out(:,:)
 
       ! Index map: which internal indices appear in the solver output
       integer :: idx(6), n, i, j
@@ -176,9 +176,9 @@ contains
    ! ---------------------------------------------------------------------------
 
    function to_internal(v, from_order) result(v_out)
-      real(dp), intent(in) :: v(6)
+      real(wp), intent(in) :: v(6)
       integer,  intent(in) :: from_order(6)
-      real(dp) :: v_out(6)
+      real(wp) :: v_out(6)
       integer  :: i
 
       do i = 1, 6
@@ -187,9 +187,9 @@ contains
    end function to_internal
 
    function from_internal(v, to_order) result(v_out)
-      real(dp), intent(in) :: v(6)
+      real(wp), intent(in) :: v(6)
       integer,  intent(in) :: to_order(6)
-      real(dp) :: v_out(6)
+      real(wp) :: v_out(6)
       integer  :: i
 
       do i = 1, 6
@@ -198,10 +198,10 @@ contains
    end function from_internal
 
    function reorder_stiffness(C, from_order, to_order) result(C_out)
-      real(dp), intent(in) :: C(6,6)
+      real(wp), intent(in) :: C(6,6)
       integer,  intent(in) :: from_order(6), to_order(6)
-      real(dp) :: C_out(6,6)
-      real(dp) :: C_internal(6,6)
+      real(wp) :: C_out(6,6)
+      real(wp) :: C_internal(6,6)
       integer  :: i, j
 
       do i = 1, 6

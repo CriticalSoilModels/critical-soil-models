@@ -29,7 +29,7 @@ subroutine UMAT(STRESS, STATEV, DDSDDE,          &
    use mod_cmname_parser,       only: material_name
    use mod_umat_linear_elastic, only: umat_linear
    use mod_umat_mcss,           only: umat_mcss
-   use stdlib_kinds,            only: dp
+   use mod_csm_kinds,           only: wp
 
    implicit none
 
@@ -37,12 +37,12 @@ subroutine UMAT(STRESS, STATEV, DDSDDE,          &
    character(80) :: CMNAME
    integer :: NDI, NSHR, NTENS, NSTATEV, NPROPS
    integer :: NOEL, NPT, LAYER, KSPT, KSTEP, KINC
-   real(dp) :: SSE, SPD, SCD, RPL, DRPLDT, DTIME, TEMP, DTEMP, PNEWDT, CELENT
-   real(dp) :: STRESS(NTENS), STATEV(NSTATEV), DDSDDE(NTENS,NTENS)
-   real(dp) :: DDSDDT(NTENS), DRPLDE(NTENS), STRAN(NTENS), DSTRAN(NTENS)
-   real(dp) :: TIME(2), PREDEF(1), DPRED(1), COORDS(3)
-   real(dp) :: DROT(3,3), DFGRD0(3,3), DFGRD1(3,3)
-   real(dp) :: PROPS(NPROPS)
+   real(wp) :: SSE, SPD, SCD, RPL, DRPLDT, DTIME, TEMP, DTEMP, PNEWDT, CELENT
+   real(wp) :: STRESS(NTENS), STATEV(NSTATEV), DDSDDE(NTENS,NTENS)
+   real(wp) :: DDSDDT(NTENS), DRPLDE(NTENS), STRAN(NTENS), DSTRAN(NTENS)
+   real(wp) :: TIME(2), PREDEF(1), DPRED(1), COORDS(3)
+   real(wp) :: DROT(3,3), DFGRD0(3,3), DFGRD1(3,3)
+   real(wp) :: PROPS(NPROPS)
 
    select case(trim(material_name(CMNAME)))
 

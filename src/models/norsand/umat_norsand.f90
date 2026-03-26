@@ -39,11 +39,11 @@ contains
       integer, intent (inout):: ntens, ndir, nshr, nstatv, nprops, noel, npt, &
          layer, kspt, kstep, kinc
 
-      real(dp), intent(inout):: strss(ntens), statev(nstatv), &
+      real(wp), intent(inout):: strss(ntens), statev(nstatv), &
          ddsdde(ntens,ntens), ddsddt(ntens), drplde(ntens), &
          stran(ntens), dstran(ntens), time(2), predef(1), dpred(1), &
          props(nprops), coords(3), drot(3,3), dfgrd0(3,3), dfgrd1(3,3)
-      real(dp), intent(inout):: sse, spd, scd, rpl, drpldt, dtime, temp, &
+      real(wp), intent(inout):: sse, spd, scd, rpl, drpldt, dtime, temp, &
          dtemp, pnewdt, celent
 
       !Parameters:
@@ -86,17 +86,17 @@ contains
       !N_soft_i: Current number of strain rate values added
       !SUM_rate: Cumulative strain rates
 
-      real(dp) ::  G_0, p_ref, nG, nu, alpha_g !Elastic variables
-      real(dp) ::  e_o, Gamma, lambda_c !CSL parameters
-      real(dp) :: M_tc, N !yield function parameters
-      real(dp) :: CHI_tc, CHIi, H_0, H_y, alpha_M, alpha_pi !Hardening parameters
-      real(dp) :: RefRate !reference strain rate
-      real(dp) :: bK, bk_0, G
-      real(dp) :: M_i, M_tce,p_i, e, psi, SUM_rate, eps_rate, YSFt
+      real(wp) ::  G_0, p_ref, nG, nu, alpha_g !Elastic variables
+      real(wp) ::  e_o, Gamma, lambda_c !CSL parameters
+      real(wp) :: M_tc, N !yield function parameters
+      real(wp) :: CHI_tc, CHIi, H_0, H_y, alpha_M, alpha_pi !Hardening parameters
+      real(wp) :: RefRate !reference strain rate
+      real(wp) :: bK, bk_0, G
+      real(wp) :: M_i, M_tce,p_i, e, psi, SUM_rate, eps_rate, YSFt
       integer :: MAXSUBS, N_S, N_soft_i, i
-      real(dp) :: DE(6,6)
-      real(dp) :: p,q,eta, s1_double
-      real(dp), dimension(6) :: dsig, stress, sig, dEpsP, EpsP,Erate, &
+      real(wp) :: DE(6,6)
+      real(wp) :: p,q,eta, s1_double
+      real(wp), dimension(6) :: dsig, stress, sig, dEpsP, EpsP,Erate, &
          Erate0
       logical:: switch_smooth, switch_yield, Dashpot_method
 
@@ -225,41 +225,41 @@ contains
       logical, intent(in):: switch_smooth , Dashpot_method
       !integers
       integer, intent(in):: noel, N_S
-      !real(dp)
-      real(dp), intent(in):: G_0, nu, p_ref, nG, e_o, R, Gamma, lambda_c, M_tc, N, CHI_tc, H_0, H_y
-      real(dp), intent(in):: alpha_g, alpha_chi, alpha_pi, RefRate, Erate0(6)
-      real(dp), intent(in):: S !Softening multiplier for undrained test
-      real(dp), intent(in):: dEps(6), dtime, Sig0(6)
+      !real(wp)
+      real(wp), intent(in):: G_0, nu, p_ref, nG, e_o, R, Gamma, lambda_c, M_tc, N, CHI_tc, H_0, H_y
+      real(wp), intent(in):: alpha_g, alpha_chi, alpha_pi, RefRate, Erate0(6)
+      real(wp), intent(in):: S !Softening multiplier for undrained test
+      real(wp), intent(in):: dEps(6), dtime, Sig0(6)
       !Output variables
       !logical
       logical, intent(inout):: switch_yield
       !integers
       integer, intent(inout):: N_soft_i
-      !real(dp)
-      real(dp), intent(inout):: G, K, e, psi, CHI_tce, p_i, pi_0, M_i
-      real(dp), intent(inout):: Erate(6), SUM_rate
-      real(dp), intent(inout):: Sig(6), EpsP(6), DDSDDE(6,6)
-      real(dp), intent(inout):: Rel_error_max, Drift_yield_max
+      !real(wp)
+      real(wp), intent(inout):: G, K, e, psi, CHI_tce, p_i, pi_0, M_i
+      real(wp), intent(inout):: Erate(6), SUM_rate
+      real(wp), intent(inout):: Sig(6), EpsP(6), DDSDDE(6,6)
+      real(wp), intent(inout):: Rel_error_max, Drift_yield_max
       !____________________________________________________________________________________
       !Local variables
       !Logical
       logical:: ApplyStrainRateUpdates, Locus, IsElasticUnloading, failed
       !integer
       integer:: icount, ITER
-      !real(dp)
-      real(dp):: SSTOL, FTOL, SPTOL, LTOL, DTmin
-      real(dp):: IErateI, IErate0I, Erate_dev, Erate_vol, Erate_dev0, Erate_vol0, &
+      !real(wp)
+      real(wp):: SSTOL, FTOL, SPTOL, LTOL, DTmin
+      real(wp):: IErateI, IErate0I, Erate_dev, Erate_vol, Erate_dev0, Erate_vol0, &
          dErate(6), dErateS(6), DErateSS(6), ErateYield(6), dErate_eff
       doubleprecision:: p,q,eta, p_i0, CHIi, ptrial, qtrial, etatrial
-      real(dp):: DE(6,6), D1, D2, dSig(6), SigTrial(6)
-      real(dp):: dEpsvol, dEpsq, dEpsS(6), dEpsSS(6), dEpspS(6), dEpsp(6), Epspv, Epspq, dEpsTrial(6)
-      real(dp):: alpha, kappa, dummyArg(2)
-      real(dp):: T, DT, FT, F0
-      real(dp):: M_i1, M_i2, p_i1, p_i2, e_1, e_2, psi_1, psi_2, CHIi_1, CHIi_2, CHI_tce1, CHI_tce2,&
+      real(wp):: DE(6,6), D1, D2, dSig(6), SigTrial(6)
+      real(wp):: dEpsvol, dEpsq, dEpsS(6), dEpsSS(6), dEpspS(6), dEpsp(6), Epspv, Epspq, dEpsTrial(6)
+      real(wp):: alpha, kappa, dummyArg(2)
+      real(wp):: T, DT, FT, F0
+      real(wp):: M_i1, M_i2, p_i1, p_i2, e_1, e_2, psi_1, psi_2, CHIi_1, CHIi_2, CHI_tce1, CHI_tce2,&
          G_1, G_2, K_1, K_2, e_c, dSP1(2), dSP2(2), Gu, Ku, chi_tcu, p_iu,p_i01, M_tcu, M_iu
-      real(dp):: dEpsP1(6), dEpsP2(6), Sig1(6), dSig1(6), dSig2(6), EpsP1(6)
-      real(dp):: RT_Dt, qq, nSigma
-      real(dp)::  Theta, J3, J2, cos3Theta, Mtheta, M_itc
+      real(wp):: dEpsP1(6), dEpsP2(6), Sig1(6), dSig1(6), dSig2(6), EpsP1(6)
+      real(wp):: RT_Dt, qq, nSigma
+      real(wp)::  Theta, J3, J2, cos3Theta, Mtheta, M_itc
       !______________________________________________________________________________________________________
       !| Initialization	of variables                                                                         |
       !|_____________________________________________________________________________________________________|
@@ -644,27 +644,27 @@ contains
 
       implicit none
       !input variables
-      real(dp), dimension(6), intent(in):: dEps, Sig, Epsp, Erate, DErate
-      real(dp), intent(in):: G_0, nu, p_ref, nG, alpha_G, S
-      real(dp), intent(in):: M_tc, N, CHI_tc, H_0, H_y
-      real(dp), intent(in):: e_o, Gamma, lambda_e
-      real(dp), intent(in):: IErate0I, IErateI, RefRate, Erate_dev, Erate_vol, Erate_vol0
-      real(dp), intent(in):: alpha_CHI, alpha_pi, DT, Dtime
+      real(wp), dimension(6), intent(in):: dEps, Sig, Epsp, Erate, DErate
+      real(wp), intent(in):: G_0, nu, p_ref, nG, alpha_G, S
+      real(wp), intent(in):: M_tc, N, CHI_tc, H_0, H_y
+      real(wp), intent(in):: e_o, Gamma, lambda_e
+      real(wp), intent(in):: IErate0I, IErateI, RefRate, Erate_dev, Erate_vol, Erate_vol0
+      real(wp), intent(in):: alpha_CHI, alpha_pi, DT, Dtime
       !output variables
-      real(dp), dimension(6), intent(out)::dSig, dEpsP
-      real(dp), intent(inout):: p_i, M_i, psi, CHI_tce, CHIi, e, G, K, dSP(2), pi_0
+      real(wp), dimension(6), intent(out)::dSig, dEpsP
+      real(wp), intent(inout):: p_i, M_i, psi, CHI_tce, CHIi, e, G, K, dSP(2), pi_0
       logical, intent(in):: Int_Method
 
       logical, intent(inout):: Locus
       !local variables
-      real(dp), dimension(6,6):: DE
-      real(dp), dimension(2):: DSPErate
-      real(dp), dimension(6):: dFdSig, dSigel, aux, dPPdSig, DummyVec
-      real(dp), dimension(2):: dFdSP
-      real(dp), dimension(2,6):: dSPdEpsp, dSPdEpsrate
-      real(dp):: p, q, eta, e_c, A, Hard, Gi, Ki
-      real(dp):: denom, numerator, lambda, aux2(2),Dummyvar
-      real(dp):: theta, J3, J2, cos3theta, Mtheta, D1, D2, dEpsvol, dEpsq, dErate_eff, Erate_devf
+      real(wp), dimension(6,6):: DE
+      real(wp), dimension(2):: DSPErate
+      real(wp), dimension(6):: dFdSig, dSigel, aux, dPPdSig, DummyVec
+      real(wp), dimension(2):: dFdSP
+      real(wp), dimension(2,6):: dSPdEpsp, dSPdEpsrate
+      real(wp):: p, q, eta, e_c, A, Hard, Gi, Ki
+      real(wp):: denom, numerator, lambda, aux2(2),Dummyvar
+      real(wp):: theta, J3, J2, cos3theta, Mtheta, D1, D2, dEpsvol, dEpsq, dErate_eff, Erate_devf
       logical:: ApplyStrainRateUpdates
       integer:: I, J
 
@@ -844,30 +844,30 @@ contains
 
       implicit none
       !input variables
-      real(dp), dimension(6), intent(in):: dEpsp, Erate, dErate
-      real(dp), intent(in):: FTOL
-      real(dp), intent(in):: G_0, nu, p_ref, nG, M_tc, N,Chi_tc, H_0, H_y, S
-      real(dp), intent(inout):: p_i, M_i, e, psi, CHIi, CHI_tce
-      real(dp), intent(in):: e_o, Gamma, lambda_e
-      real(dp), intent(in):: IErate0I, IErateI, RefRate ,alpha_pi, alpha_G, &
+      real(wp), dimension(6), intent(in):: dEpsp, Erate, dErate
+      real(wp), intent(in):: FTOL
+      real(wp), intent(in):: G_0, nu, p_ref, nG, M_tc, N,Chi_tc, H_0, H_y, S
+      real(wp), intent(inout):: p_i, M_i, e, psi, CHIi, CHI_tce
+      real(wp), intent(in):: e_o, Gamma, lambda_e
+      real(wp), intent(in):: IErate0I, IErateI, RefRate ,alpha_pi, alpha_G, &
          alpha_chi, DT, Dtime
 
       integer, intent(in):: MAXIT
       !output variables
-      real(dp), intent(inout):: F0, Sig(6), Epsp(6), G, K, pi_0
+      real(wp), intent(inout):: F0, Sig(6), Epsp(6), G, K, pi_0
 
       logical, intent(inout):: Locus, Int_Method
       !local variables
-      real(dp), dimension(6)::dEpspS,DummyVec
-      real(dp), dimension(2)::dSP
-      real(dp), dimension(6,6):: DE
-      real(dp), dimension(6):: dFdSig, dPPdSig, dSigel, aux, Signew
-      real(dp), dimension(2):: dFdSP, DSPErate
-      real(dp), dimension(2,6):: dSPdEpsp, dSPdEpsrate
-      real(dp):: p, q, eta, e_c, A, Hard, dEpsvol, dEpsq
-      real(dp):: M_in, p_in, en, psin, D1, D2, Gn, Kn, p_i0n, CHI_tcen
-      real(dp):: denom, numerator, lambda, aux2(3), F2, Erate_dev0
-      real(dp):: J3, J2, cos3Theta, Mtheta, theta, M_itc, eta_L, Dummyvar,dErate_eff
+      real(wp), dimension(6)::dEpspS,DummyVec
+      real(wp), dimension(2)::dSP
+      real(wp), dimension(6,6):: DE
+      real(wp), dimension(6):: dFdSig, dPPdSig, dSigel, aux, Signew
+      real(wp), dimension(2):: dFdSP, DSPErate
+      real(wp), dimension(2,6):: dSPdEpsp, dSPdEpsrate
+      real(wp):: p, q, eta, e_c, A, Hard, dEpsvol, dEpsq
+      real(wp):: M_in, p_in, en, psin, D1, D2, Gn, Kn, p_i0n, CHI_tcen
+      real(wp):: denom, numerator, lambda, aux2(3), F2, Erate_dev0
+      real(wp):: J3, J2, cos3Theta, Mtheta, theta, M_itc, eta_L, Dummyvar,dErate_eff
       logical:: ApplyStrainRateUpdates
       integer:: I, J, count
       count=0
@@ -1059,23 +1059,23 @@ contains
 
       implicit none
       !input variables
-      real(dp), dimension(6), intent(in):: dEps, Sig, Epsp, Erate, Erate0
-      real(dp), intent(in):: M_tc, N, CHI_tc, H_0, H_y, pi_0, p_i, M_i, psi, CHI_tce, M_tce, &
+      real(wp), dimension(6), intent(in):: dEps, Sig, Epsp, Erate, Erate0
+      real(wp), intent(in):: M_tc, N, CHI_tc, H_0, H_y, pi_0, p_i, M_i, psi, CHI_tce, M_tce, &
          CHIi, e, G, K
-      real(dp), intent(in):: e_o, Gamma, lambda_e
-      real(dp), intent(in):: RefRate, alpha_CHI, alpha_pi, DT, Dtime, alpha_M, S, kappa
+      real(wp), intent(in):: e_o, Gamma, lambda_e
+      real(wp), intent(in):: RefRate, alpha_CHI, alpha_pi, DT, Dtime, alpha_M, S, kappa
       logical, intent(in):: Int_Method, Locus
       !output variables
-      real(dp), dimension(6,6), intent(out):: DDSDDE
+      real(wp), dimension(6,6), intent(out):: DDSDDE
 
       !local variables
-      real(dp), dimension(6,6):: DE, M_p, C_vp
-      real(dp), dimension(6):: dFdSig, aux_0, aux, dPPdSig, DummyVec
-      real(dp), dimension(3):: dFdSP
-      real(dp), dimension(3,6):: dSPdEpsp, dSPdEpsrate
-      real(dp):: p, q, eta, A, Hard, aux2(2)
-      real(dp):: denom, Dummyvar, IErateI, IErate0I, Erate_dev, Erate_dev0, Erate_vol
-      real(dp):: theta, J3, J2, cos3theta, Mtheta, D1, D2, dEpsvol
+      real(wp), dimension(6,6):: DE, M_p, C_vp
+      real(wp), dimension(6):: dFdSig, aux_0, aux, dPPdSig, DummyVec
+      real(wp), dimension(3):: dFdSP
+      real(wp), dimension(3,6):: dSPdEpsp, dSPdEpsrate
+      real(wp):: p, q, eta, A, Hard, aux2(2)
+      real(wp):: denom, Dummyvar, IErateI, IErate0I, Erate_dev, Erate_dev0, Erate_vol
+      real(wp):: theta, J3, J2, cos3theta, Mtheta, D1, D2, dEpsvol
       integer:: I, J
 
       !_Get the derivatives___________________________________________________________________________
@@ -1189,11 +1189,11 @@ contains
       !Function to obtain a path dependent critical stress ratio
       !_______________________________________________________________________________
       implicit none
-      real(dp), intent(in) :: Mtc
-      real(dp), intent(inout):: stress(6)
-      real(dp), intent(out) :: theta, J3, J2, cos3Theta, xM
-      real(dp) :: dJdSig(6), dJ3dSig(6)
-      real(dp) ::  J3AJ3,  sin3Theta, pi
+      real(wp), intent(in) :: Mtc
+      real(wp), intent(inout):: stress(6)
+      real(wp), intent(out) :: theta, J3, J2, cos3Theta, xM
+      real(wp) :: dJdSig(6), dJ3dSig(6)
+      real(wp) ::  J3AJ3,  sin3Theta, pi
       PARAMETER (pi=3.14159265359D0)
 
 
@@ -1224,7 +1224,7 @@ contains
       if (theta < -0.523598) theta = -0.523598
 
       cos3Theta = cos(3.*theta)
-      if (abs(cos3Theta) < 1.0e-8_dp) cos3Theta = 0
+      if (abs(cos3Theta) < 1.0e-8_wp) cos3Theta = 0
 
       ! Jefferies \& Shuttle  2011
       xM = Mtc - Mtc**2./(3. + Mtc) * cos(-3.*theta /2. + pi / 4.) !The minus sign is for p<0
@@ -1235,9 +1235,9 @@ contains
    !XXXXXX STRESS INVARIANTS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
    subroutine getPandQ (stress,p,q,eta)
       implicit none
-      real(dp), intent(in) :: stress(6)
-      real(dp), intent(out) :: p, q, eta
-      real(dp) :: sigma(6)
+      real(wp), intent(in) :: stress(6)
+      real(wp), intent(out) :: p, q, eta
+      real(wp) :: sigma(6)
       integer :: I
       sigma = stress
       q = 0.
@@ -1258,8 +1258,8 @@ contains
 
    subroutine getDevVolStrain (Eps, EpsV, EpsD)
       implicit none
-      real(dp), intent(in) :: Eps(6)
-      real(dp), intent(out) :: EpsV, EpsD
+      real(wp), intent(in) :: Eps(6)
+      real(wp), intent(out) :: EpsV, EpsD
       EpsV = Eps(1) + Eps(2) + Eps(3)  ! volumetric strain
       EpsD = sqrt(2./3.)*sqrt( (Eps(1)-EpsV/3.)**2. &
          + (EpS(2)-EpsV/3.)**2. + (EpS(3)-EpsV/3.)**2. &
@@ -1268,9 +1268,9 @@ contains
 
    subroutine getInvariants (stress, J2, dJdSig,J3, dJ3dSig)
       implicit none
-      real(dp), intent(inout) :: stress(6)
-      real(dp), intent(out) ::J2,dJdSig(6),J3,dJ3dSig(6)
-      real(dp) :: p, q, S(6), eta
+      real(wp), intent(inout) :: stress(6)
+      real(wp), intent(out) ::J2,dJdSig(6),J3,dJ3dSig(6)
+      real(wp) :: p, q, S(6), eta
       integer :: I
 
       call getPandQ (stress,p,q,eta)
@@ -1316,8 +1316,8 @@ contains
       !Jeffereis and Shuttle 2011
       !____________________________________________________________
       implicit none
-      real(dp), intent(in):: xM, CHI, N, psi_i, M_tc
-      real(dp), intent(out):: M_i
+      real(wp), intent(in):: xM, CHI, N, psi_i, M_tc
+      real(wp), intent(out):: M_i
       M_i=xM*(1.0d0-(N*CHI*abs(psi_i)/M_tc))
    end subroutine GetMiwithPsi
 
@@ -1329,12 +1329,12 @@ contains
       !________________________________________________________________________
       implicit none
       !input variables
-      real(dp), intent(in) :: SPTOL, dSig(6), Sig(6), M_tc, CHI_tc, lambda, Gamma, N, e, R, &
+      real(wp), intent(in) :: SPTOL, dSig(6), Sig(6), M_tc, CHI_tc, lambda, Gamma, N, e, R, &
          FTOL
       !Output variables
-      real(dp), intent(inout):: M_i, p_i, CHIi, psi_i
+      real(wp), intent(inout):: M_i, p_i, CHIi, psi_i
       !local variables
-      real(dp):: sigT(6), p, q, eta, theta, J3, J2, cos3Theta, Mtheta,e_ci, pi_old, F_pi, dFdSP(3)
+      real(wp):: sigT(6), p, q, eta, theta, J3, J2, cos3Theta, Mtheta,e_ci, pi_old, F_pi, dFdSP(3)
       logical:: Locus
 
       call getPandQ(Sig, p, q, eta)
@@ -1376,16 +1376,16 @@ contains
    subroutine getdFdSig(Locus, Sig, p_i, M_i, M_tc, CHIi, CHI_tce, N, psi, dFdSig, dPPdSig)
       !PartialFtoPartialSigma
       implicit none
-      real(dp), intent(in) ::Sig(6), p_i, M_tc, CHIi, N, psi, M_i, CHI_tce
+      real(wp), intent(in) ::Sig(6), p_i, M_tc, CHIi, N, psi, M_i, CHI_tce
       logical, intent(in):: Locus
-      real(dp), intent(out) :: dFdSig(6), dPPdSig(6)
-      real(dp) :: dFdp, dpdSig(6), dqdSig(6), dFdM, dThetadSig(6), xM
-      real(dp) :: dMdTheta, dFdq
-      real(dp) :: p, q , eta,J2, J3, dJdSig(6), dJ3dSig(6), &
+      real(wp), intent(out) :: dFdSig(6), dPPdSig(6)
+      real(wp) :: dFdp, dpdSig(6), dqdSig(6), dFdM, dThetadSig(6), xM
+      real(wp) :: dMdTheta, dFdq
+      real(wp) :: p, q , eta,J2, J3, dJdSig(6), dJ3dSig(6), &
          theta, cos3Theta, F1(6), F2(6), F3(6), pi, Dmin
-      real(dp) :: p_max, pr, pl, n_L, M_itc, D
-      real(dp) :: dMidMtheta
-      real(dp) :: dFdTheta, C_v, C_q, F_to_G_gradients_angle
+      real(wp) :: p_max, pr, pl, n_L, M_itc, D
+      real(wp) :: dMidMtheta
+      real(wp) :: dFdTheta, C_v, C_q, F_to_G_gradients_angle
       integer :: I
 
       PARAMETER (pi=3.14159265359D0)
@@ -1427,7 +1427,7 @@ contains
             dThetadSig(I) = 0.
          end do
       else
-         if (abs(cos3Theta) < 1.0e-16_dp) then  ! avoid dividing by 0
+         if (abs(cos3Theta) < 1.0e-16_wp) then  ! avoid dividing by 0
             if (cos3Theta == 0) then
                do I = 1, 6
                   dThetadSig(I) = 0.
@@ -1490,15 +1490,15 @@ contains
 
       implicit none
       !Input variables
-      real(dp), intent(in):: M_i, p_i, p, psi, CHI_tce, M_tc, CHIi, lambda, N
-      real(dp), dimension(6), intent(in):: Sig
+      real(wp), intent(in):: M_i, p_i, p, psi, CHI_tce, M_tc, CHIi, lambda, N
+      real(wp), dimension(6), intent(in):: Sig
       logical, intent(in):: Locus
       !output variables
-      real(dp), dimension(2), intent(out):: dFdSP
+      real(wp), dimension(2), intent(out):: dFdSP
       !local variables
-      real(dp):: dFdM, Mtheta, theta, J3, J2, cos3Theta,p_max, dMthetadMtc, dMidMtc
-      real(dp):: pi
-      real(dp)::dpmaxdpi, dpmaxdChi_tc, M_itc
+      real(wp):: dFdM, Mtheta, theta, J3, J2, cos3Theta,p_max, dMthetadMtc, dMidMtc
+      real(wp):: pi
+      real(wp)::dpmaxdpi, dpmaxdChi_tc, M_itc
       PARAMETER (pi=3.14159265359D0)
 
       M_itc=M_tc*(1-CHIi*N*abs(psi)/M_tc)
@@ -1533,19 +1533,19 @@ contains
 
       implicit none
       !input variables
-      real(dp), dimension(6), intent(in):: Epsp, dEps, Sig
-      real(dp), intent(in):: M_i, p_i, psi,q, p, e_o, e, lambda, Gamma, pi_0
-      real(dp), intent(in):: M_tc, N, CHIi, Chi_tce, H_0, H_y, S, K, RefRate
-      real(dp), intent(inout):: IErateI, alpha_pi, IErate0I
+      real(wp), dimension(6), intent(in):: Epsp, dEps, Sig
+      real(wp), intent(in):: M_i, p_i, psi,q, p, e_o, e, lambda, Gamma, pi_0
+      real(wp), intent(in):: M_tc, N, CHIi, Chi_tce, H_0, H_y, S, K, RefRate
+      real(wp), intent(inout):: IErateI, alpha_pi, IErate0I
 
       logical, intent(in):: Locus
       !output variables
-      real(dp), dimension(2,6), intent(out):: dSPdEpsp
+      real(wp), dimension(2,6), intent(out):: dSPdEpsp
       !local variables
-      real(dp):: theta, J3, J2, cos3Theta, Mtheta, dMitcdpsi, dErate
-      real(dp):: ps, pmax, dpidpsi, dpidMitc, dMidpsi, dpsidpi, psi_act, H, Ts, eta_L
-      real(dp):: dEpsqdEpsp(6), Epspq, Epspv, dpidEpspeq, dpsidEpsv, dpidEpspv
-      real(dp):: dEpspvdEpsp(6), dMidEpsv, dMidEpsq, M_itc, dEpspv, dEpspq, dErate_eff
+      real(wp):: theta, J3, J2, cos3Theta, Mtheta, dMitcdpsi, dErate
+      real(wp):: ps, pmax, dpidpsi, dpidMitc, dMidpsi, dpsidpi, psi_act, H, Ts, eta_L
+      real(wp):: dEpsqdEpsp(6), Epspq, Epspv, dpidEpspeq, dpsidEpsv, dpidEpspv
+      real(wp):: dEpspvdEpsp(6), dMidEpsv, dMidEpsq, M_itc, dEpspv, dEpspq, dErate_eff
       integer:: I
       logical:: ApplyStrainRateUpdates
 
@@ -1617,13 +1617,13 @@ contains
       !***************************************************************************
       implicit none
       !input variables
-      real(dp), intent(in):: alpha_chi, alpha_pi, Erate_dev, Erate_devf, &
+      real(wp), intent(in):: alpha_chi, alpha_pi, Erate_dev, Erate_devf, &
          pi_0, chi_tc, Erate(6), RateRef
       !inout variables
-      real(dp), intent(out):: dSPdEpsrate(2,6)
+      real(wp), intent(out):: dSPdEpsrate(2,6)
       !local variables
       integer :: i
-      real(dp):: dErate_devdErate(6), aux, dErateDev_dErate(6), dErate_eff
+      real(wp):: dErate_devdErate(6), aux, dErateDev_dErate(6), dErate_eff
       logical:: ApplyStrainRateUpdates
       dErate_eff=Erate_devf-Erate_dev
       call check4crossing(Erate_dev, Erate_devf, dErate_eff, RateRef, ApplyStrainRateUpdates)
@@ -1668,14 +1668,14 @@ contains
       implicit none
 
       !Local Variables
-      real(dp) :: k1, k2, k3
-      real(dp) :: EpsPM
-      real(dp), dimension(3) :: EpsDev
+      real(wp) :: k1, k2, k3
+      real(wp) :: EpsPM
+      real(wp), dimension(3) :: EpsDev
       !In Variables
-      real(dp), intent(in), dimension(6) :: EpsP
-      real(dp), intent(in) :: EpsPEq
+      real(wp), intent(in), dimension(6) :: EpsP
+      real(wp), intent(in) :: EpsPEq
       !Out Variables
-      real(dp), intent(out), dimension(6):: DEpsPEqDPS
+      real(wp), intent(out), dimension(6):: DEpsPEqDPS
 
       k1 = 2.0d0/(3.0d0*EpsPEq)
       if (EpsPEq < 0.00000000001d0) then
@@ -1704,14 +1704,14 @@ contains
       psi,CHI_tce, CHIi)
       implicit none
       !input variables
-      real(dp), intent(in):: dsig(6),Sig(6), M_tc, N
-      real(dp), intent(in):: alpha_pi, alpha_CHI, RefRate
-      real(dp), intent(in):: lambda, Gamma, e
-      real(dp), intent(in):: IErateI, dErate_eff
+      real(wp), intent(in):: dsig(6),Sig(6), M_tc, N
+      real(wp), intent(in):: alpha_pi, alpha_CHI, RefRate
+      real(wp), intent(in):: lambda, Gamma, e
+      real(wp), intent(in):: IErateI, dErate_eff
       !out variables
-      real(dp), intent(inout):: p_i, M_i, psi, CHIi, CHI_tce, pi_0
+      real(wp), intent(inout):: p_i, M_i, psi, CHIi, CHI_tce, pi_0
       !local variables
-      real(dp):: e_ci, theta, J3, J2, cos3Theta, Mtheta
+      real(wp):: e_ci, theta, J3, J2, cos3Theta, Mtheta
 
 
       p_i=pi_0*(1.0d0+alpha_pi*log10(IErateI/RefRate))
@@ -1728,12 +1728,12 @@ contains
       IErate0I, Erate_vol, Erate_vol0, dErate_eff, RefRate, G, K)
       implicit none
       !input variables
-      real(dp), intent(in):: G_0, p, p_ref, nG, nu
-      real(dp), intent(in):: alpha_G, alpha_K, IErateI, IErate0I, dErate_eff, RefRate
+      real(wp), intent(in):: G_0, p, p_ref, nG, nu
+      real(wp), intent(in):: alpha_G, alpha_K, IErateI, IErate0I, dErate_eff, RefRate
       !output variables
-      real(dp), intent(inout):: G, K, Erate_vol, Erate_vol0
+      real(wp), intent(inout):: G, K, Erate_vol, Erate_vol0
       !local variables
-      real(dp):: dG, K_0
+      real(wp):: dG, K_0
       logical:: ApplyVolStrainRate
 
       !Update G
@@ -1752,10 +1752,10 @@ contains
       ! Yield function or plastic potential surface for Nor-Sand
       !_______________________________________________________________
       implicit none
-      real(dp), intent(in) :: p, q, M_image, p_image, CHI_tc, psi, M_tc, CHIi, N, TOL
-      real(dp), intent(out) :: yield
+      real(wp), intent(in) :: p, q, M_image, p_image, CHI_tc, psi, M_tc, CHIi, N, TOL
+      real(wp), intent(out) :: yield
       logical, intent(out):: locus
-      real(dp):: p_max, M_itc, F1, F2
+      real(wp):: p_max, M_itc, F1, F2
 
 
       M_itc=M_tc*(1-CHIi*N*abs(psi)/M_tc)
@@ -1772,10 +1772,10 @@ contains
       ! Yield function or plastic potential surface for Nor-Sand
       !_______________________________________________________________
       implicit none
-      real(dp), intent(in) :: p, q, M_image, p_image, CHI_tc, psi, M_tc, CHIi, N, TOL
-      real(dp), intent(out) :: yield
+      real(wp), intent(in) :: p, q, M_image, p_image, CHI_tc, psi, M_tc, CHIi, N, TOL
+      real(wp), intent(out) :: yield
       logical, intent(in):: locus
-      real(dp):: p_max, M_itc, F1, F2
+      real(wp):: p_max, M_itc, F1, F2
 
 
       M_itc=M_tc*(1-CHIi*N*abs(psi)/M_tc)
@@ -1800,20 +1800,20 @@ contains
       !__________________________________________________________________
       implicit none
       !input variables
-      real(dp), intent(in):: FTOL, Sig_0(6), dEps(6), RefRate
-      real(dp), intent(in):: Chi_tc, M_tc, N, pi_0, alpha_chi, alpha_pi
-      real(dp), intent(in):: G_0, nu, p_ref, nG, alpha_G
-      real(dp), intent(in):: Gamma, Lambda, IErateI, Erate_dev, Erate_vol
+      real(wp), intent(in):: FTOL, Sig_0(6), dEps(6), RefRate
+      real(wp), intent(in):: Chi_tc, M_tc, N, pi_0, alpha_chi, alpha_pi
+      real(wp), intent(in):: G_0, nu, p_ref, nG, alpha_G
+      real(wp), intent(in):: Gamma, Lambda, IErateI, Erate_dev, Erate_vol
       !out variables
-      real(dp), intent(inout):: alphaNewton, e, p_i, chi_tce, psi, Chii, G, K, M_i
-      real(dp), intent(out):: Sig(6), dEpsS(6)
-      real(dp), intent(inout)::dErate(6), Erate0(6), IErate0I, dErate_eff, Erate_dev0, Erate_vol0
+      real(wp), intent(inout):: alphaNewton, e, p_i, chi_tce, psi, Chii, G, K, M_i
+      real(wp), intent(out):: Sig(6), dEpsS(6)
+      real(wp), intent(inout)::dErate(6), Erate0(6), IErate0I, dErate_eff, Erate_dev0, Erate_vol0
       !local variables
-      real(dp):: FNewton, e_new, p_inew, chi_tcenew, psi_new, e_c, Chii_new, M_inew, Fp
-      real(dp):: dEpsT(6), dErateT(6), ErateT(6), IErateTI, dSigEl(6), SigT(6), &
+      real(wp):: FNewton, e_new, p_inew, chi_tcenew, psi_new, e_c, Chii_new, M_inew, Fp
+      real(wp):: dEpsT(6), dErateT(6), ErateT(6), IErateTI, dSigEl(6), SigT(6), &
          Erate_dev_T, Erate_vol_T
-      real(dp):: p, q, eta,p_t, q_t, Gi, Ki, dEpsVol, dEpsq, Mtheta, theta, J3, J2, cos3Theta, DeltaK, deltaG
-      real(dp):: dSPRate(2), D1, D2, DE(6,6), dDdK(6,6), dDdG(6,6), AlphaD(6,6), dSigdalpha(6), &
+      real(wp):: p, q, eta,p_t, q_t, Gi, Ki, dEpsVol, dEpsq, Mtheta, theta, J3, J2, cos3Theta, DeltaK, deltaG
+      real(wp):: dSPRate(2), D1, D2, DE(6,6), dDdK(6,6), dDdG(6,6), AlphaD(6,6), dSigdalpha(6), &
          dFdSig(6), dFdSP(2)
       integer:: I, c
       logical:: ApplyStrainRateUpdates, Locus
@@ -1954,12 +1954,12 @@ contains
       implicit none
 
       !Local Variables
-      real(dp) ::  NormDSig, NormDFDSig, DSigdpDFDSig, CTeta, dummy(6)
-      real(dp), dimension(6) :: dFdSig
+      real(wp) ::  NormDSig, NormDFDSig, DSigdpDFDSig, CTeta, dummy(6)
+      real(wp), dimension(6) :: dFdSig
       logical, intent(in):: Locus
       !In Variables
-      real(dp), intent(in), dimension(6) :: Sig, dSig
-      real(dp), intent(in) :: M_tc, N, p_i, psi, CHIi, CHI_tce, LTOL, M_i
+      real(wp), intent(in), dimension(6) :: Sig, dSig
+      real(wp), intent(in) :: M_tc, N, p_i, psi, CHIi, CHI_tce, LTOL, M_i
 
       !Out Variables
       Logical, intent(out) :: IsElasticUnloading
@@ -1994,7 +1994,7 @@ contains
    subroutine ZERO2(A,N)
       implicit none
       integer, intent(in) :: N
-      real(dp), intent(inout) :: A (N,N)
+      real(wp), intent(inout) :: A (N,N)
       integer :: I,J
       do I = 1,N
          do J=1,N
@@ -2006,7 +2006,7 @@ contains
    subroutine ZERO1(A,N)
       implicit none
       integer, intent(in) :: N
-      real(dp), intent(inout) :: A(N)
+      real(wp), intent(inout) :: A(N)
       integer :: I
       do I = 1, N
          A(I) = 0.
@@ -2015,8 +2015,8 @@ contains
 
    subroutine addMatComp (A, B, C)
       implicit none
-      real(dp), intent(in) :: A(6,6), B(6,6)
-      real(dp), intent(out) :: C (6,6)
+      real(wp), intent(in) :: A(6,6), B(6,6)
+      real(wp), intent(out) :: C (6,6)
       integer :: I , J
       do I = 1, 6
          do J = 1, 6
@@ -2027,9 +2027,9 @@ contains
 
    subroutine AddVec (A, B, coef1, coef2, N, C)
       implicit none
-      real(dp), intent(in) :: A(N), B(N)
-      real(dp), intent(in) :: coef1, coef2
-      real(dp), intent(out) :: C(N)
+      real(wp), intent(in) :: A(N), B(N)
+      real(wp), intent(in) :: coef1, coef2
+      real(wp), intent(out) :: C(N)
       integer :: I, J, N
 
       call ZERO1(C,N)
@@ -2040,8 +2040,8 @@ contains
 
    subroutine MatVec (A, M, B, N, C)
       implicit none
-      real(dp), intent(in) :: A(M,N), B(N)
-      real(dp), intent(out) :: C (N)
+      real(wp), intent(in) :: A(M,N), B(N)
+      real(wp), intent(out) :: C (N)
       integer :: I, J, M, N
 
       call ZERO1(C,N)
@@ -2144,7 +2144,7 @@ contains
       ! Boolean
       !******************************************************************
       implicit none
-      real(dp), intent(in):: A
+      real(wp), intent(in):: A
       logical, intent(out):: B
       if (A<1.0) then
          B=.false.
@@ -2165,7 +2165,7 @@ contains
 
    Subroutine check4crossing(IErate0I, IErateI, dErate_eff,RateRef, Apply)
       implicit none
-      real(dp), intent(inout):: IErate0I, IErateI, dErate_eff, RateRef
+      real(wp), intent(inout):: IErate0I, IErateI, dErate_eff, RateRef
       logical:: cond1, cond2, cond3
       logical, intent(out)::Apply
       Apply=.false.

@@ -3,7 +3,7 @@
 ! and implements the seven deferred procedures.
 
 module mod_csm_model
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
    implicit none
 
    ! ---------------------------------------------------------------------------
@@ -37,47 +37,47 @@ module mod_csm_model
       ! F = model%yield_fn(sig)
       ! Returns scalar yield function value. F < 0 = elastic, F = 0 = on surface.
       function yield_fn_iface(self, sig) result(F)
-         import :: csm_model_t, dp
+         import :: csm_model_t, wp
          class(csm_model_t), intent(in) :: self
-         real(dp), intent(in) :: sig(6)   ! internal Voigt convention
-         real(dp) :: F
+         real(wp), intent(in) :: sig(6)   ! internal Voigt convention
+         real(wp) :: F
       end function yield_fn_iface
 
       ! dF_by_dsig = model%flow_rule(sig)
       ! Gradient of the yield surface — used for the consistency condition.
       function flow_rule_iface(self, sig) result(dF_by_dsig)
-         import :: csm_model_t, dp
+         import :: csm_model_t, wp
          class(csm_model_t), intent(in) :: self
-         real(dp), intent(in) :: sig(6)
-         real(dp) :: dF_by_dsig(6)
+         real(wp), intent(in) :: sig(6)
+         real(wp) :: dF_by_dsig(6)
       end function flow_rule_iface
 
       ! dg_plas_by_dsig = model%plastic_potential(sig)
       ! Flow direction. For associated flow: identical to flow_rule.
       ! For non-associated flow (e.g. MC): uses dilation angle instead of friction angle.
       function plastic_pot_iface(self, sig) result(dg_plas_by_dsig)
-         import :: csm_model_t, dp
+         import :: csm_model_t, wp
          class(csm_model_t), intent(in) :: self
-         real(dp), intent(in) :: sig(6)
-         real(dp) :: dg_plas_by_dsig(6)
+         real(wp), intent(in) :: sig(6)
+         real(wp) :: dg_plas_by_dsig(6)
       end function plastic_pot_iface
 
       ! call model%update_hardening(deps_p)
       ! Updates all internal state variables given a plastic strain increment.
       ! This is the only place internal state changes during stress integration.
       subroutine harden_iface(self, deps_p)
-         import :: csm_model_t, dp
+         import :: csm_model_t, wp
          class(csm_model_t), intent(inout) :: self
-         real(dp), intent(in) :: deps_p(6)
+         real(wp), intent(in) :: deps_p(6)
       end subroutine harden_iface
 
       ! stiff_e = model%elastic_stiffness()
       ! Returns the 6x6 elastic stiffness matrix.
       ! For models with pressure-dependent stiffness this uses current state.
       function stiffness_iface(self) result(stiff_e)
-         import :: csm_model_t, dp
+         import :: csm_model_t, wp
          class(csm_model_t), intent(in) :: self
-         real(dp) :: stiff_e(6,6)
+         real(wp) :: stiff_e(6,6)
       end function stiffness_iface
 
       ! call model%snapshot(saved)
@@ -85,18 +85,18 @@ module mod_csm_model
       ! The integrator holds this array opaquely — it does not interpret the contents.
       ! Index layout is defined only inside each model's implementation.
       subroutine snapshot_iface(self, saved)
-         import :: csm_model_t, dp
+         import :: csm_model_t, wp
          class(csm_model_t), intent(in)               :: self
-         real(dp), allocatable, intent(out)            :: saved(:)
+         real(wp), allocatable, intent(out)            :: saved(:)
       end subroutine snapshot_iface
 
       ! call model%restore(saved)
       ! Deserialises state from a flat array previously produced by snapshot.
       ! Inverse of snapshot — index layout must match.
       subroutine restore_iface(self, saved)
-         import :: csm_model_t, dp
+         import :: csm_model_t, wp
          class(csm_model_t), intent(inout) :: self
-         real(dp),            intent(in)   :: saved(:)
+         real(wp),            intent(in)   :: saved(:)
       end subroutine restore_iface
 
    end interface

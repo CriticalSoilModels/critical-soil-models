@@ -1,11 +1,11 @@
 module mod_SRMC_Ortiz_Simo
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
 
    use mod_SRMC_funcs        , only: MatVec, DotProduct_2 ! Subroutines that are required for calculations
    use mod_state_params      , only: check4crossing, Update_GK, get_dilation, Get_M
    use mod_state_params_deriv, only: calc_ddil_by_deps_p
-   use mod_stress_invariants , only: calc_sig_invariants
-   use mod_strain_invariants , only: calc_eps_invariants
+   use mod_stress_invariants , only: calc_sig_inv
+   use mod_strain_invariants , only: calc_eps_inv
    use mod_yield_function    , only: calc_yield_function, calc_dF_by_dsig
    use mod_plastic_potential , only: calc_dg_plas_by_dsig
 
@@ -55,43 +55,43 @@ contains
       !--------------Input variables--------------!
 
       ! Input scalar values
-      real(dp), intent(in):: G_0, nu, M_tc, No, D_min, h, &
+      real(wp), intent(in):: G_0, nu, M_tc, No, D_min, h, &
          k_G, k_K, k_D, FTOL
       integer, intent(in) :: NOEL, max_stress_iters
       ! Input vector values
-      real(dp), dimension (6), intent(in):: dEps
+      real(wp), dimension (6), intent(in):: dEps
 
       !-------------End Input Variables-----------!
 
       !--------------Output Variables-------------!
       ! In/Out scalar values
-      real(dp), intent(inout):: G, K, eta_y, dilation, I_0, I, dI, M
+      real(wp), intent(inout):: G, K, eta_y, dilation, I_0, I, dI, M
 
       ! In/Out Vector values
-      real(dp), dimension(6), intent(inout):: Sig, EpsP !, dEpsP
+      real(wp), dimension(6), intent(inout):: Sig, EpsP !, dEpsP
 
       ! Out scalar values
-      !real(dp), intent(out)::
+      !real(wp), intent(out)::
 
       ! Out vector values
-      ! real(dp), dimension(6), intent(out):: dSig
+      ! real(wp), dimension(6), intent(out):: dSig
 
       !-------------End Output Variables--------!
 
       !-------------local Variables-------------!
       ! Local scalar values
-      real(dp):: I_f, F, p, q, epsv_p, epsq_p, eta_yu, dil_u, Mu, dummyVal, a_Dot_m, L, H_term, &
+      real(wp):: I_f, F, p, q, epsv_p, epsq_p, eta_yu, dil_u, Mu, dummyVal, a_Dot_m, L, H_term, &
          D1, D2, b, dLambda, ddil
 
       logical:: ApplyStrainRateUpdate = .false.
       integer:: counter
 
       ! Local vector values
-      real(dp), dimension(6):: dEpsE, dummyVec, dEpsPu, EpsPu, Sigu, &
+      real(wp), dimension(6):: dEpsE, dummyVec, dEpsPu, EpsPu, Sigu, &
          m_vec, n_vec, DE_m, a, dSig
 
       ! Local matrix values
-      real(dp), dimension(6,6):: DE
+      real(wp), dimension(6,6):: DE
 
       !------------End local Variables----------!
 
@@ -106,7 +106,7 @@ contains
       ! Apply strain rate updates
       I_f=I+dI
       call check4crossing(I,  I_f, dI, I_0, ApplyStrainRateUpdate)
-      call calc_eps_invariants(EpsPu, epsv_p, epsq_p)
+      call calc_eps_inv(EpsPu, epsv_p, epsq_p)
       call Update_GK(G_0, nu, I_f, I_0, k_G, k_K, G, K)
       call get_dilation(h, D_min, I_f, I_0, epsq_p, k_D, ApplyStrainRateUpdate, dil_u) ! Need this for the strain rate but also to actually calculate dil_u
       eta_yu = Mu-dil_u*(1.0 * No)
@@ -141,7 +141,7 @@ contains
       !-------------------Begin Yielding Check--------------------------!
 
       ! Compute stress invariants
-      call calc_sig_invariants(Sigu, p, q, dummyVal)
+      call calc_sig_inv(Sigu, p, q, dummyVal)
 
       ! M = M_tc*(1 + 0.25(cos(1.5 * theta + 0.25 *pi))
       call Get_M(M_tc, dummyVal, Mu)
@@ -177,7 +177,7 @@ contains
          dEpsPu, I, ApplyStrainRateUpdate, a) !a=ddil/dEpsP
 
       ! Compute stress invariants
-      call calc_sig_invariants(Sigu, p, q, dummyVal)
+      call calc_sig_inv(Sigu, p, q, dummyVal)
 
       do while (abs(F) >= FTOL .and. counter <= max_stress_iters)
          !---------------------Begin Compute derivatives--------------------------!
@@ -209,7 +209,7 @@ contains
          Sigu = Sigu - dLambda * DE_m
 
          ! Compute stress invariants
-         call calc_sig_invariants(Sigu, p, q, dummyVal)
+         call calc_sig_inv(Sigu, p, q, dummyVal)
 
          ! Update M
          call Get_M(M_tc, dummyVal, Mu)
@@ -221,7 +221,7 @@ contains
          EpsPu = EpsPu + dEpsPu
 
          ! Calc strain invariants
-         ! call calc_eps_invariants(EpsPu, epsv_p, epsq_p)
+         ! call calc_eps_inv(EpsPu, epsv_p, epsq_p)
 
          ! ! Calc a = ddil/dEpsP
          ! call calc_ddil_by_deps_p(D_min, h, I_0, k_D, epsq_p, epsv_p, &

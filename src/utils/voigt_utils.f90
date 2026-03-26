@@ -1,5 +1,5 @@
 module mod_voigt_utils
-   use stdlib_kinds, only: dp, i32 => int32
+   use mod_csm_kinds, only: wp
    implicit none
    private
    public :: calc_dev_stress, calc_two_norm_tensor, calc_two_norm_tensor_strain, calc_voigt_to_matrix, calc_matrix_to_voigt, &
@@ -7,8 +7,8 @@ module mod_voigt_utils
 contains
 
    pure function calc_dev_stress(stress, mean_stress) result(dev_stress)
-      real(kind = dp), intent(in) :: stress(6), mean_stress
-      real(kind = dp) :: dev_stress(6)
+      real(kind=wp), intent(in) :: stress(6), mean_stress
+      real(kind=wp) :: dev_stress(6)
 
       ! Local variables
       integer :: i
@@ -26,16 +26,16 @@ contains
    pure function calc_two_norm_tensor(v) result(norm)
       ! Frobenius norm of a symmetric tensor in Voigt-6 form: sqrt(A:A)
       ! Normal components (1:3) enter once; shear components (4:6) enter twice.
-      real(kind = dp), intent(in) :: v(6)
-      real(kind = dp) :: norm
+      real(kind=wp), intent(in) :: v(6)
+      real(kind=wp) :: norm
       integer :: i
 
-      norm = 0.0_dp
+      norm = 0.0_wp
       do i = 1, 3
          norm = norm + v(i)*v(i)
       end do
       do i = 4, 6
-         norm = norm + 2.0_dp*(v(i)*v(i))
+         norm = norm + 2.0_wp*(v(i)*v(i))
       end do
       norm = sqrt(norm)
 
@@ -44,16 +44,16 @@ contains
    pure function calc_two_norm_tensor_strain(v) result(norm)
       ! Frobenius norm of a symmetric strain tensor in Voigt-6 form.
       ! Uses engineering shear strains (factor 0.5 on shear components).
-      real(kind = dp), intent(in) :: v(6)
-      real(kind = dp) :: norm
+      real(kind=wp), intent(in) :: v(6)
+      real(kind=wp) :: norm
       integer :: i
 
-      norm = 0.0_dp
+      norm = 0.0_wp
       do i = 1, 3
          norm = norm + v(i)*v(i)
       end do
       do i = 4, 6
-         norm = norm + 0.5_dp*(v(i)*v(i))
+         norm = norm + 0.5_wp*(v(i)*v(i))
       end do
       norm = sqrt(norm)
 
@@ -61,8 +61,8 @@ contains
 
    pure function calc_voigt_to_matrix(voigt_vector) result(matrix)
 
-      real(kind = dp), intent(in) :: voigt_vector(6)
-      real(kind = dp) :: matrix(3, 3)
+      real(kind=wp), intent(in) :: voigt_vector(6)
+      real(kind=wp) :: matrix(3, 3)
 
       ! Local variables
       integer :: i
@@ -81,8 +81,8 @@ contains
 
    pure function calc_matrix_to_voigt(matrix) result(voigt_vector)
 
-      real(kind = dp), intent(in) :: matrix(3,3)
-      real(kind = dp) :: voigt_vector(6)
+      real(kind=wp), intent(in) :: matrix(3,3)
+      real(kind=wp) :: voigt_vector(6)
 
       ! Local variables
       integer :: i
@@ -113,8 +113,8 @@ contains
    pure function calc_voigt_square(voigt) result(voigt2)
       ! Multies a voigt vector using matrix multiplication against itself
       ! Assumes incremental driver ordering for the voigt vector
-      real(kind = dp), intent(in) :: voigt(6)
-      real(kind = dp) :: voigt2(6)
+      real(kind=wp), intent(in) :: voigt(6)
+      real(kind=wp) :: voigt2(6)
 
       voigt2(1)=voigt(1)**2 + voigt(4)**2 + voigt(5)**2
       voigt2(2)=voigt(2)**2 + voigt(4)**2 + voigt(6)**2
@@ -127,16 +127,16 @@ contains
    pure function calc_tensor_inner_product(a, b) result(inner)
       ! Symmetric tensor inner product A:B in Voigt-6 form.
       ! Normal components (1:3) enter once; shear components (4:6) enter twice.
-      real(kind = dp), intent(in) :: a(6), b(6)
-      real(kind = dp) :: inner
+      real(kind=wp), intent(in) :: a(6), b(6)
+      real(kind=wp) :: inner
       integer :: i
 
-      inner = 0.0_dp
+      inner = 0.0_wp
       do i = 1, 3
          inner = inner + a(i)*b(i)
       end do
       do i = 4, 6
-         inner = inner + 2.0_dp*(a(i)*b(i))
+         inner = inner + 2.0_wp*(a(i)*b(i))
       end do
    end function calc_tensor_inner_product
 

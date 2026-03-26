@@ -1,6 +1,6 @@
 module mod_bingham
    !! This module does this thingw
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
    ! use mod_strain_invariants, only: calc_eps_vol
 
 contains
@@ -9,32 +9,32 @@ contains
       dstran,nstatev,statev,naddvar,additionalvar,cmname,nprops,props,numberofphases,ntens)
 
 
-      ! implicit real(dp) (a-h, o-z)
+      ! implicit real(wp) (a-h, o-z)
       integer :: ntens, nstatev, naddvar, nprops, npt, noel, idset, numberofphases
-      real(dp) :: eunloading, plasticmultiplier
+      real(wp) :: eunloading, plasticmultiplier
       character(len=80), intent(in):: cmname
-      real(dp), intent(inout) :: stress(ntens), dstran(ntens),statev(nstatev),additionalvar(naddvar),props(nprops)
+      real(wp), intent(inout) :: stress(ntens), dstran(ntens),statev(nstatev),additionalvar(naddvar),props(nprops)
 
 
 !---local variables required in standard umat
       integer :: istep, timestep
-      real(dp), dimension(:), allocatable :: ddsddt ! only for fully coupled thermal analysis: variation of stress increment due to temperature
-      real(dp), dimension(:), allocatable :: drplde ! only for fully coupled thermal analysis: variation of volumetric heat generation due to strain increment
-      real(dp), dimension(:), allocatable :: stran
-      real(dp), dimension(:), allocatable :: time
-      real(dp), dimension(:), allocatable :: predef
-      real(dp), dimension(:), allocatable :: dpred
-      real(dp), dimension(:), allocatable :: coords
-      real(dp), dimension(:,:), allocatable :: ddsdde ! jacobian matrix of the constitutive model (tangent stiffness matrix in case of mc)
-      real(dp), dimension(:,:), allocatable :: drot
-      real(dp), dimension(:,:), allocatable :: dfgrd0
-      real(dp), dimension(:,:), allocatable :: dfgrd1
-      real(dp) :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
-      real(dp) :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
-      real(dp) :: drpldt ! only for fully coupled thermal analysis: variation of volumetric heat generation due to temperature
-      real(dp) :: pnewdt, dtime, temp, dtemp, celent
-      real(dp) :: value ! auxiliary variable holding any real valued number
-      real(dp) :: porosity, waterpressure, waterpressure0, gaspressure, gaspressure0, degreesaturation
+      real(wp), dimension(:), allocatable :: ddsddt ! only for fully coupled thermal analysis: variation of stress increment due to temperature
+      real(wp), dimension(:), allocatable :: drplde ! only for fully coupled thermal analysis: variation of volumetric heat generation due to strain increment
+      real(wp), dimension(:), allocatable :: stran
+      real(wp), dimension(:), allocatable :: time
+      real(wp), dimension(:), allocatable :: predef
+      real(wp), dimension(:), allocatable :: dpred
+      real(wp), dimension(:), allocatable :: coords
+      real(wp), dimension(:,:), allocatable :: ddsdde ! jacobian matrix of the constitutive model (tangent stiffness matrix in case of mc)
+      real(wp), dimension(:,:), allocatable :: drot
+      real(wp), dimension(:,:), allocatable :: dfgrd0
+      real(wp), dimension(:,:), allocatable :: dfgrd1
+      real(wp) :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
+      real(wp) :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
+      real(wp) :: drpldt ! only for fully coupled thermal analysis: variation of volumetric heat generation due to temperature
+      real(wp) :: pnewdt, dtime, temp, dtemp, celent
+      real(wp) :: value ! auxiliary variable holding any real valued number
+      real(wp) :: porosity, waterpressure, waterpressure0, gaspressure, gaspressure0, degreesaturation
 
 
       integer :: ndi, nshr, layer, kspt, kstep, kinc
@@ -86,9 +86,9 @@ contains
       character(len=80) cmname
       integer :: ntens,nstatev,nprops,ndi,nshr,noel, &
          npt,layer,kspt,kstep,kinc
-      real(dp) :: sse,spd,scd,rpl,drpldt,dtime,temp,dtemp, &
+      real(wp) :: sse,spd,scd,rpl,drpldt,dtime,temp,dtemp, &
          pnewdt,celent
-      real(dp) :: stress(ntens),statev(nstatev), &
+      real(wp) :: stress(ntens),statev(nstatev), &
          ddsdde(ntens,ntens),ddsddt(ntens),drplde(ntens), &
          stran(ntens),dstran(ntens),time(2),predef(1),dpred(1), &
          props(nprops),coords(3),drot(3,3),dfgrd0(3,3),dfgrd1(3,3)
@@ -103,11 +103,11 @@ contains
       !  statev  i/o  r()  : state variables
 
       !---  local variables
-      real(dp) :: dsig(ntens), sig(ntens), strainrate(ntens), devstrainrate(ntens), sigma(ntens)
-      real(dp) :: dstranvol
-      real(dp):: eel, enu, yieldstress, viscosity, bulkmodulusliquid, liquidpressurecavitation, one, two, g
-      real(dp):: shearstress, fac, d1,d2
-      real(dp):: volstrainrate, volstrainratecomponent, liquidpressure, liquidpressureincrement
+      real(wp) :: dsig(ntens), sig(ntens), strainrate(ntens), devstrainrate(ntens), sigma(ntens)
+      real(wp) :: dstranvol
+      real(wp):: eel, enu, yieldstress, viscosity, bulkmodulusliquid, liquidpressurecavitation, one, two, g
+      real(wp):: shearstress, fac, d1,d2
+      real(wp):: volstrainrate, volstrainratecomponent, liquidpressure, liquidpressureincrement
       logical ::  computepressure
       integer :: i
 

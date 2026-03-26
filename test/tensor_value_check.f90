@@ -1,5 +1,5 @@
 module mod_tensor_value_checker
-   use stdlib_kinds, only: dp, sp
+   use mod_csm_kinds, only: wp, sp
    implicit none
 
    private
@@ -39,9 +39,9 @@ contains
 
    ! Subroutine for checking values of a real double-precision scalar
    subroutine check_real_dp_scalar_value(actual, expected, tol, passed)
-      real(kind= dp), intent(in) :: actual, expected, tol
+      real(kind=wp), intent(in) :: actual, expected, tol
       logical, intent(out) :: passed
-      real(kind = dp), allocatable :: diff
+      real(kind=wp), allocatable :: diff
 
       ! Calculate the difference between the values
       diff = abs(actual - expected)
@@ -81,9 +81,9 @@ contains
 
    ! Subroutine for checking values of a real single-precision vector
    subroutine check_real_dp_vector_values(actual, expected, tol, passed)
-    real(kind= dp), intent(in) :: actual(:), expected(:), tol
+    real(kind=wp), intent(in) :: actual(:), expected(:), tol
     logical, intent(out) :: passed
-    real(kind = dp), allocatable :: diff(:)
+    real(kind=wp), allocatable :: diff(:)
 
     ! Calculate the difference between the values
     diff = abs(actual - expected)
@@ -123,9 +123,9 @@ contains
 
    ! Subroutine for checking values of a real double-precision matrix
    subroutine check_real_dp_matrix_values(actual, expected, tol, passed)
-      real(kind= dp), intent(in) :: actual(:,:), expected(:,:), tol
+      real(kind=wp), intent(in) :: actual(:,:), expected(:,:), tol
       logical, intent(out) :: passed
-      real(kind = dp), allocatable :: diff(:,:)
+      real(kind=wp), allocatable :: diff(:,:)
 
       ! Calculate the difference between the values
       diff = abs(actual - expected)

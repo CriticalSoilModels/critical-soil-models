@@ -157,6 +157,30 @@ subroutine csm_umat_c(stress, statev, ddsdde, dstran, props, nprops, nstatev) &
 
 ---
 
+## 7. INCLUDE-based template integrators for GPU/HPC
+
+The generic `euler_substep` integrator uses `class(csm_model_t)` with deferred procedure
+calls — dynamic dispatch that cannot be placed in GPU kernels. For true HPC use (OpenACC,
+OpenMP target, CUDA Fortran), the integrator needs to be instantiated per-model so the
+compiler sees concrete procedure calls at compile time.
+
+The cleanest mechanism in standard Fortran is an `INCLUDE`-based template: write the
+integrator algorithm once in an include file, then instantiate it for each model by
+setting a few preprocessor definitions and including the file. This avoids duplicating
+the substepping, error control, and drift correction logic across models.
+
+**Why this is deferred:**
+- Significant boilerplate and build system complexity
+- Would bloat the library before the pure function layer (the prerequisite) is stable
+- The OOP integrator covers all research and prototyping use cases in the meantime
+
+**When to revisit:**
+When the pure function layer exists for at least two models and a concrete MPM consumer
+is ready to benchmark GPU throughput. At that point the performance gap will justify the
+added complexity.
+
+---
+
 ## Summary table
 
 | Consideration | Affects interface? | Affects integrator? | Priority |
@@ -167,3 +191,4 @@ subroutine csm_umat_c(stress, statev, ddsdde, dstran, props, nprops, nstatev) &
 | Time-dependent models | Yes — update_hardening | Possibly | Medium |
 | Multiphase inputs | Yes — new argument needed | No | Low |
 | Non-UMAT interfaces | No — new wrappers only | No | Medium |
+| INCLUDE template integrators | No | Yes — per-model flat versions | Low (after pure fn layer) |

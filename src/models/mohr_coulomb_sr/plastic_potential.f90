@@ -1,8 +1,8 @@
 ! Module for holding the function that calculates the plastic potential derivatives
 
 module mod_plastic_potential
-   use stdlib_kinds, only: dp
-   use mod_stress_invariants , only: calc_sig_invariants
+   use mod_csm_kinds, only: wp
+   use mod_stress_invariants , only: calc_sig_inv
    use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig
    use mod_voigt_utils   , only: calc_dev_stress
    implicit none
@@ -14,12 +14,12 @@ contains
       !! where dP/dp = -dilation and dP/dq = 1
       !! m_vec is a 6-vector in Voigt notation
       implicit none
-      real(dp), intent(in)  :: dilation, sig(6)
-      real(dp), intent(out) :: m_vec(6)
+      real(wp), intent(in)  :: dilation, sig(6)
+      real(wp), intent(out) :: m_vec(6)
 
-      real(dp) :: p, q, lode_angle, dp_by_dsig(6), dev(6), dq_by_dsig(6)
+      real(wp) :: p, q, lode_angle, dp_by_dsig(6), dev(6), dq_by_dsig(6)
 
-      call calc_sig_invariants(sig, p, q, lode_angle)
+      call calc_sig_inv(sig, p, q, lode_angle)
 
       dp_by_dsig = calc_dp_by_dsig()
 

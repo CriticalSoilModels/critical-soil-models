@@ -1,5 +1,5 @@
 module mod_array_helper
-   use stdlib_kinds, only: dp, i32 =>int32
+   use mod_csm_kinds, only: wp
 
    implicit none
    private
@@ -26,12 +26,12 @@ contains
     end function all_unique_integer
 
    function reorder_real_array(input_arr, new_order) result(output_arr)
-      real(kind = dp)    , intent(in)  :: input_arr(:)
-      integer(kind = i32), intent(in)  :: new_order(:)
-      real(kind = dp)    , allocatable :: output_arr(:)
+      real(kind=wp)    , intent(in)  :: input_arr(:)
+      integer, intent(in)  :: new_order(:)
+      real(kind=wp)    , allocatable :: output_arr(:)
 
       ! Local variables
-      integer(kind=i32) :: i, n
+      integer :: i, n
       logical :: is_valid_order
 
       n = size(input_arr)

@@ -25,7 +25,7 @@ subroutine umat_linear(STRESS, STATEV, DDSDDE,          &
                         DFGRD0, DFGRD1,                  &
                         NOEL, NPT, LAYER, KSPT, KSTEP, KINC)
 
-   use stdlib_kinds,              only: dp
+   use mod_csm_kinds,             only: wp
    use mod_linear_elastic_model,  only: linear_elastic_model_t, le_from_props
    use mod_integrate_stress,      only: integrate_stress
    use mod_cmname_parser,         only: integrator_name
@@ -38,17 +38,17 @@ subroutine umat_linear(STRESS, STATEV, DDSDDE,          &
    character(80) :: CMNAME
    integer :: NDI, NSHR, NTENS, NSTATEV, NPROPS
    integer :: NOEL, NPT, LAYER, KSPT, KSTEP, KINC
-   real(dp) :: SSE, SPD, SCD, RPL, DRPLDT, DTIME, TEMP, DTEMP, PNEWDT, CELENT
-   real(dp) :: STRESS(NTENS), STATEV(NSTATEV), DDSDDE(NTENS,NTENS)
-   real(dp) :: DDSDDT(NTENS), DRPLDE(NTENS), STRAN(NTENS), DSTRAN(NTENS)
-   real(dp) :: TIME(2), PREDEF(1), DPRED(1), COORDS(3)
-   real(dp) :: DROT(3,3), DFGRD0(3,3), DFGRD1(3,3)
-   real(dp) :: PROPS(NPROPS)
+   real(wp) :: SSE, SPD, SCD, RPL, DRPLDT, DTIME, TEMP, DTEMP, PNEWDT, CELENT
+   real(wp) :: STRESS(NTENS), STATEV(NSTATEV), DDSDDE(NTENS,NTENS)
+   real(wp) :: DDSDDT(NTENS), DRPLDE(NTENS), STRAN(NTENS), DSTRAN(NTENS)
+   real(wp) :: TIME(2), PREDEF(1), DPRED(1), COORDS(3)
+   real(wp) :: DROT(3,3), DFGRD0(3,3), DFGRD1(3,3)
+   real(wp) :: PROPS(NPROPS)
 
    ! --- Local ---
    type(linear_elastic_model_t) :: model
    integer  :: ptype
-   real(dp) :: sig6(6), dstran6(6), D6(6,6)
+   real(wp) :: sig6(6), dstran6(6), D6(6,6)
 
    ! 1. Build model from PROPS (no state to load)
    model = le_from_props(PROPS)
@@ -61,7 +61,7 @@ subroutine umat_linear(STRESS, STATEV, DDSDDE,          &
    dstran6 = inflate(to_internal(DSTRAN(1:NTENS),  ANURA3D_ORDER(1:NTENS)), ptype)
 
    ! 5. Integrate (F = -1 always → exits after elastic predictor)
-   call integrate_stress(model, sig6, dstran6, ftol=0.0_dp, stol=1.0e-4_dp, &
+   call integrate_stress(model, sig6, dstran6, ftol=0.0_wp, stol=1.0e-4_wp, &
                          method=integrator_name(CMNAME))
 
    ! 6. Deflate + reorder back to solver convention

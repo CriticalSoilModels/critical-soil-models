@@ -1,10 +1,10 @@
 module mod_SRMC_Substepping
-    use stdlib_kinds, only: dp
+    use mod_csm_kinds, only: wp
     use mod_SRMC_funcs, only:  MatVec,  DotProduct_2
     use mod_state_params, only: check4crossing, Update_GK, get_dilation, Check_Unloading
-    use mod_strain_invariants, only: calc_eps_invariants
+    use mod_strain_invariants, only: calc_eps_inv
     use mod_strain_invar_deriv, only: calc_deps_q_by_deps
-    use mod_stress_invariants, only : calc_sig_invariants                           
+    use mod_stress_invariants, only : calc_sig_inv                           
     use mod_yield_function, only: calc_dF_by_dsig, calc_yield_function
     use mod_plastic_potential, only: calc_dg_plas_by_dsig
     use mod_state_params_deriv, only: calc_ddil_by_deps_p, calc_ddil_by_dI
@@ -39,22 +39,22 @@ contains
     implicit none
     !input
     integer, intent(in):: MAXITER
-    real(dp), intent(in):: G_0, nu, M, M_tc, No, D_min, h, dilationar, G_s, &
+    real(wp), intent(in):: G_0, nu, M, M_tc, No, D_min, h, dilationar, G_s, &
        eps_q, k_G, k_K, k_D, I_act, I_0, FTOL
-    real(dp), dimension(6), intent(in):: dEps
+    real(wp), dimension(6), intent(in):: dEps
     !output
-    real(dp), intent(inout):: G, K, eta_y, dilation, I_coeff, &
+    real(wp), intent(inout):: G, K, eta_y, dilation, I_coeff, &
        Gu, Ku, eta_yu, dil_u, F0, Sig_0(6)
-    real(dp), intent(out):: alpha
+    real(wp), intent(out):: alpha
     !local variables
     logical:: ApplyStrainRateUpdates
     integer:: n, i
-    real(dp):: FT, dG, dK, deta, ddil, dI, &
+    real(wp):: FT, dG, dK, deta, ddil, dI, &
        dI_alpha, I_alpha, &
        p_alpha, q_alpha, dummyvar, F_prime
-    real(dp):: dEps_alpha(6), dSig_alpha(6), Sig_alpha(6), &
+    real(wp):: dEps_alpha(6), dSig_alpha(6), Sig_alpha(6), &
        n_vec(6), L, dSigdAlpha(6)
-    real(dp):: D1, D2, DE(6,6), ddildG(6,6), ddildK(6,6), aux(6,6)
+    real(wp):: D1, D2, DE(6,6), ddildG(6,6), ddildK(6,6), aux(6,6)
 
     !Initialize parameters
     FT=1000
@@ -105,7 +105,7 @@ contains
        Sig_alpha = Sig_0 + dSig_alpha
        !___________________________________________________________
        !Evaluate yield function
-       call calc_sig_invariants(Sig_alpha, p_alpha, q_alpha, dummyvar)
+       call calc_sig_inv(Sig_alpha, p_alpha, q_alpha, dummyvar)
        call calc_yield_function(q_alpha, p_alpha, eta_yu, FT)
 
        !Evaluate n=dF/dSig and L=dF/dXs
@@ -187,16 +187,16 @@ contains
     implicit none
     !input
     logical, intent(in):: switch_original
-    real(dp), intent(in):: G_0, nu, M_tc, M, No, D_min, h, dilationart, Gs,&
+    real(wp), intent(in):: G_0, nu, M_tc, M, No, D_min, h, dilationart, Gs,&
        erate(6), I_0, k_G, k_K, k_D, dtime, DT,&
        dEps(6)
-    real(dp), intent(inout):: I, dI
+    real(wp), intent(inout):: I, dI
     !output
-    real(dp), intent(inout):: G, K, eta_y, dilation, EpsP(6) , Sig(6)
-    real(dp), intent(out):: ddil, dSig(6), dEpsp(6)
+    real(wp), intent(inout):: G, K, eta_y, dilation, EpsP(6) , Sig(6)
+    real(wp), intent(out):: ddil, dSig(6), dEpsp(6)
     !local variables
     logical:: ApplyStrainRateUpdate
-    real(dp):: I_f, DE(6,6), D1, D2, dSig_el(6), num, lambda, &
+    real(wp):: I_f, DE(6,6), D1, D2, dSig_el(6), num, lambda, &
        n_vec(6), p, q, dummyvar, L, b, m_vec(6), a(6), &
        epsq_p, epsv_p, Hard, den, dummyvec(6), Hvp, erate_q
 
@@ -212,8 +212,8 @@ contains
 
     !________________________________________________________________________
     !Compute invariants and derivatives
-    call calc_sig_invariants(Sig, p, q, dummyvar)
-    call calc_eps_invariants(EpsP, epsv_p, epsq_p)
+    call calc_sig_inv(Sig, p, q, dummyvar)
+    call calc_eps_inv(EpsP, epsv_p, epsq_p)
     call calc_dF_by_dsig(M_tc, eta_y, Sig, n_vec) !n=dFdSig
     call calc_dg_plas_by_dsig(dilation, Sig, m_vec) !m=dP/dSig
     L = -p*(1.0-No) !L=dF/dXs
@@ -263,7 +263,7 @@ contains
 
     if ((ApplyStrainRateUpdate).and.(switch_original)) then !original
        !compute viscous hardening modulus Hvp=-L.bv.m/(dt*DT)
-       call calc_eps_invariants(erate,dummyvar,erate_q)
+       call calc_eps_inv(erate,dummyvar,erate_q)
        dummyvec=calc_deps_q_by_deps(erate_q,erate)
        dummyvec=b*dilationart*sqrt(Gs/abs(p))*dummyvec
        call DotProduct_2(dummyvec, m_vec, 6, dummyvar)
@@ -325,16 +325,16 @@ contains
     !input
     logical, intent(in):: switch_original
     integer, intent(in):: MAXITER
-    real(dp), intent(in):: G_0, nu, M_tc, M, No, D_min, h, dilationart, Gs,&
+    real(wp), intent(in):: G_0, nu, M_tc, M, No, D_min, h, dilationart, Gs,&
        erate(6), I_0, k_G, k_K, k_D, dtime, DT,&
        FTOL, dEps(6)
-    real(dp), intent(inout):: I, I_f, dI
+    real(wp), intent(inout):: I, I_f, dI
     !output
-    real(dp), intent(inout):: G, K, eta_y, dilation, EpsP(6) , Sig(6), F0
+    real(wp), intent(inout):: G, K, eta_y, dilation, EpsP(6) , Sig(6), F0
     !local variables
     logical:: ApplyStrainRateUpdate
     integer:: n
-    real(dp)::epsq_p, epsv_p, n_vec(6), m_vec(6), L, a(6), b,&
+    real(wp)::epsq_p, epsv_p, n_vec(6), m_vec(6), L, a(6), b,&
        DE(6,6), D1, D2, Den,  Hard, Hvp, dlambda, &
        dummyvec(6), dummyvar, FC, &
        dil_u, eta_yu, Sigu(6), ddil, dSig(6), dEpsp(6),Epspu(6), &
@@ -363,8 +363,8 @@ contains
 
        !________________________________________________________________________
        !Compute invariants and derivatives
-       call calc_sig_invariants(Sig, p, q, dummyvar)
-       call calc_eps_invariants(EpsP, epsv_p, epsq_p)
+       call calc_sig_inv(Sig, p, q, dummyvar)
+       call calc_eps_inv(EpsP, epsv_p, epsq_p)
        call calc_dF_by_dsig(M_tc, eta_y, Sig, n_vec) !n=dFdSig
        call calc_dg_plas_by_dsig(dilation, Sig, m_vec) !m=dP/dSig
        L=-p*(1.0-No) !L=dF/dXs
@@ -399,7 +399,7 @@ contains
 
        if ((ApplyStrainRateUpdate).and.(switch_original)) then !original
           !compute viscous hardening modulus Hvp=-L.bdI/dErate.m/(dt*DT)
-          call calc_eps_invariants(erate,dummyvar,erate_q)
+          call calc_eps_inv(erate,dummyvar,erate_q)
           dummyvec=calc_deps_q_by_deps(erate_q,erate)
           dummyvec=b*dilationart*sqrt(Gs/abs(p))*dummyvec
           call DotProduct_2(dummyvec, m_vec, 6, dummyvar)
@@ -426,7 +426,7 @@ contains
 
        !__________________________________________________________________
        !Evaluate yield function
-       call calc_sig_invariants(Sigu, p, q, dummyvar)
+       call calc_sig_inv(Sigu, p, q, dummyvar)
        call calc_yield_function(q, p, eta_yu, FC)
        !__________________________________________________________________
        !Evaluate change direction

@@ -1,5 +1,5 @@
 module mod_SRMC_funcs
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
 
    implicit none
 
@@ -17,14 +17,14 @@ contains
       !
       !***********************************************************************
       implicit none
-      real(dp), intent(in)  :: xMat(N, N), Vec(N)
+      real(wp), intent(in)  :: xMat(N, N), Vec(N)
       integer, intent(in)          :: IM, N
-      real(dp), intent(out) :: VecR(N)
+      real(wp), intent(out) :: VecR(N)
 
       !***********************************************************************
       ! Local variables
       integer :: I, J
-      real(dp) :: X
+      real(wp) :: X
 
       Do I=1,N
          X=0
@@ -48,14 +48,14 @@ contains
       !
       !***********************************************************************
       implicit none
-      real(dp), intent(in)  :: VecA(N), VecB(N)
+      real(wp), intent(in)  :: VecA(N), VecB(N)
       integer, intent(in)          :: N
-      real(dp), intent(out) :: res
+      real(wp), intent(out) :: res
 
       !***********************************************************************
       ! Local variables
       integer :: I
-      res=0.0_dp
+      res=0.0_wp
       Do I=1,N
          res=res+VecA(I)*VecB(I)
       end do

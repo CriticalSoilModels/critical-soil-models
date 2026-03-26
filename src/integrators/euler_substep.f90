@@ -3,28 +3,28 @@
 ! defined in csm_model_t.
 
 module mod_euler_substep
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
    use mod_csm_model, only: csm_model_t
    implicit none
 
-   real(dp), parameter :: DT_MIN_DEFAULT = 1.0e-9_dp
+   real(wp), parameter :: DT_MIN_DEFAULT = 1.0e-9_wp
 
 contains
 
    subroutine euler_substep(model, sig, deps, ftol, stol)
       class(csm_model_t), intent(inout) :: model
-      real(dp),           intent(inout) :: sig(6)    ! updated in place
-      real(dp),           intent(in)    :: deps(6)   ! strain increment (internal convention)
-      real(dp),           intent(in)    :: ftol      ! yield surface tolerance
-      real(dp),           intent(in)    :: stol      ! relative stress error tolerance
+      real(wp),           intent(inout) :: sig(6)    ! updated in place
+      real(wp),           intent(in)    :: deps(6)   ! strain increment (internal convention)
+      real(wp),           intent(in)    :: ftol      ! yield surface tolerance
+      real(wp),           intent(in)    :: stol      ! relative stress error tolerance
 
-      real(dp) :: stiff_e(6,6)
-      real(dp) :: sig_tr(6), F
-      real(dp) :: alpha_ep
-      real(dp) :: t_sub, dt_sub, err_rel
-      real(dp) :: sig_t(6), deps_ep(6)
-      real(dp) :: dsig_1(6), dsig_2(6), deps_p1(6), deps_p2(6)
-      real(dp), allocatable :: saved(:)
+      real(wp) :: stiff_e(6,6)
+      real(wp) :: sig_tr(6), F
+      real(wp) :: alpha_ep
+      real(wp) :: t_sub, dt_sub, err_rel
+      real(wp) :: sig_t(6), deps_ep(6)
+      real(wp) :: dsig_1(6), dsig_2(6), deps_p1(6), deps_p2(6)
+      real(wp), allocatable :: saved(:)
       logical  :: step_failed
 
       ! -----------------------------------------------------------------------
@@ -51,16 +51,16 @@ contains
 
       ! Stress on yield surface + remaining plastic strain increment
       sig     = sig + alpha_ep * matmul(stiff_e, deps)
-      deps_ep = (1.0_dp - alpha_ep) * deps
+      deps_ep = (1.0_wp - alpha_ep) * deps
 
       ! -----------------------------------------------------------------------
       ! 4. Modified Euler substep loop with error control
       ! -----------------------------------------------------------------------
-      t_sub      = 0.0_dp
-      dt_sub     = 1.0_dp
+      t_sub      = 0.0_wp
+      dt_sub     = 1.0_wp
       step_failed = .false.
 
-      do while (t_sub < 1.0_dp)
+      do while (t_sub < 1.0_wp)
 
          sig_t = sig
 
@@ -76,18 +76,18 @@ contains
          call model%restore(saved)
 
          ! --- Relative error estimate ---
-         err_rel = 0.5_dp * norm2(dsig_1 - dsig_2) &
-                   / max(norm2(sig_t + 0.5_dp*(dsig_1 + dsig_2)), 1.0e-12_dp)
+         err_rel = 0.5_wp * norm2(dsig_1 - dsig_2) &
+                   / max(norm2(sig_t + 0.5_wp*(dsig_1 + dsig_2)), 1.0e-12_wp)
 
          if (err_rel > stol) then
             ! Step rejected — shrink dt_sub and retry
-            dt_sub      = max(0.9_dp * sqrt(stol/err_rel) * dt_sub, DT_MIN_DEFAULT)
+            dt_sub      = max(0.9_wp * sqrt(stol/err_rel) * dt_sub, DT_MIN_DEFAULT)
             step_failed = .true.
 
          else
             ! Step accepted — take modified Euler average
-            sig = sig_t + 0.5_dp * (dsig_1 + dsig_2)
-            call model%update_hardening(0.5_dp * (deps_p1 + deps_p2))
+            sig = sig_t + 0.5_wp * (dsig_1 + dsig_2)
+            call model%update_hardening(0.5_wp * (deps_p1 + deps_p2))
 
             ! Drift correction: push stress back onto yield surface
             F = model%yield_fn(sig)
@@ -95,9 +95,9 @@ contains
 
             ! Advance pseudo-time, grow dt_sub if step was easy
             t_sub  = t_sub + dt_sub
-            dt_sub = min(0.9_dp * sqrt(stol / max(err_rel, 1.0e-12_dp)) * dt_sub, 1.0_dp - t_sub)
+            dt_sub = min(0.9_wp * sqrt(stol / max(err_rel, 1.0e-12_wp)) * dt_sub, 1.0_wp - t_sub)
             if (step_failed) then
-               dt_sub      = min(dt_sub, 1.0_dp - t_sub)   ! don't overshoot after a failure
+               dt_sub      = min(dt_sub, 1.0_wp - t_sub)   ! don't overshoot after a failure
                step_failed = .false.
             end if
          end if
@@ -112,12 +112,12 @@ contains
    ! ---------------------------------------------------------------------------
    subroutine euler_step(model, sig, deps_sub, stiff_e, dsig, deps_p)
       class(csm_model_t), intent(in)  :: model
-      real(dp),           intent(in)  :: sig(6), deps_sub(6), stiff_e(6,6)
-      real(dp),           intent(out) :: dsig(6), deps_p(6)
+      real(wp),           intent(in)  :: sig(6), deps_sub(6), stiff_e(6,6)
+      real(wp),           intent(out) :: dsig(6), deps_p(6)
 
-      real(dp) :: dF_by_dsig(6), dg_plas_by_dsig(6), dlambda
-      real(dp) :: stiff_e_dG(6)   ! stiff_e * dg_plas_by_dsig
-      real(dp) :: dF_stiff_e(6)   ! dF_by_dsig^T * stiff_e (row vector)
+      real(wp) :: dF_by_dsig(6), dg_plas_by_dsig(6), dlambda
+      real(wp) :: stiff_e_dG(6)   ! stiff_e * dg_plas_by_dsig
+      real(wp) :: dF_stiff_e(6)   ! dF_by_dsig^T * stiff_e (row vector)
 
       dF_by_dsig = model%flow_rule(sig)
       dg_plas_by_dsig = model%plastic_potential(sig)
@@ -128,7 +128,7 @@ contains
       stiff_e_dG   = matmul(stiff_e, dg_plas_by_dsig)
       dF_stiff_e   = matmul(dF_by_dsig, stiff_e)
       dlambda      = dot_product(dF_stiff_e, deps_sub) / dot_product(dF_stiff_e, dg_plas_by_dsig)
-      dlambda      = max(dlambda, 0.0_dp)   ! no negative plastic multiplier
+      dlambda      = max(dlambda, 0.0_wp)   ! no negative plastic multiplier
 
       deps_p = dlambda * dg_plas_by_dsig
       dsig   = matmul(stiff_e, deps_sub - deps_p)
@@ -140,20 +140,20 @@ contains
    ! ---------------------------------------------------------------------------
    subroutine find_yield_intersection(model, sig, deps, stiff_e, ftol, alpha_ep)
       class(csm_model_t), intent(in)  :: model
-      real(dp),           intent(in)  :: sig(6), deps(6), stiff_e(6,6), ftol
-      real(dp),           intent(out) :: alpha_ep
+      real(wp),           intent(in)  :: sig(6), deps(6), stiff_e(6,6), ftol
+      real(wp),           intent(out) :: alpha_ep
 
-      real(dp) :: dsig_e(6)
-      real(dp) :: alpha0, alpha1, F0, F1, alpha_new, F_new
+      real(wp) :: dsig_e(6)
+      real(wp) :: alpha0, alpha1, F0, F1, alpha_new, F_new
       integer  :: iter
 
       dsig_e = matmul(stiff_e, deps)
-      alpha0 = 0.0_dp;  F0 = model%yield_fn(sig)
-      alpha1 = 1.0_dp;  F1 = model%yield_fn(sig + dsig_e)
+      alpha0 = 0.0_wp;  F0 = model%yield_fn(sig)
+      alpha1 = 1.0_wp;  F1 = model%yield_fn(sig + dsig_e)
 
       ! If already outside at start, alpha_ep = 0
       if (F0 >= -ftol) then
-         alpha_ep = 0.0_dp
+         alpha_ep = 0.0_wp
          return
       end if
 
@@ -162,7 +162,7 @@ contains
          alpha_new = alpha1 - F1 * (alpha1 - alpha0) / (F1 - F0)
          F_new     = model%yield_fn(sig + alpha_new * dsig_e)
          if (abs(F_new) < ftol) exit
-         if (F_new * F1 < 0.0_dp) then
+         if (F_new * F1 < 0.0_wp) then
             alpha0 = alpha1;  F0 = F1
          else
             F0 = F0 * F1 / (F1 + F_new)
@@ -179,10 +179,10 @@ contains
    ! ---------------------------------------------------------------------------
    subroutine correct_drift(model, sig, stiff_e, ftol)
       class(csm_model_t), intent(inout) :: model
-      real(dp),           intent(inout) :: sig(6)
-      real(dp),           intent(in)    :: stiff_e(6,6), ftol
+      real(wp),           intent(inout) :: sig(6)
+      real(wp),           intent(in)    :: stiff_e(6,6), ftol
 
-      real(dp) :: F, dF_by_dsig(6), dg_plas_by_dsig(6), dlambda
+      real(wp) :: F, dF_by_dsig(6), dg_plas_by_dsig(6), dlambda
       integer  :: iter
 
       do iter = 1, 100

@@ -5,13 +5,13 @@
 !   3. Provide from_props / load_state / save_state at the UMAT boundary
 
 module mod_mcss_model
-   use stdlib_kinds,          only: dp
+   use mod_csm_kinds,         only: wp
    use mod_csm_model,         only: csm_model_t
    use mod_elastic_utils,     only: calc_stiffness_GK, calc_K_from_G_nu
-   use mod_stress_invariants, only: calc_sig_invariants
+   use mod_stress_invariants, only: calc_sig_inv
    implicit none
 
-   real(dp), parameter :: DEG_TO_RAD = acos(-1.0_dp) / 180.0_dp
+   real(wp), parameter :: DEG_TO_RAD = acos(-1.0_wp) / 180.0_wp
 
    ! ---------------------------------------------------------------------------
    ! State type — separate so it can be copied cleanly for integrator rollback
@@ -20,8 +20,8 @@ module mod_mcss_model
    ! Everywhere else state is accessed by name.
 
    type :: mcss_state_t
-      real(dp) :: c, phi, psi     ! current softening values
-      real(dp) :: eps_p(6)        ! accumulated plastic strain
+      real(wp) :: c, phi, psi     ! current softening values
+      real(wp) :: eps_p(6)        ! accumulated plastic strain
    end type mcss_state_t
 
    ! ---------------------------------------------------------------------------
@@ -31,14 +31,14 @@ module mod_mcss_model
    type, extends(csm_model_t) :: mcss_model_t
 
       ! --- Parameters (fixed, populated from PROPS once at UMAT entry) ---
-      real(dp) :: G, nu
-      real(dp) :: c_peak,   c_res
-      real(dp) :: phi_peak, phi_res     ! stored in radians
-      real(dp) :: psi_peak, psi_res     ! stored in radians
-      real(dp) :: shape_factor
-      real(dp) :: yield_tol
+      real(wp) :: G, nu
+      real(wp) :: c_peak,   c_res
+      real(wp) :: phi_peak, phi_res     ! stored in radians
+      real(wp) :: psi_peak, psi_res     ! stored in radians
+      real(wp) :: shape_factor
+      real(wp) :: yield_tol
       integer  :: max_iters
-      real(dp) :: dt_min
+      real(wp) :: dt_min
 
       ! --- State (evolves during integration) ---
       type(mcss_state_t) :: state
@@ -75,7 +75,7 @@ contains
    !  13: dt_min
 
    function mcss_from_props(props) result(model)
-      real(dp), intent(in) :: props(:)
+      real(wp), intent(in) :: props(:)
       type(mcss_model_t) :: model
 
       model%G            = props(1)
@@ -102,7 +102,7 @@ contains
 
    subroutine mcss_load_state(model, statev)
       type(mcss_model_t), intent(inout) :: model
-      real(dp),           intent(in)    :: statev(:)
+      real(wp),           intent(in)    :: statev(:)
 
       model%state%c     = statev(1)
       model%state%phi   = statev(2)
@@ -112,7 +112,7 @@ contains
 
    subroutine mcss_save_state(model, statev)
       type(mcss_model_t), intent(in)    :: model
-      real(dp),           intent(inout) :: statev(:)
+      real(wp),           intent(inout) :: statev(:)
 
       statev(1)   = model%state%c
       statev(2)   = model%state%phi
@@ -126,11 +126,11 @@ contains
 
    function mcss_yield_fn(self, sig) result(F)
       class(mcss_model_t), intent(in) :: self
-      real(dp), intent(in) :: sig(6)
-      real(dp) :: F
-      real(dp) :: p, q, lode_angle
+      real(wp), intent(in) :: sig(6)
+      real(wp) :: F
+      real(wp) :: p, q, lode_angle
 
-      call calc_sig_invariants(sig, p, q, lode_angle)
+      call calc_sig_inv(sig, p, q, lode_angle)
       ! Mohr-Coulomb: F = q - eta*p - c
       ! where eta = M(theta) derived from phi
       ! (simplified here — real version uses Lode-angle-dependent M)
@@ -139,35 +139,35 @@ contains
 
    function mcss_flow_rule(self, sig) result(dF_by_dsig)
       class(mcss_model_t), intent(in) :: self
-      real(dp), intent(in) :: sig(6)
-      real(dp) :: dF_by_dsig(6)
+      real(wp), intent(in) :: sig(6)
+      real(wp) :: dF_by_dsig(6)
 
       ! ∂F/∂σ — gradient of yield surface w.r.t. stress
       ! Uses self%state%phi (current friction angle)
       ! ... invariant chain rule ...
-      dF_by_dsig = 0.0_dp   ! placeholder
+      dF_by_dsig = 0.0_wp   ! placeholder
    end function mcss_flow_rule
 
    function mcss_plastic_potential(self, sig) result(dG_by_dsig)
       class(mcss_model_t), intent(in) :: self
-      real(dp), intent(in) :: sig(6)
-      real(dp) :: dG_by_dsig(6)
+      real(wp), intent(in) :: sig(6)
+      real(wp) :: dG_by_dsig(6)
 
       ! ∂G/∂σ — flow direction
       ! Non-associated: same form as flow_rule but uses self%state%psi not phi
       ! ... invariant chain rule ...
-      dG_by_dsig = 0.0_dp   ! placeholder
+      dG_by_dsig = 0.0_wp   ! placeholder
    end function mcss_plastic_potential
 
    subroutine mcss_update_hardening(self, deps_p)
       class(mcss_model_t), intent(inout) :: self
-      real(dp), intent(in) :: deps_p(6)
-      real(dp) :: eps_p_eq
+      real(wp), intent(in) :: deps_p(6)
+      real(wp) :: eps_p_eq
 
       self%state%eps_p = self%state%eps_p + deps_p
 
       ! Equivalent plastic strain (scalar measure of accumulated plasticity)
-      eps_p_eq = sqrt(2.0_dp/3.0_dp * dot_product(self%state%eps_p, self%state%eps_p))
+      eps_p_eq = sqrt(2.0_wp/3.0_wp * dot_product(self%state%eps_p, self%state%eps_p))
 
       ! Softening: interpolate c, phi, psi between peak and residual values
       ! call calc_softening_params(eps_p_eq, self%c_peak, self%c_res, &
@@ -178,7 +178,7 @@ contains
 
    function mcss_elastic_stiffness(self) result(stiff_e)
       class(mcss_model_t), intent(in) :: self
-      real(dp) :: stiff_e(6,6)
+      real(wp) :: stiff_e(6,6)
 
       stiff_e = calc_stiffness_GK(self%G, calc_K_from_G_nu(self%G, self%nu))
 
@@ -197,7 +197,7 @@ contains
 
    subroutine mcss_snapshot(self, saved)
       class(mcss_model_t), intent(in)    :: self
-      real(dp), allocatable, intent(out) :: saved(:)
+      real(wp), allocatable, intent(out) :: saved(:)
 
       allocate(saved(9))
       saved(1)   = self%state%c
@@ -208,7 +208,7 @@ contains
 
    subroutine mcss_restore(self, saved)
       class(mcss_model_t), intent(inout) :: self
-      real(dp),            intent(in)    :: saved(:)
+      real(wp),            intent(in)    :: saved(:)
 
       self%state%c     = saved(1)
       self%state%phi   = saved(2)

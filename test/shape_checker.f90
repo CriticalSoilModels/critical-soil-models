@@ -1,5 +1,5 @@
 module mod_shape_checker
-    use stdlib_kinds, only: dp
+    use mod_csm_kinds, only: wp
     implicit none
     private
     public :: check_matrix_shape
@@ -14,7 +14,7 @@ contains
 
     ! Subroutine for real matrices
     subroutine check_real_matrix_shape(actual, expected, passed)
-        real(kind=dp), intent(in) :: actual(:,:), expected(:,:)
+        real(kind=wp), intent(in) :: actual(:,:), expected(:,:)
         logical, intent(out) :: passed
 
         passed = (size(actual, 1) == size(expected, 1)) .and. &

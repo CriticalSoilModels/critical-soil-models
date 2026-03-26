@@ -10,7 +10,7 @@
 !   INTEGRATION_ORTIZ_SIMO  = "ortiz_simo"
 
 module mod_integrate_stress
-   use stdlib_kinds,      only: dp
+   use mod_csm_kinds,     only: wp
    use mod_csm_model,     only: csm_model_t
    use mod_euler_substep, only: euler_substep
    implicit none
@@ -33,9 +33,9 @@ contains
       !! stol   — substep error tolerance (used by substepping methods)
       !! method — integration method name; use the INTEGRATION_* constants
       class(csm_model_t), intent(inout) :: model
-      real(dp),           intent(inout) :: sig(6)
-      real(dp),           intent(in)    :: deps(6)
-      real(dp),           intent(in)    :: ftol, stol
+      real(wp),           intent(inout) :: sig(6)
+      real(wp),           intent(in)    :: deps(6)
+      real(wp),           intent(in)    :: ftol, stol
       character(len=*),   intent(in)    :: method
 
       select case(trim(method))

@@ -15,7 +15,7 @@ module mod_mc_strain_rate
    !
    !**********************************************************************
 
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
    use mod_bool_helper, only: dbltobool, logic2dbl
    use mod_SRMC, only: SRMC_HSR
    use mod_array_helper, only: reorder_real_array
@@ -48,25 +48,25 @@ contains
       integer :: NTENS
       integer, intent(in) :: NOEL
       real (dp), dimension(NTENS), intent(inout) :: STRESS
-      real(dp), dimension(NSTATEV), intent(inout) :: STATEV
-      real(dp), dimension(NTENS, NTENS), intent(inout) :: DDSDDE
-      real(dp), intent(in) :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
-      real(dp), intent(in) :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
-      real(dp), dimension(NTENS), intent(in) :: DDSDDT
-      real(dp), dimension(NTENS), intent(in) :: DRPLDE
-      real(dp)                               :: DRPLDT
-      real(dp), dimension(NTENS), intent(in) :: STRAN
-      real(dp), dimension(NTENS), intent(inout) :: DSTRAN ! TODO: Change this back to intent(in) - 
+      real(wp), dimension(NSTATEV), intent(inout) :: STATEV
+      real(wp), dimension(NTENS, NTENS), intent(inout) :: DDSDDE
+      real(wp), intent(in) :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
+      real(wp), intent(in) :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
+      real(wp), dimension(NTENS), intent(in) :: DDSDDT
+      real(wp), dimension(NTENS), intent(in) :: DRPLDE
+      real(wp)                               :: DRPLDT
+      real(wp), dimension(NTENS), intent(in) :: STRAN
+      real(wp), dimension(NTENS), intent(inout) :: DSTRAN ! TODO: Change this back to intent(in) - 
                                                                  ! Making it intent(inout) to reorder it for incremental driver
-      real(dp), dimension(2), intent(in) :: TIME
-      real(dp), dimension(1), intent(in) :: PREDEF
-      real(dp), dimension(1), intent(in) :: DPRED
-      real(dp), dimension(NPROPS), intent(in) :: PROPS
-      real(dp), dimension(3), intent(in) :: COORDS
-      real(dp), dimension(3,3), intent(in) :: DFGRD0
-      real(dp), dimension(3,3), intent(in) :: DFGRD1, drot
-      real(dp), intent(in) :: PNEWDT,  TEMP, DTEMP, CELENT
-      real(dp), intent(in) :: DTIME
+      real(wp), dimension(2), intent(in) :: TIME
+      real(wp), dimension(1), intent(in) :: PREDEF
+      real(wp), dimension(1), intent(in) :: DPRED
+      real(wp), dimension(NPROPS), intent(in) :: PROPS
+      real(wp), dimension(3), intent(in) :: COORDS
+      real(wp), dimension(3,3), intent(in) :: DFGRD0
+      real(wp), dimension(3,3), intent(in) :: DFGRD1, drot
+      real(wp), intent(in) :: PNEWDT,  TEMP, DTEMP, CELENT
+      real(wp), intent(in) :: DTIME
       character(len = 80), intent(in):: CMNAME
       integer, intent(in) :: NDI, NSHR, LAYER, KSPT, KSTEP, KINC
 
@@ -84,16 +84,16 @@ contains
       !  EpsRate	 : Total strain rate tensor
       !
       integer :: N_S, N_i
-      real(dp), dimension(6,6) :: DE
-      real(dp), dimension(6)   :: Sig
-      real(dp), dimension(6)   :: dEpsP
-      real(dp), dimension(6)   :: EpsP, ERate
-      real(dp), dimension(6) :: dEpsE, EpsE, dEps, Eps
+      real(wp), dimension(6,6) :: DE
+      real(wp), dimension(6)   :: Sig
+      real(wp), dimension(6)   :: dEpsP
+      real(wp), dimension(6)   :: EpsP, ERate
+      real(wp), dimension(6) :: dEpsE, EpsE, dEps, Eps
       logical :: switch_smooth, switch_original, switch_yield
-      real(dp) :: G_0, enu, eM_tc, eN, D_min, eh, alpha_G, alpha_K, alpha_D, D_part, G_s, RefERate !SSMC props local variables, (props)
-      real(dp) :: G, bk, eta_y, dilation, eI_coeff, Sum_rate  !SSMC state variables (statv)
-      real(dp) :: Error_yield_1, Error_yield_2, Error_Euler_max, Error_Yield_last, Error_Yield_max
-      real(dp) :: F1, F2, bK_0, FTOL
+      real(wp) :: G_0, enu, eM_tc, eN, D_min, eh, alpha_G, alpha_K, alpha_D, D_part, G_s, RefERate !SSMC props local variables, (props)
+      real(wp) :: G, bk, eta_y, dilation, eI_coeff, Sum_rate  !SSMC state variables (statv)
+      real(wp) :: Error_yield_1, Error_yield_2, Error_Euler_max, Error_Yield_last, Error_Yield_max
+      real(wp) :: F1, F2, bK_0, FTOL
       integer :: i, max_stress_iters
       integer :: switch_plastic_integration
       integer, parameter :: A3D_voigt_order(6) = [1, 2, 3, 4, 6, 5]

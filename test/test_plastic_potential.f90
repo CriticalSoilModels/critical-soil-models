@@ -1,9 +1,9 @@
 ! Module for holding the platic potential unit tests
 
 module mod_test_plastic_potential_suite
-    use stdlib_kinds, only: dp
+    use mod_csm_kinds, only: wp
     use ieee_arithmetic, only: ieee_is_nan
-    use mod_stress_invariants, only: calc_q, calc_mean_stress, calc_J2
+    use mod_stress_invariants, only: calc_q_inv, calc_p_inv, calc_J2_inv
     use mod_voigt_utils, only: calc_dev_stress
     use mod_stress_invar_deriv, only: calc_dq_by_dsig, calc_dp_by_dsig
     use mod_plastic_potential, only: calc_dg_plas_by_dsig
@@ -30,21 +30,21 @@ contains
         type(error_type), allocatable, intent(out) :: error
 
         ! Local variables
-        real(dp) :: m_vec(6), exp_m_vec(6)
-        real(dp) :: dilatancy, stress(6), dev(6), q, mean_stress, J2
+        real(wp) :: m_vec(6), exp_m_vec(6)
+        real(wp) :: dilatancy, stress(6), dev(6), q, mean_stress, J2
         logical :: passed
-        real(dp), parameter :: tol = 1e-9_dp
-        stress = [1.0_dp, 3.0_dp, 5.0_dp, 7.0_dp, 11.0_dp, 13.0_dp]
+        real(wp), parameter :: tol = 1e-9_wp
+        stress = [1.0_wp, 3.0_wp, 5.0_wp, 7.0_wp, 11.0_wp, 13.0_wp]
 
         dilatancy = -0.1
         
         ! Calc the value
         call calc_dg_plas_by_dsig(dilatancy, stress, m_vec)
         
-        mean_stress = calc_mean_stress(stress)
+        mean_stress = calc_p_inv(stress)
         dev = calc_dev_stress(stress, mean_stress)
-        J2 = calc_J2(dev)
-        q = calc_q(J2)
+        J2 = calc_J2_inv(dev)
+        q = calc_q_inv(J2)
 
         ! Set the expected value from a hand calc
         exp_m_vec =  -dilatancy * calc_dp_by_dsig() + calc_dq_by_dsig(dev, q)

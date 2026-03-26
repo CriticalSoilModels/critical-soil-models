@@ -1,7 +1,7 @@
 ! Functions that help working with booleans (True or False values)
 
 module mod_bool_helper
-   use stdlib_kinds, only: dp
+   use mod_csm_kinds, only: wp
    implicit none
 
 contains
@@ -11,7 +11,7 @@ contains
       ! Boolean
       !******************************************************************
       implicit none
-      real(dp), intent(in):: A
+      real(wp), intent(in):: A
       logical, intent(out):: B
       if (A<1.0) then
          B=.false.
@@ -20,7 +20,7 @@ contains
       endif
    end subroutine dbltobool
 
-   real(dp) function logic2dbl(a)
+   real(wp) function logic2dbl(a)
       logical, intent(in) :: a
 
       if (a) then

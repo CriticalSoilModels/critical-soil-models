@@ -1,5 +1,5 @@
 module mod_test_yield_function
-    use stdlib_kinds, only: dp, i32 => int32
+    use mod_csm_kinds, only: wp
     use mod_yield_function, only : calc_dF_by_dsig
     use mod_tensor_value_checker, only: check_tensor_values
     use ieee_arithmetic, only: ieee_is_nan
@@ -27,12 +27,12 @@ contains
         ! TODO: add hand-calculated expected values
         type(error_type), allocatable, intent(out) :: error
 
-        real(dp) :: M_tc, eta_y, sig(6), n_vec(6)
+        real(wp) :: M_tc, eta_y, sig(6), n_vec(6)
         logical :: no_nans
 
-        M_tc  = 1.0_dp
-        eta_y = 1.5_dp
-        sig   = [1.0_dp, 3.0_dp, 5.0_dp, 7.0_dp, 11.0_dp, 13.0_dp]
+        M_tc  = 1.0_wp
+        eta_y = 1.5_wp
+        sig   = [1.0_wp, 3.0_wp, 5.0_wp, 7.0_wp, 11.0_wp, 13.0_wp]
 
         call calc_dF_by_dsig(M_tc, eta_y, sig, n_vec)
 

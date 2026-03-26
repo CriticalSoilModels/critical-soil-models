@@ -26,14 +26,22 @@ fpm run
 
 # Generate documentation (requires ford)
 ford fpm.toml
+
+# Clean build artifacts (preserves dependencies — stdlib is NOT re-downloaded)
+fpm clean
+
+# Clean everything including dependencies (stdlib will be re-cloned and rebuilt)
+fpm clean --all
 ```
 
 ### Environment Setup
 ```bash
 conda env create -f environment.yml
-conda activate csm
+conda activate fpm
 ```
-Requires: gfortran, fpm (Fortran Package Manager), fortls, ford. `stdlib` must be available at `../../stdlib` relative to this repo.
+Requires: gfortran, fpm (Fortran Package Manager), fortls, ford. `stdlib` is fetched
+automatically as a git dependency on first build and cached in `build/dependencies/`.
+Use `fpm clean` (not `fpm clean --all`) to avoid re-downloading it.
 
 ## Architecture
 

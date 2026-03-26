@@ -5,7 +5,7 @@
 ! internal Voigt ordering [11,22,33,12,13,23].
 
 module mod_stress_invar_refs
-   use iso_fortran_env, only: dp => real64
+   use mod_csm_kinds, only: wp
    implicit none
    private
    public :: calc_dJ3_by_dsig_full
@@ -16,15 +16,15 @@ contains
    ! (Voigt order [11,22,33,12,13,23]) without first extracting
    ! the deviatoric tensor. Used as an independent cross-check in tests.
    pure function calc_dJ3_by_dsig_full(stress) result(dJ3_by_dsig)
-      real(dp), intent(in) :: stress(6)
-      real(dp) :: dJ3_by_dsig(6)
+      real(wp), intent(in) :: stress(6)
+      real(wp) :: dJ3_by_dsig(6)
 
       ! Local variables
-      real(kind=  dp) :: t(6)
-      real(dp),parameter :: ONE_NINTH = 1.0_dp/9.0_dp, &
-         ONE_THIRD = 1.0_dp/3.0_dp, &
-         TWO       = 2.0_dp, &
-         FOUR      = 4.0_dp
+      real(kind=wp) :: t(6)
+      real(wp),parameter :: ONE_NINTH = 1.0_wp/9.0_wp, &
+         ONE_THIRD = 1.0_wp/3.0_wp, &
+         TWO       = 2.0_wp, &
+         FOUR      = 4.0_wp
 
       ! Store the stress in a shorter name to make it easier to type
       t = stress

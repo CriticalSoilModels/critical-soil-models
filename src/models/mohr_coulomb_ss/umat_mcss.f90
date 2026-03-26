@@ -37,7 +37,7 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
                                      DFGRD0, DFGRD1,               &
                                      NOEL, NPT, LAYER, KSPT, KSTEP, KINC)
 
-   use stdlib_kinds,           only: dp
+   use mod_csm_kinds,          only: wp
    use mod_mcss_model,        only: mcss_model_t, mcss_from_props, &
                                     mcss_load_state, mcss_save_state
    use mod_euler_substep,     only: euler_substep
@@ -53,18 +53,18 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
    character(80) :: CMNAME
    integer :: NDI, NSHR, NTENS, NSTATEV, NPROPS
    integer :: NOEL, NPT, LAYER, KSPT, KSTEP, KINC
-   real(dp) :: SSE, SPD, SCD, RPL, DRPLDT, DTIME, TEMP, DTEMP, PNEWDT, CELENT
-   real(dp) :: STRESS(NTENS), STATEV(NSTATEV), DDSDDE(NTENS,NTENS)
-   real(dp) :: DDSDDT(NTENS), DRPLDE(NTENS), STRAN(NTENS), DSTRAN(NTENS)
-   real(dp) :: TIME(2), PREDEF(1), DPRED(1), COORDS(3)
-   real(dp) :: DROT(3,3), DFGRD0(3,3), DFGRD1(3,3)
-   real(dp) :: PROPS(NPROPS)
+   real(wp) :: SSE, SPD, SCD, RPL, DRPLDT, DTIME, TEMP, DTEMP, PNEWDT, CELENT
+   real(wp) :: STRESS(NTENS), STATEV(NSTATEV), DDSDDE(NTENS,NTENS)
+   real(wp) :: DDSDDT(NTENS), DRPLDE(NTENS), STRAN(NTENS), DSTRAN(NTENS)
+   real(wp) :: TIME(2), PREDEF(1), DPRED(1), COORDS(3)
+   real(wp) :: DROT(3,3), DFGRD0(3,3), DFGRD1(3,3)
+   real(wp) :: PROPS(NPROPS)
 
    ! --- Local ---
    type(mcss_model_t) :: model
    integer  :: ptype
-   real(dp) :: sig6(6), dstran6(6)
-   real(dp) :: D6(6,6)
+   real(wp) :: sig6(6), dstran6(6)
+   real(wp) :: D6(6,6)
 
    ! -----------------------------------------------------------------------
    ! 1. Build model from PROPS + STATEV
@@ -102,7 +102,7 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
    ! -----------------------------------------------------------------------
    call integrate_stress(model, sig6, dstran6,              &
                          ftol=model%yield_tol,              &
-                         stol=1.0e-4_dp,                    &
+                         stol=1.0e-4_wp,                    &
                          method=integrator_name(CMNAME))
 
    ! -----------------------------------------------------------------------
@@ -134,17 +134,17 @@ contains
    ! ==========================================================================
    subroutine enforce_plane_stress(mdl, sig6_ps, dstran6_ps, ftol)
       class(mcss_model_t), intent(inout) :: mdl
-      real(dp),            intent(inout) :: sig6_ps(6), dstran6_ps(6)
-      real(dp),            intent(in)    :: ftol
+      real(wp),            intent(inout) :: sig6_ps(6), dstran6_ps(6)
+      real(wp),            intent(in)    :: ftol
 
       integer,  parameter :: MAX_ITER = 20
-      real(dp), parameter :: TOL = 1.0e-10_dp
+      real(wp), parameter :: TOL = 1.0e-10_wp
 
-      real(dp) :: sig_trial(6), dstran_trial(6)
-      real(dp) :: sig33, d_sig33_d_eps33
-      real(dp) :: D6_ps(6,6)
-      real(dp) :: deps33
-      real(dp), allocatable :: state_saved(:)
+      real(wp) :: sig_trial(6), dstran_trial(6)
+      real(wp) :: sig33, d_sig33_d_eps33
+      real(wp) :: D6_ps(6,6)
+      real(wp) :: deps33
+      real(wp), allocatable :: state_saved(:)
       integer  :: iter
 
       ! Elastic stiffness column 3 gives dsig_33/deps_33 (approximate Jacobian)
@@ -159,7 +159,7 @@ contains
          dstran_trial = dstran6_ps
 
          call mdl%snapshot(state_saved)
-         call euler_substep(mdl, sig_trial, dstran_trial, ftol=ftol, stol=1.0e-4_dp)
+         call euler_substep(mdl, sig_trial, dstran_trial, ftol=ftol, stol=1.0e-4_wp)
          call mdl%restore(state_saved)
 
          ! Check sig_33
