@@ -201,23 +201,23 @@ contains
       end if
    end function calc_K
 
-   pure function calc_dK_dlode(asp, lode, s3ta, sin_angle) result(dK_dlode)
+   pure function calc_dK_by_dlode(asp, lode, s3ta, sin_angle) result(dK_by_dlode)
       !! Derivative of Abbo-Sloan K with respect to lode angle.
       type(abbo_sloan_params_t), intent(in) :: asp
       real(wp), intent(in) :: lode, s3ta, sin_angle
-      real(wp) :: dK_dlode, cos_lode, cos_3lode, sgn, b_coeff
+      real(wp) :: dK_by_dlode, cos_lode, cos_3lode, sgn, b_coeff
 
       if (abs(lode) < asp%lode_tr) then
-         cos_lode = cos(lode)
-         dK_dlode = -sin(lode) - INV_SQRT3 * sin_angle * cos_lode
+         cos_lode    = cos(lode)
+         dK_by_dlode = -sin(lode) - INV_SQRT3 * sin_angle * cos_lode
       else
-         sgn      = sign(1.0_wp, lode)
-         cos_lode = cos(lode)
-         cos_3lode = cos_lode * (4.0_wp*cos_lode*cos_lode - 3.0_wp)
-         b_coeff  = asp%B1 * sgn + asp%B2 * sin_angle
-         dK_dlode = -3.0_wp * b_coeff * cos_3lode
+         sgn         = sign(1.0_wp, lode)
+         cos_lode    = cos(lode)
+         cos_3lode   = cos_lode * (4.0_wp*cos_lode*cos_lode - 3.0_wp)
+         b_coeff     = asp%B1 * sgn + asp%B2 * sin_angle
+         dK_by_dlode = -3.0_wp * b_coeff * cos_3lode
       end if
-   end function calc_dK_dlode
+   end function calc_dK_by_dlode
 
    pure function calc_a_smooth(asp, c, phi) result(a)
       !! Abbo-Sloan tip-smoothing parameter: a = smooth_coeff * c * cot(phi).
@@ -240,14 +240,14 @@ contains
       real(wp),                  intent(in) :: J, dev(6), lode, s3ta, c, angle
       real(wp) :: dF_by_dsig(6)
 
-      real(wp) :: sin_angle, K, dK_dlode_val, a, a_sphi_sq, jk_over_H
+      real(wp) :: sin_angle, K, dK_by_dlode_val, a, a_sphi_sq, jk_over_H
       real(wp) :: cos_3lode, tan_3lode, j2
       real(wp) :: dF_dp, dF_dJ, dF_dJ3
       real(wp) :: dp_by_dsig(6), dJ_by_dsig(6), dJ3_by_dsig(6)
 
       sin_angle    = sin(angle)
       K            = calc_K(asp, lode, s3ta, sin_angle)
-      dK_dlode_val = calc_dK_dlode(asp, lode, s3ta, sin_angle)
+      dK_by_dlode_val = calc_dK_by_dlode(asp, lode, s3ta, sin_angle)
       a            = calc_a_smooth(asp, c, angle)
       a_sphi_sq    = a * a * sin_angle * sin_angle
 
@@ -271,8 +271,8 @@ contains
       jk_over_H = J * K / sqrt(j2*K*K + a_sphi_sq)
 
       dF_dp  = sin_angle
-      dF_dJ  = jk_over_H*K - tan_3lode * jk_over_H * dK_dlode_val
-      dF_dJ3 = -SQRT3_OVER2 * dK_dlode_val * jk_over_H / (j2 * cos_3lode)
+      dF_dJ  = jk_over_H*K - tan_3lode * jk_over_H * dK_by_dlode_val
+      dF_dJ3 = -SQRT3_OVER2 * dK_by_dlode_val * jk_over_H / (j2 * cos_3lode)
 
       dF_by_dsig = dF_dp*dp_by_dsig + dF_dJ*dJ_by_dsig + dF_dJ3*dJ3_by_dsig
    end function calc_dF_by_dsig_abbo
