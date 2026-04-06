@@ -7,7 +7,7 @@ module mod_mcss_types
 
    public :: mcss_params_t, mcss_state_t
    public :: abbo_sloan_params_t
-   public :: DEFAULT_AS_PARAMS
+   public :: DEFAULT_AS_PARAMS, DEFAULT_SMOOTH_COEFF
 
    ! ---------------------------------------------------------------------------
    ! Default Abbo & Sloan (1995) smoothing constants — LodeT = 29.5 degrees.
