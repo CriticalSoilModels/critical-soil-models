@@ -13,7 +13,7 @@ module mod_mcss_functions
    use mod_stress_invariants,  only: calc_sig_inv, calc_J_inv
    use mod_voigt_utils,        only: calc_dev_stress
    use mod_strain_invariants,  only: calc_eps_vol_inv, calc_dev_strain, calc_eps_q_inv
-   use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dJ3_by_dsig
+   use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dJ_by_dsig, calc_dJ3_by_dsig
    implicit none
    private
 
@@ -72,7 +72,7 @@ contains
       ! dp/dsig == dp/ds: mean stress is independent of deviatoric stress
       dev  = calc_dev_stress(sig, p)
 
-      dF_by_dsig = calc_dF_dsig_abbo(params%as_params, J, dev, lode, s3ta, state%c, state%phi)
+      dF_by_dsig = calc_dF_by_dsig_abbo(params%as_params, J, dev, lode, s3ta, state%c, state%phi)
    end function mcss_flow_rule
 
    ! ---------------------------------------------------------------------------
@@ -99,7 +99,7 @@ contains
          psi_eff = state%psi
       end if
 
-      dG_by_dsig = calc_dF_dsig_abbo(params%as_params, J, dev, lode, s3ta, state%c, psi_eff)
+      dG_by_dsig = calc_dF_by_dsig_abbo(params%as_params, J, dev, lode, s3ta, state%c, psi_eff)
    end function mcss_plastic_potential
 
    ! ---------------------------------------------------------------------------
@@ -231,7 +231,7 @@ contains
       end if
    end function calc_a_smooth
 
-   pure function calc_dF_dsig_abbo(asp, J, dev, lode, s3ta, c, angle) result(dF_by_dsig)
+   pure function calc_dF_by_dsig_abbo(asp, J, dev, lode, s3ta, c, angle) result(dF_by_dsig)
       !! Gradient of Abbo-Sloan yield/potential surface w.r.t. stress.
       !! dF/dsig = dF/dp * dp/dsig + dF/dJ * dJ/dsig + dF/dJ3 * dJ3/dsig
       !!
@@ -241,7 +241,7 @@ contains
       real(wp) :: dF_by_dsig(6)
 
       real(wp) :: sin_angle, K, dK_dlode_val, a, a_sphi_sq, jk_over_H
-      real(wp) :: cos_3lode, tan_3lode, j2, inv_2J
+      real(wp) :: cos_3lode, tan_3lode, j2
       real(wp) :: dF_dp, dF_dJ, dF_dJ3
       real(wp) :: dp_by_dsig(6), dJ_by_dsig(6), dJ3_by_dsig(6)
 
@@ -261,12 +261,10 @@ contains
       dp_by_dsig = calc_dp_by_dsig()
 
       if (J > 1.0e-4_wp) then
-         inv_2J = 0.5_wp / J
+         dJ_by_dsig = calc_dJ_by_dsig(dev, J)
       else
-         inv_2J = 0.0_wp
+         dJ_by_dsig = 0.0_wp
       end if
-      dJ_by_dsig = [inv_2J*dev(1),         inv_2J*dev(2),         inv_2J*dev(3), &
-                    2.0_wp*inv_2J*dev(4),   2.0_wp*inv_2J*dev(5),  2.0_wp*inv_2J*dev(6)]
 
       dJ3_by_dsig = calc_dJ3_by_dsig(dev)
 
@@ -277,7 +275,7 @@ contains
       dF_dJ3 = -SQRT3_OVER2 * dK_dlode_val * jk_over_H / (j2 * cos_3lode)
 
       dF_by_dsig = dF_dp*dp_by_dsig + dF_dJ*dJ_by_dsig + dF_dJ3*dJ3_by_dsig
-   end function calc_dF_dsig_abbo
+   end function calc_dF_by_dsig_abbo
 
    ! ---------------------------------------------------------------------------
    ! ∂F/∂c and ∂F/∂φ: yield function derivatives w.r.t. state parameters.

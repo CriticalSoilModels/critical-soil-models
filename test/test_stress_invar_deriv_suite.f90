@@ -3,8 +3,8 @@ module mod_test_stress_invar_deriv_suite
     use mod_csm_kinds, only: wp
     use mod_stress_invariants, only: calc_p_inv, calc_q_inv, calc_J2_inv, &
                                      calc_J3_inv, calc_lode_inv
-    use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig, calc_dJ2_by_dsig, calc_dJ3_by_dsig, &
-                                      calc_dlode_angle_by_dsig
+    use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig, calc_dJ_by_dsig, calc_dJ2_by_dsig, &
+                                      calc_dJ3_by_dsig, calc_dlode_angle_by_dsig
     use mod_stress_invar_refs, only: calc_dJ3_by_dsig_full
     use mod_voigt_utils   , only: calc_dev_stress
     use mod_tensor_value_checker, only: check_tensor_values
@@ -26,6 +26,7 @@ contains
             new_unittest("dp/dSigma" , test_dMean_Stress_to_dSigma),  &
             new_unittest("dq/dSigma" , test_dq_to_dSigma),  &
             new_unittest("dJ2/dSigma", test_dJ2_to_dSigma), &
+            new_unittest("dJ/dSigma" , test_dJ_to_dSigma),  &
             new_unittest("dJ3/dSigma", test_dJ3_to_dSigma), &
             new_unittest("dlode_angle_dSigma", test_dlode_angle_to_dSigma) &
             ]
@@ -126,6 +127,30 @@ contains
         if(allocated(error)) return
 
     end subroutine test_dJ2_to_dSigma
+
+    subroutine test_dJ_to_dSigma(error)
+        !! dJ/dσ = dJ2/dσ / (2J) — verify against that reference formula.
+        type(error_type), allocatable, intent(out) :: error
+
+        real(kind=wp) :: dJ_dSigma(6), exp_dJ_dSigma(6)
+        real(kind=wp) :: stress(6), dev(6), mean_stress, J2, J
+        real(kind=wp), parameter :: tol = 1e-9_wp
+        logical :: passed = .False.
+
+        stress      = [100.0_wp, 50.0_wp, 25.0_wp, 10.0_wp, 5.0_wp, 2.0_wp]
+        mean_stress = calc_p_inv(stress)
+        dev         = calc_dev_stress(stress, mean_stress)
+        J2          = calc_J2_inv(dev)
+        J           = sqrt(J2)
+
+        dJ_dSigma     = calc_dJ_by_dsig(dev, J)
+        exp_dJ_dSigma = calc_dJ2_by_dsig(dev) / (2.0_wp * J)
+
+        call check_tensor_values(dJ_dSigma, exp_dJ_dSigma, tol, passed)
+        call check(error, passed, .True., more = "Indiv. dJ/dSigma test")
+        if(allocated(error)) return
+
+    end subroutine test_dJ_to_dSigma
 
     subroutine test_dJ3_to_dSigma(error)
         type(error_type), allocatable, intent(out) ::  error

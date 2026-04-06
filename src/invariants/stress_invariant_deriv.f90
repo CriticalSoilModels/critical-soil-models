@@ -55,6 +55,14 @@ contains
 
    end function calc_dJ2_by_dsig
 
+   pure function calc_dJ_by_dsig(dev, J) result(dJ_by_dsig)
+      !! dJ/dσ = dJ2/dσ / (2J), where J = sqrt(J2).
+      !! Caller must guard against J ≈ 0 to avoid division by zero.
+      real(wp), intent(in) :: dev(6), J
+      real(wp) :: dJ_by_dsig(6)
+      dJ_by_dsig = calc_dJ2_by_dsig(dev) / (2.0_wp * J)
+   end function calc_dJ_by_dsig
+
    pure function calc_dJ3_by_dsig(dev) result(dJ3_by_dsig)
       real(wp), intent(in) :: dev(6)
       real(wp) :: dJ3_by_dsig(6)
