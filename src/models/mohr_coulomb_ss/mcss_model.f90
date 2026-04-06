@@ -100,7 +100,7 @@ contains
       asp = DEFAULT_AS_PARAMS   ! start from defaults
 
       if (size(props) >= 14) then
-         if (props(14) /= 0.0_wp) asp%lode_t       = props(14)
+         if (props(14) /= 0.0_wp) asp%lode_tr      = props(14)
       end if
       if (size(props) >= 15) then
          if (props(15) /= 0.0_wp) asp%A1           = props(15)

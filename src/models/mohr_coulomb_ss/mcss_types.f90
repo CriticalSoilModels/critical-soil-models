@@ -13,7 +13,7 @@ module mod_mcss_types
    ! Default Abbo & Sloan (1995) smoothing constants — LodeT = 29.5 degrees.
    ! Override by supplying PROPS(14:19); zero or missing entries use these values.
    ! ---------------------------------------------------------------------------
-   real(wp), parameter :: DEFAULT_LODE_T       = 0.514872129338327_wp  !! Transition Lode angle [rad]
+   real(wp), parameter :: DEFAULT_LODE_TR      = 0.514872129338327_wp  !! Transition Lode angle [rad]
    real(wp), parameter :: DEFAULT_A1           = 7.138654723242414_wp
    real(wp), parameter :: DEFAULT_A2           = 6.112267270920612_wp
    real(wp), parameter :: DEFAULT_B1           = 6.270447753139589_wp
@@ -21,7 +21,7 @@ module mod_mcss_types
    real(wp), parameter :: DEFAULT_SMOOTH_COEFF = 0.0005_wp             !! Tip smoothing: a = coeff*c*cot(phi)
 
    type :: abbo_sloan_params_t
-      real(wp) :: lode_t       !! Transition Lode angle [rad]
+      real(wp) :: lode_tr      !! Transition Lode angle [rad]
       real(wp) :: A1           !! Corner-rounding constant
       real(wp) :: A2           !! Corner-rounding constant
       real(wp) :: B1           !! Corner-rounding constant
@@ -31,7 +31,7 @@ module mod_mcss_types
 
    !> Pre-built default instance — use as a fallback or initialiser.
    type(abbo_sloan_params_t), parameter :: DEFAULT_AS_PARAMS = abbo_sloan_params_t( &
-      lode_t       = DEFAULT_LODE_T,       &
+      lode_tr      = DEFAULT_LODE_TR,      &
       A1           = DEFAULT_A1,           &
       A2           = DEFAULT_A2,           &
       B1           = DEFAULT_B1,           &
