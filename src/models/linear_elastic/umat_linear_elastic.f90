@@ -27,7 +27,7 @@ subroutine umat_linear(STRESS, STATEV, DDSDDE,          &
 
    use mod_csm_kinds,             only: wp
    use mod_linear_elastic_model,  only: linear_elastic_model_t, le_from_props
-   use mod_integrate_stress,      only: integrate_stress
+   use mod_integrate_stress,      only: integrate_stress, integrator_params_t, DEFAULT_INTEGRATOR_PARAMS
    use mod_cmname_parser,         only: integrator_name
    use mod_voigt_conventions,     only: to_internal, from_internal, ANURA3D_ORDER, &
                                         problem_type, inflate, deflate, deflate_stiffness
@@ -61,8 +61,8 @@ subroutine umat_linear(STRESS, STATEV, DDSDDE,          &
    dstran6 = inflate(to_internal(DSTRAN(1:NTENS),  ANURA3D_ORDER(1:NTENS)), ptype)
 
    ! 5. Integrate (F = -1 always → exits after elastic predictor)
-   call integrate_stress(model, sig6, dstran6, ftol=0.0_wp, stol=1.0e-4_wp, &
-                         method=integrator_name(CMNAME))
+   call integrate_stress(model, sig6, dstran6, method=integrator_name(CMNAME), &
+                         iparams=DEFAULT_INTEGRATOR_PARAMS)
 
    ! 6. Deflate + reorder back to solver convention
    STRESS(1:NTENS) = from_internal(deflate(sig6, ptype), ANURA3D_ORDER(1:NTENS))
