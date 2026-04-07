@@ -1,3 +1,17 @@
+!! UMAT wrapper for the Mohr-Coulomb Strain Softening (MCSS) model.
+!!
+!! Responsibilities of this wrapper — and **only** this wrapper:
+!!
+!! 1. Unpack PROPS/STATEV into typed model fields
+!! 2. Determine problem dimensionality from NDI/NSHR
+!! 3. Reorder Voigt components to internal convention
+!! 4. Inflate solver vectors (NTENS) to internal 6-component form
+!! 5. For plane stress: Newton iteration to enforce σ₃₃ = 0
+!! 6. Call the stress integrator
+!! 7. Deflate and reorder back to solver convention
+!! 8. Pack model state back into STATEV
+!! 9. Return elastic tangent stiffness DDSDDE
+
 module mod_umat_mcss
    implicit none
    private
@@ -5,7 +19,6 @@ module mod_umat_mcss
 
 contains
 
-! UMAT wrapper for the MCSS model under the new architecture.
 !
 ! Responsibilities of this wrapper — and ONLY this wrapper:
 !   1. Unpack PROPS/STATEV into typed model fields

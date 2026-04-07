@@ -1,38 +1,50 @@
-! Mohr-Coulomb Strain Softening — concrete implementation of csm_model_t.
-!
-! All constitutive math lives in mod_mcss_functions (pure, GPU-callable).
-! The deferred procedure implementations here are thin wrappers only.
-!
-! PROPS layout:
-!   Required (1–13):
-!    1:  G          shear modulus [kPa]
-!    2:  nu         Poisson's ratio [-]
-!    3:  c_peak     peak cohesion [kPa]
-!    4:  c_res      residual cohesion [kPa]
-!    5:  phi_peak   peak friction angle [degrees]
-!    6:  phi_res    residual friction angle [degrees]
-!    7:  psi_peak   peak dilation angle [degrees]
-!    8:  psi_res    residual dilation angle [degrees]
-!    9:  factor     softening rate shape parameter [-]
-!   10:  (integrator flag — consumed by umat_mcss, not stored here)
-!   11:  yield_tol
-!   12:  max_iters
-!   13:  dt_min
-!
-!   Optional Abbo & Sloan smoothing (14–19):
-!   If omitted or zero, DEFAULT_AS_PARAMS values are used (LodeT = 29.5 deg).
-!   14:  lode_t       transition Lode angle [rad]
-!   15:  A1           corner-rounding constant
-!   16:  A2           corner-rounding constant
-!   17:  B1           corner-rounding constant
-!   18:  B2           corner-rounding constant
-!   19:  smooth_coeff tip smoothing coefficient [-]
-!
-! STATEV layout (9 entries):
-!   1:   c      current cohesion [kPa]
-!   2:   phi    current friction angle [rad]
-!   3:   psi    current dilation angle [rad]
-!   4-9: eps_p  accumulated plastic strain (Voigt) [-]
+!! Mohr-Coulomb Strain Softening — concrete implementation of `csm_model_t`.
+!!
+!! All constitutive mathematics lives in `mod_mcss_functions` (pure,
+!! GPU-callable). The deferred procedure implementations here are thin
+!! wrappers only — they forward to those pure functions with the model's
+!! params and state unpacked.
+!!
+!! ### PROPS layout
+!!
+!! Required (indices 1–13):
+!!
+!! | Index | Symbol     | Description                        | Units   |
+!! |-------|------------|------------------------------------|---------|
+!! | 1     | G          | Shear modulus                      | kPa     |
+!! | 2     | ν          | Poisson's ratio                    | —       |
+!! | 3     | c_peak     | Peak cohesion                      | kPa     |
+!! | 4     | c_res      | Residual cohesion                  | kPa     |
+!! | 5     | φ_peak     | Peak friction angle                | degrees |
+!! | 6     | φ_res      | Residual friction angle            | degrees |
+!! | 7     | ψ_peak     | Peak dilation angle                | degrees |
+!! | 8     | ψ_res      | Residual dilation angle            | degrees |
+!! | 9     | factor     | Softening rate shape parameter     | —       |
+!! | 10    | —          | Integrator flag (consumed by UMAT) | —       |
+!! | 11    | yield_tol  | Yield surface tolerance            | —       |
+!! | 12    | max_iters  | Maximum substep iterations         | —       |
+!! | 13    | dt_min     | Minimum pseudo-time increment      | —       |
+!!
+!! Optional Abbo & Sloan smoothing (indices 14–19).
+!! If omitted or zero, `DEFAULT_AS_PARAMS` is used (LodeT = 29.5°):
+!!
+!! | Index | Symbol      | Description                    |
+!! |-------|-------------|--------------------------------|
+!! | 14    | lode_t      | Transition Lode angle [rad]    |
+!! | 15    | A1          | Corner-rounding constant       |
+!! | 16    | A2          | Corner-rounding constant       |
+!! | 17    | B1          | Corner-rounding constant       |
+!! | 18    | B2          | Corner-rounding constant       |
+!! | 19    | smooth_coeff| Tip smoothing coefficient [-]  |
+!!
+!! ### STATEV layout (9 entries)
+!!
+!! | Index | Symbol | Description                         | Units  |
+!! |-------|--------|-------------------------------------|--------|
+!! | 1     | c      | Current cohesion                    | kPa    |
+!! | 2     | φ      | Current friction angle              | rad    |
+!! | 3     | ψ      | Current dilation angle              | rad    |
+!! | 4–9   | ε_p    | Accumulated plastic strain (Voigt)  | —      |
 
 module mod_mcss_model
    use mod_csm_kinds,      only: wp
@@ -49,11 +61,15 @@ module mod_mcss_model
    real(wp), parameter :: DEG_TO_RAD = acos(-1.0_wp) / 180.0_wp
 
    type, extends(csm_model_t) :: mcss_model_t
-      type(mcss_params_t) :: params
-      type(mcss_state_t)  :: state
-      real(wp) :: yield_tol
-      integer  :: max_iters
-      real(wp) :: dt_min
+      !! Mohr-Coulomb Strain Softening model.
+      !!
+      !! Extends `csm_model_t`. Parameters are fixed after construction via
+      !! `mcss_from_props`; state evolves during `update_hardening` calls.
+      type(mcss_params_t) :: params    !! Fixed model parameters
+      type(mcss_state_t)  :: state     !! Evolving internal state (c, φ, ψ, ε_p)
+      real(wp) :: yield_tol            !! Yield surface tolerance for the integrator
+      integer  :: max_iters            !! Maximum substep iterations
+      real(wp) :: dt_min               !! Minimum pseudo-time increment
    contains
       procedure :: yield_fn          => mcss_yield_fn_method
       procedure :: flow_rule         => mcss_flow_rule_method
@@ -72,7 +88,8 @@ contains
    ! ---------------------------------------------------------------------------
 
    function mcss_from_props(props) result(model)
-      real(wp), intent(in) :: props(:)
+      !! Construct an `mcss_model_t` from a flat PROPS array (UMAT convention).
+      real(wp), intent(in) :: props(:)  !! PROPS array (see module doc for layout)
       type(mcss_model_t) :: model
 
       model%params%G        = props(1)
@@ -120,8 +137,9 @@ contains
    end function mcss_as_params_from_props
 
    subroutine mcss_load_state(model, statev)
+      !! Unpack a STATEV array into the model's internal state fields.
       type(mcss_model_t), intent(inout) :: model
-      real(wp),           intent(in)    :: statev(:)
+      real(wp),           intent(in)    :: statev(:)  !! STATEV array (see module doc for layout)
 
       model%state%c     = statev(1)
       model%state%phi   = statev(2)
@@ -130,8 +148,9 @@ contains
    end subroutine mcss_load_state
 
    subroutine mcss_save_state(model, statev)
+      !! Pack the model's internal state back into a STATEV array.
       type(mcss_model_t), intent(in)    :: model
-      real(wp),           intent(inout) :: statev(:)
+      real(wp),           intent(inout) :: statev(:)  !! STATEV array (see module doc for layout)
 
       statev(1)   = model%state%c
       statev(2)   = model%state%phi

@@ -1,4 +1,4 @@
-! Module for holding the derivatives of the strain invariants
+!! Derivatives of strain invariants with respect to the strain vector.
 
 module mod_strain_invar_deriv
    use mod_csm_kinds, only: wp
@@ -6,9 +6,13 @@ module mod_strain_invar_deriv
    implicit none
 
 contains
+
    pure function calc_deps_q_by_deps(eps_q, eps) result(deps_q_by_deps)
-      ! Returns dεq/dε — derivative of deviatoric strain invariant w.r.t. strain.
-      real(wp), intent(in) :: eps_q, eps(6)
+      !! Derivative of the deviatoric strain invariant εq with respect to strain: ∂εq/∂ε.
+      !!
+      !! Returns a zero vector when εq = 0 to avoid division by zero at the origin.
+      real(wp), intent(in) :: eps_q     !! Deviatoric strain invariant εq
+      real(wp), intent(in) :: eps(6)    !! Strain vector (Voigt)
       real(wp) :: deps_q_by_deps(6)
       real(wp) :: evol, dev(6)
 

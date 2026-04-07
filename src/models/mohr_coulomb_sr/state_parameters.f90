@@ -1,4 +1,8 @@
-! Functions for calculating and updating the state parameters
+!! **Legacy** — State parameter calculations for the MCSR model.
+!!
+!! Computes and updates the inertial coefficient, M (Lode-dependent critical
+!! stress ratio), dilation, and elastic moduli G and K as functions of
+!! strain rate and accumulated plastic strain.
 
 module mod_state_params
    use mod_csm_kinds, only: wp

@@ -1,3 +1,8 @@
+!! **Legacy** — Low-level matrix/vector helpers for the MCSR model.
+!!
+!! Provides `MatVec` (matrix-vector product) and `DotProduct_2` (dot product).
+!! These duplicate Fortran intrinsics (`matmul`, `dot_product`) and exist
+!! only to support the legacy MCSR code. New code should use intrinsics directly.
 module mod_SRMC_funcs
    use mod_csm_kinds, only: wp
 

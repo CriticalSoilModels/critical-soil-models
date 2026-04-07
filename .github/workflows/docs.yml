@@ -1,0 +1,72 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; don't cancel in-progress runs
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-docs:
+    name: Build ford docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup gfortran
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: 13
+
+      - name: Setup fpm
+        uses: fortran-lang/setup-fpm@v7
+        with:
+          fpm-version: "latest"
+
+      - name: Install ford and graphviz
+        run: |
+          pip install ford
+          sudo apt-get install -y graphviz
+
+      - name: Cache fpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/dependencies
+          key: fpm-deps-gcc13-${{ hashFiles('fpm.toml') }}
+          restore-keys: |
+            fpm-deps-gcc13-
+
+      - name: Build ford docs
+        run: ford fpm.toml || true   # warn=true exits non-zero on undocumented items
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/doc
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build-docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

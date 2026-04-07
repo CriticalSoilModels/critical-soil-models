@@ -1,5 +1,8 @@
-! Top-level library module — exports model types for programmatic use.
-! UMATs are accessed through the single UMAT entry point in src/umat.f90.
+!! Top-level library module — exports model types for programmatic use.
+!!
+!! Re-exports the public API for consumers who embed the library directly
+!! rather than linking against the Abaqus UMAT interface. UMATs are accessed
+!! through the single `UMAT` entry point in `src/umat.f90`.
 module critical_soil_models
    use mod_le_functions,         only: le_params_t, le_state_t, &
                                         le_yield_fn, le_flow_rule, le_plastic_potential, &

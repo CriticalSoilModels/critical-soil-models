@@ -1,3 +1,9 @@
+!! **Legacy** — Euler substepping and Newton-Raphson routines for the MCSR model.
+!!
+!! Provides `Newton_Raphson` (elastic-plastic intersection finder),
+!! `Euler_Algorithm` (single Euler step), and `Stress_Drift_Correction`.
+!! These are called by `SRMC_HSR` in `mod_SRMC` and are not part of the
+!! new generic integrator architecture.
 module mod_SRMC_Substepping
     use mod_csm_kinds, only: wp
     use mod_SRMC_funcs, only:  MatVec,  DotProduct_2

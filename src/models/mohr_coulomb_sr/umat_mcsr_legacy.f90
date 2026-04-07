@@ -1,19 +1,52 @@
+!! **Legacy** — UMAT entry point for the Mohr-Coulomb with Strain Rate (MCSR) model.
+!!
+!! Implements the non-associative Mohr-Coulomb model with strain softening and
+!! strain rate effects, as presented in:
+!!
+!! > Constitutive modelling of non-cohesive soils under high-strain rates.
+!! > DOI: [10.1680/jgeot.21.00192](https://doi.org/10.1680/jgeot.21.00192)
+!!
+!! The current implementation uses the Ortiz-Simo yield surface correction.
+!! This module pre-dates the new architecture and is not refactored to extend
+!! `csm_model_t`.
+!!
+!! ### PROPS layout (18 entries)
+!!
+!! | Index | Symbol              | Description                              |
+!! |-------|---------------------|------------------------------------------|
+!! | 1     | G_0                 | Initial shear modulus [kPa]              |
+!! | 2     | ν                   | Poisson's ratio [-]                      |
+!! | 3     | M_tc                | Critical stress ratio (triaxial compr.)  |
+!! | 4     | N                   | Nova's volumetric coupling coefficient   |
+!! | 5     | D_min               | Minimum dilation [-]                     |
+!! | 6     | h                   | Hardening parameter [-]                  |
+!! | 7     | α_G                 | Shear modulus viscosity factor [-]       |
+!! | 8     | α_K                 | Bulk modulus viscosity factor [-]        |
+!! | 9     | α_D                 | Dilation viscosity factor [-]            |
+!! | 10    | D_part              | Particle diameter [mm]                   |
+!! | 11    | G_s                 | Specific gravity [-]                     |
+!! | 12    | RefERate            | Reference strain rate [1/s]              |
+!! | 13    | switch_smooth       | Activate strain rate smoothing (0/1)     |
+!! | 14    | N_S                 | Degree of smoothing [-]                  |
+!! | 15    | switch_original     | 1=Wang, 0=Olzak-Perzyna consistency      |
+!! | 16    | FTOL                | Yield surface tolerance [-]              |
+!! | 17    | max_stress_iters    | Maximum stress integration iterations   |
+!! | 18    | switch_plastic_integration | Integration scheme (0=Euler, 1=Ortiz-Simo) |
+!!
+!! ### STATEV layout (14 entries)
+!!
+!! | Index | Symbol       | Description                         |
+!! |-------|--------------|-------------------------------------|
+!! | 1     | G            | Current shear modulus [kPa]         |
+!! | 2     | K            | Current bulk modulus [kPa]          |
+!! | 3     | η_y          | Current friction ratio [-]          |
+!! | 4     | ψ            | Current dilation [-]                |
+!! | 5     | I_coeff      | Current inertial coefficient [-]    |
+!! | 6     | switch_yield | Yielding flag (0.0/1.0)             |
+!! | 7–12  | ε_p          | Accumulated plastic strain (Voigt)  |
+!! | 13    | N_i          | Current number of strain rate sums  |
+!! | 14    | SUM_rate     | Current strain rate sum             |
 module mod_mc_strain_rate
-   !**********************************************************************
-   !
-   ! Module: Contains all functions and subroutines required for the Non-Associative Mohr-Coulomb constitutive model
-   !
-   !   Info: Constitutive model was presented in Constitutive modelling of non-cohesive soils under high-strain rates DOI: 10.1680/jgeot.21.00192
-   !         Current implementation was modified to use Ortiz-Simo yield surface correction
-   !
-   ! Note: Integer type and real type is not specified in this module. This was done because the ESMs are usually compiled into external .dlls
-   !        and the type wouldn't be specfied there
-   ! TODO: Add integer and real type. Also determine if doubles are really needed for this computation. As they are cast into reals does it matter?
-   !
-   !     $Revision: ????? $
-   !     $Date: 2024-01-19 10:34 +0500 (WaveHello, 28 Dec 2023) $
-   !
-   !**********************************************************************
 
    use mod_csm_kinds, only: wp
    use mod_bool_helper, only: dbltobool, logic2dbl

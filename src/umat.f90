@@ -1,18 +1,25 @@
-! Central UMAT entry point — Abaqus standard interface.
-!
-! This is the single subroutine Abaqus links against.  Its only job is
-! to route the call to the correct model implementation based on the
-! material name portion of CMNAME.
-!
-! CMNAME convention:  MATERIALNAME[_INTEG_INTEGRATORNAME]
-!
-!   LINEAR_ELASTIC                → linear elastic (default integrator)
-!   LINEAR_ELASTIC_INTEG_EULER    → linear elastic, Euler substepping
-!   MCSS_INTEG_EULER              → Mohr-Coulomb SS, Euler substepping
-!   MCSS_INTEG_ORTIZ_SIMO         → Mohr-Coulomb SS, Ortiz-Simo
-!
-! Abaqus uppercases CMNAME before passing it; model names are matched
-! in uppercase.  The integrator suffix is lowercased inside each model UMAT.
+!! Central UMAT entry point — Abaqus standard interface.
+!!
+!! This is the single subroutine Abaqus links against. Its only job is to
+!! route the call to the correct model implementation based on the material
+!! name portion of `CMNAME`.
+!!
+!! ### CMNAME convention
+!!
+!! ```
+!! MATERIALNAME[_INTEG_INTEGRATORNAME]
+!! ```
+!!
+!! | CMNAME string              | Model                               |
+!! |----------------------------|-------------------------------------|
+!! | `LINEAR_ELASTIC`           | Linear elastic (default integrator) |
+!! | `LINEAR_ELASTIC_INTEG_EULER` | Linear elastic, Euler substepping |
+!! | `MCSS`                     | Mohr-Coulomb SS (default integrator)|
+!! | `MCSS_INTEG_EULER`         | Mohr-Coulomb SS, Euler substepping  |
+!! | `MCSS_INTEG_ORTIZ_SIMO`    | Mohr-Coulomb SS, Ortiz-Simo         |
+!!
+!! Abaqus uppercases `CMNAME` before passing it; model names are matched in
+!! uppercase. The integrator suffix is parsed in lowercase inside each model UMAT.
 
 subroutine UMAT(STRESS, STATEV, DDSDDE,          &
                 SSE, SPD, SCD,                   &

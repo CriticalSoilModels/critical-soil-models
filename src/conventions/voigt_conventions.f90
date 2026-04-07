@@ -1,19 +1,22 @@
-! Voigt convention translation utilities.
-! Internal convention: [11, 22, 33, 12, 13, 23]  (standard mechanics order)
-! Translation and inflation/deflation happen only at the UMAT boundary —
-! never inside models or integrators.
-!
-! Problem types and their solver-side component counts:
-!
-!   3D           NDI=3, NSHR=3, NTENS=6   [11, 22, 33, 12, 13, 23]
-!   Plane strain NDI=3, NSHR=1, NTENS=4   [11, 22, 33, 12]
-!   Axisymmetric NDI=3, NSHR=1, NTENS=4   [11, 22, 33, 12]  (33 = hoop)
-!   Plane stress NDI=2, NSHR=1, NTENS=3   [11, 22, 12]      (33 = 0)
-!
-! Internally every model and integrator always works with 6 components.
-! The wrapper inflates solver vectors to 6 on entry and deflates back on exit.
-! Plane stress requires a Newton iteration in the wrapper to find eps_33
-! such that sig_33 = 0 — handled in the UMAT wrapper, not here.
+!! Voigt convention translation and inflate/deflate utilities.
+!!
+!! The library's **internal** Voigt ordering is `[11, 22, 33, 12, 13, 23]`.
+!! Convention translation and inflate/deflate happen **only** at the UMAT
+!! boundary — never inside models or integrators.
+!!
+!! ### Supported problem types
+!!
+!! | Type            | NDI | NSHR | NTENS | Solver components          |
+!! |-----------------|-----|------|-------|----------------------------|
+!! | 3D              | 3   | 3    | 6     | [11, 22, 33, 12, 13, 23]   |
+!! | Plane strain    | 3   | 1    | 4     | [11, 22, 33, 12]           |
+!! | Axisymmetric    | 3   | 1    | 4     | [11, 22, 33, 12] (33=hoop) |
+!! | Plane stress    | 2   | 1    | 3     | [11, 22, 12] (33=0)        |
+!!
+!! Internally every model always works with 6 components. `inflate` pads solver
+!! vectors to 6 on entry; `deflate` strips them back on exit.
+!! Plane stress requires a Newton iteration in the UMAT wrapper to satisfy
+!! σ₃₃ = 0 — this is handled in the wrapper, not here.
 
 module mod_voigt_conventions
    use mod_csm_kinds, only: wp
@@ -22,31 +25,31 @@ module mod_voigt_conventions
    ! ---------------------------------------------------------------------------
    ! Problem type identifiers
    ! ---------------------------------------------------------------------------
-   integer, parameter :: PROBLEM_3D           = 1
-   integer, parameter :: PROBLEM_PLANE_STRAIN = 2
-   integer, parameter :: PROBLEM_AXISYMMETRIC = 3
-   integer, parameter :: PROBLEM_PLANE_STRESS = 4
+   integer, parameter :: PROBLEM_3D           = 1  !! Full 3D (NTENS=6)
+   integer, parameter :: PROBLEM_PLANE_STRAIN = 2  !! Plane strain (NTENS=4)
+   integer, parameter :: PROBLEM_AXISYMMETRIC = 3  !! Axisymmetric (NTENS=4)
+   integer, parameter :: PROBLEM_PLANE_STRESS = 4  !! Plane stress (NTENS=3)
 
    ! ---------------------------------------------------------------------------
-   ! Named reorder arrays for each supported solver convention
+   ! Named reorder arrays for each supported solver convention.
    ! Internal (this library): [11, 22, 33, 12, 13, 23]
    ! ---------------------------------------------------------------------------
 
    integer, parameter :: INTERNAL_ORDER(6) = [1, 2, 3, 4, 5, 6]
+   !! Identity permutation — internal library order.
 
-   ! Anura3D: [11, 22, 33, 12, 23, 31]  — positions 5 and 6 swapped
    integer, parameter :: ANURA3D_ORDER(6) = [1, 2, 3, 4, 6, 5]
+   !! Anura3D convention: `[11, 22, 33, 12, 23, 31]` — positions 5 and 6 swapped.
 
-   ! Abaqus:  [11, 22, 33, 12, 13, 23]  — same as internal
    integer, parameter :: ABAQUS_ORDER(6) = [1, 2, 3, 4, 5, 6]
+   !! Abaqus convention: `[11, 22, 33, 12, 13, 23]` — same as internal.
 
 contains
 
-   ! ---------------------------------------------------------------------------
-   ! Determine problem type from NDI and NSHR (as passed by the solver UMAT)
-   ! ---------------------------------------------------------------------------
    function problem_type(ndi, nshr) result(ptype)
-      integer, intent(in) :: ndi, nshr
+      !! Determine the problem type from the NDI and NSHR arguments passed by the solver.
+      integer, intent(in) :: ndi   !! Number of direct stress components
+      integer, intent(in) :: nshr  !! Number of shear stress components
       integer :: ptype
 
       if (ndi == 3 .and. nshr == 3) then
@@ -60,24 +63,15 @@ contains
       end if
    end function problem_type
 
-   ! ---------------------------------------------------------------------------
-   ! Inflate a solver-side Voigt vector (NTENS components) to internal 6-component
-   !
-   ! Plane strain / axisymmetric (NTENS=4):
-   !   solver [11, 22, 33, 12]  ->  internal [11, 22, 33, 12, 0, 0]
-   !   Components 5 (13) and 6 (23) are zero — no out-of-plane shear.
-   !
-   ! Plane stress (NTENS=3):
-   !   solver [11, 22, 12]  ->  internal [11, 22, 0, 12, 0, 0]
-   !   Component 3 (33) is set to zero here. For strain inflation the caller
-   !   is responsible for inserting the eps_33 found by the plane-stress Newton
-   !   iteration before passing to the integrator.
-   !
-   ! 3D (NTENS=6): identity (after convention reorder)
-   ! ---------------------------------------------------------------------------
    function inflate(v_solver, ptype) result(v6)
-      real(wp), intent(in) :: v_solver(:)   ! NTENS components, already in internal order
-      integer,  intent(in) :: ptype
+      !! Pad a solver-side Voigt vector (NTENS components) to the internal 6-component form.
+      !!
+      !! Missing components are set to zero:
+      !! - Plane strain/axisymmetric: positions 5 (13) and 6 (23) → 0
+      !! - Plane stress: position 3 (33) → 0 for stress;
+      !!   for strain the caller inserts ε₃₃ after calling this function.
+      real(wp), intent(in) :: v_solver(:)  !! NTENS components, already in internal order
+      integer,  intent(in) :: ptype        !! Problem type (use `problem_type`)
       real(wp) :: v6(6)
 
       v6 = 0.0_wp
@@ -87,34 +81,25 @@ contains
          v6 = v_solver(1:6)
 
        case(PROBLEM_PLANE_STRAIN, PROBLEM_AXISYMMETRIC)
-         ! solver: [11, 22, 33, 12]  ->  internal positions 1,2,3,4
          v6(1) = v_solver(1)   ! 11
          v6(2) = v_solver(2)   ! 22
          v6(3) = v_solver(3)   ! 33
          v6(4) = v_solver(4)   ! 12
-         ! v6(5) = 0  (13 — no out-of-plane shear)
-         ! v6(6) = 0  (23 — no out-of-plane shear)
 
        case(PROBLEM_PLANE_STRESS)
-         ! solver: [11, 22, 12]  ->  internal positions 1,2,4
-         ! v6(3) = 0 for stress; for strain the wrapper must insert eps_33 afterwards
          v6(1) = v_solver(1)   ! 11
          v6(2) = v_solver(2)   ! 22
          v6(4) = v_solver(3)   ! 12
-         ! v6(3) = 0  (sig_33 = 0 by definition; eps_33 set by caller)
-         ! v6(5) = 0, v6(6) = 0
 
        case default
          error stop "inflate: unknown problem type"
       end select
    end function inflate
 
-   ! ---------------------------------------------------------------------------
-   ! Deflate an internal 6-component Voigt vector back to solver-side NTENS
-   ! ---------------------------------------------------------------------------
    function deflate(v6, ptype) result(v_solver)
-      real(wp), intent(in) :: v6(6)
-      integer,  intent(in) :: ptype
+      !! Strip an internal 6-component Voigt vector back to the solver-side NTENS form.
+      real(wp), intent(in) :: v6(6)          !! Internal 6-component vector
+      integer,  intent(in) :: ptype          !! Problem type (use `problem_type`)
       real(wp), allocatable :: v_solver(:)
 
       select case(ptype)
@@ -124,31 +109,28 @@ contains
 
        case(PROBLEM_PLANE_STRAIN, PROBLEM_AXISYMMETRIC)
          allocate(v_solver(4))
-         v_solver(1) = v6(1)   ! 11
-         v_solver(2) = v6(2)   ! 22
-         v_solver(3) = v6(3)   ! 33
-         v_solver(4) = v6(4)   ! 12
+         v_solver(1) = v6(1)
+         v_solver(2) = v6(2)
+         v_solver(3) = v6(3)
+         v_solver(4) = v6(4)
 
        case(PROBLEM_PLANE_STRESS)
          allocate(v_solver(3))
-         v_solver(1) = v6(1)   ! 11
-         v_solver(2) = v6(2)   ! 22
-         v_solver(3) = v6(4)   ! 12 (skips sig_33 — solver knows it is zero)
+         v_solver(1) = v6(1)
+         v_solver(2) = v6(2)
+         v_solver(3) = v6(4)   ! 12 (skips σ₃₃ — solver knows it is zero)
 
        case default
          error stop "deflate: unknown problem type"
       end select
    end function deflate
 
-   ! ---------------------------------------------------------------------------
-   ! Deflate a 6x6 internal stiffness matrix to NTENS x NTENS solver-side form
-   ! ---------------------------------------------------------------------------
    function deflate_stiffness(C6, ptype) result(C_out)
-      real(wp), intent(in) :: C6(6,6)
-      integer,  intent(in) :: ptype
+      !! Extract the NTENS×NTENS solver-side stiffness block from the internal 6×6 matrix.
+      real(wp), intent(in) :: C6(6,6)          !! Internal 6×6 stiffness matrix
+      integer,  intent(in) :: ptype            !! Problem type (use `problem_type`)
       real(wp), allocatable :: C_out(:,:)
 
-      ! Index map: which internal indices appear in the solver output
       integer :: idx(6), n, i, j
       n = 0
 
@@ -171,13 +153,10 @@ contains
       end do
    end function deflate_stiffness
 
-   ! ---------------------------------------------------------------------------
-   ! Convention reorder (unchanged from before)
-   ! ---------------------------------------------------------------------------
-
    function to_internal(v, from_order) result(v_out)
-      real(wp), intent(in) :: v(6)
-      integer,  intent(in) :: from_order(6)
+      !! Reorder a Voigt vector from a solver convention to internal order.
+      real(wp), intent(in) :: v(6)           !! Input vector in solver convention
+      integer,  intent(in) :: from_order(6)  !! Solver order (e.g. `ANURA3D_ORDER`)
       real(wp) :: v_out(6)
       integer  :: i
 
@@ -187,8 +166,9 @@ contains
    end function to_internal
 
    function from_internal(v, to_order) result(v_out)
-      real(wp), intent(in) :: v(6)
-      integer,  intent(in) :: to_order(6)
+      !! Reorder a Voigt vector from internal order to a solver convention.
+      real(wp), intent(in) :: v(6)         !! Input vector in internal order
+      integer,  intent(in) :: to_order(6)  !! Target order (e.g. `ANURA3D_ORDER`)
       real(wp) :: v_out(6)
       integer  :: i
 
@@ -198,8 +178,10 @@ contains
    end function from_internal
 
    function reorder_stiffness(C, from_order, to_order) result(C_out)
-      real(wp), intent(in) :: C(6,6)
-      integer,  intent(in) :: from_order(6), to_order(6)
+      !! Reorder a 6×6 stiffness matrix between two Voigt conventions.
+      real(wp), intent(in) :: C(6,6)          !! Input stiffness in source convention
+      integer,  intent(in) :: from_order(6)   !! Source order
+      integer,  intent(in) :: to_order(6)     !! Target order
       real(wp) :: C_out(6,6)
       real(wp) :: C_internal(6,6)
       integer  :: i, j

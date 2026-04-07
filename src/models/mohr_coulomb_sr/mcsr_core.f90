@@ -1,3 +1,9 @@
+!! **Legacy** — Mohr-Coulomb with Strain Rate effects (MCSR) core integration driver.
+!!
+!! Contains `SRMC_HSR`: the top-level elasto-plastic routine that selects
+!! between Euler substepping and Ortiz-Simo integration based on
+!! `switch_plastic_integration`. This module pre-dates the new architecture
+!! and is not yet refactored to extend `csm_model_t`.
 module mod_SRMC
    use mod_csm_kinds, only: wp
    use mod_SRMC_funcs, only: MatVec

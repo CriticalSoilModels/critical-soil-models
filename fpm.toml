@@ -1,6 +1,6 @@
 name = "critical-soil-models"
 version = "0.1.0"
-license = "BSD"
+license = "GPL-3.0"
 author = "Jonathan Moore"
 maintainer = "jonathanm@vt.edu"
 copyright = "Copyright 2025, Jonathan Moore"
@@ -24,9 +24,15 @@ test-drive = { git = "https://github.com/fortran-lang/test-drive.git/" }
 project = "critical-soil-models"
 author = "WaveHello"
 summary = "Modern Fortran library of constitutive relations for soil"
+project_url = "https://github.com/CriticalSoilModels/critical-soil-models"
+version = "0.1.0"
+license = "gpl"
 src_dir = ["src", "example"]
 output_dir = "build/doc"
-# page_dir = "doc"
+page_dir = "docs/pages"
+display = ["public", "protected"]
+graph = true
+warn = true
 # exclude = "**/fortplot_pdf_text.f90"
 
 [install]
