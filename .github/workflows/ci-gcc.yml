@@ -1,0 +1,45 @@
+name: GFortran
+
+on:
+  push:
+    branches: [main, architecture-prototype]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-gcc:
+    name: gfortran ${{ matrix.gcc-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc-version: [12, 13, 14]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup gfortran
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: ${{ matrix.gcc-version }}
+
+      - name: Setup fpm
+        uses: fortran-lang/setup-fpm@v7
+        with:
+          fpm-version: "latest"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache fpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/dependencies
+          key: fpm-deps-gcc${{ matrix.gcc-version }}-${{ hashFiles('fpm.toml') }}
+          restore-keys: |
+            fpm-deps-gcc${{ matrix.gcc-version }}-
+
+      - name: Build
+        run: fpm build
+
+      - name: Test
+        run: fpm test
