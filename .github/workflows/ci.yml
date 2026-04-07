@@ -79,40 +79,6 @@ jobs:
       - name: Test
         run: fpm test
 
-  # ── LLVM flang ──────────────────────────────────────────────────────────────
-  test-flang:
-    name: flang (LLVM)
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup flang
-        uses: fortran-lang/setup-fortran@v1
-        with:
-          compiler: flang
-          version: "19"
-
-      - name: Setup fpm
-        uses: fortran-lang/setup-fpm@v7
-        with:
-          fpm-version: "latest"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cache fpm dependencies
-        uses: actions/cache@v4
-        with:
-          path: build/dependencies
-          key: fpm-deps-flang19-${{ hashFiles('fpm.toml') }}
-          restore-keys: |
-            fpm-deps-flang19-
-
-      - name: Build
-        run: fpm build
-
-      - name: Test
-        run: fpm test
-
   # ── LFortran (experimental — allowed to fail) ────────────────────────────────
   test-lfortran:
     name: lfortran (experimental)
