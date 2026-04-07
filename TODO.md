@@ -24,40 +24,42 @@ Still needed in `src/models/mohr_coulomb_sr/` (outside invariants scope):
 
 ---
 
-## New architecture — pseudocode written, not yet compiled
+## New architecture — DONE ✓
 
-The following files describe the target architecture but are marked `PSEUDOCODE — does not compile`:
+All steps compiled and unit-tested (39 tests passing):
 
-- `src/core/csm_model.f90` — abstract base type `csm_model_t`
-- `src/integrators/euler_substep.f90` — modified Euler substepping integrator
-- `src/conventions/voigt_conventions.f90` — Voigt reordering and inflate/deflate
-- `src/models/mohr_coulomb_ss/mcss_model.f90` — MCSS concrete model
-- `src/models/mohr_coulomb_ss/umat_mcss.f90` — MCSS UMAT wrapper
+- **Step 1** `csm_model.f90` — abstract base type `csm_model_t` ✓
+- **Step 2** `voigt_conventions.f90` — Voigt reordering and inflate/deflate ✓
+- **Step 3** `euler_substep.f90` — modified Euler substepping integrator ✓
+- **Step 4** Linear elastic model — full stack validated (base → integrator → UMAT) ✓
+- **Step 5** MCSS model — functions, types, UMAT wiring complete ✓
 
-Suggested order to make them compile:
+---
 
-### Step 1 — `csm_model.f90` (abstract base)
-No dependencies on other new-arch files. Start here; it gates everything else.
+## MCSS refactoring — in progress
 
-### Step 2 — `voigt_conventions.f90`
-Standalone utility module. Needed by all UMAT wrappers. Can be done in parallel with Step 1.
+Recent work on `src/models/mohr_coulomb_ss/`:
 
-### Step 3 — `euler_substep.f90` (integrator)
-Depends only on `csm_model_t`. Can compile against the abstract type once Step 1 is done.
-Has no concrete model calls — purely polymorphic dispatch through deferred procedures.
+### Completed ✓
+- Renamed all derivative functions to `d<num>_by_d<denom>` convention:
+  - `calc_dF_dsig_abbo` → `calc_dF_by_dsig_abbo`
+  - `calc_dK_dlode` → `calc_dK_by_dlode`
+- Replaced inline dJ/dσ in `calc_dF_by_dsig_abbo` with `calc_dJ_by_dsig` from invariants library
+- Added `calc_dJ_by_dsig` to `mod_stress_invar_deriv` (thin wrapper over dJ2/dσ ÷ 2J)
+- Refactored `mcss_hardening_modulus` into orchestrator + two private helpers:
+  - `calc_dF_by_dstate` — ∂F/∂c and ∂F/∂φ
+  - `calc_dstate_by_deps_eq` — dc/dεq and dφ/dεq (exponential softening rates)
+- Renamed `lode_t` → `lode_tr` throughout (`abbo_sloan_params_t` field + all uses)
+- Power operations consistent throughout module (`*` not `**2`, avoids gfortran IPO instability)
+- Moved `pm4sand` to `legacy/` (depended on Anura3D internals; was blocking fpm build)
+- Fixed `umat_linear_elastic` to use `integrator_params_t` / `DEFAULT_INTEGRATOR_PARAMS`
+- Added `abbo_sloan_preset(lode_tr_deg)` factory in `mod_abbo_sloan_presets`:
+  - Returns pre-calibrated constants for 25.0° and 29.5° transition Lode angles
+  - Exported `DEFAULT_SMOOTH_COEFF` from `mod_mcss_types`
 
-### Step 4 — Linear elastic model (validate the scaffold)
-Simplest possible concrete model: no state, no yield surface.
-Write `linear_elastic_model.f90` (extends `csm_model_t`) and a UMAT wrapper.
-This validates the full stack (base type → integrator → UMAT) with the least complexity.
-A passing single-element driver test here proves the architecture works end-to-end.
-
-### Step 5 — MCSS model
-Once the scaffold is proven with linear elastic:
-- Implement `mcss_model.f90` properly (the pseudocode is a detailed spec)
-- Implement `mcss_functions.f90` (yield fn, flow rule, softening)
-- Unit-test the constitutive functions in isolation
-- Wire up `umat_mcss.f90`
+### Still needed
+- Integration tests: single-element driver for MCSS (explicitly deferred — architecture first)
+- `umat_mcss.f90` wiring (UMAT wrapper not yet connected end-to-end)
 
 ---
 
