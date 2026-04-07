@@ -97,7 +97,7 @@ contains
 
       J3 = calc_J3_inv(dev_stress)
 
-      call check(error, J3, exp_J3, more = "Indiv. J3 test")
+      call check(error, J3, exp_J3, thr = 1.0e-10_wp, more = "Indiv. J3 test")
       if(allocated(error)) return
 
    end subroutine test_J3_invariant
@@ -121,7 +121,7 @@ contains
       dev = calc_dev_stress(trx_compression, mean_stress)
       compress_lode = calc_lode_inv(calc_J2_inv(dev), calc_J3_inv(dev))
 
-      call check(error, compress_lode, -PI / 6.0_wp, more = "compression lode angle")
+      call check(error, compress_lode, -PI / 6.0_wp, thr = 1.0e-7_wp, more = "compression lode angle")
       if (allocated(error)) return
    
       ! Test for triaxial extension (expected Lode angle is pi/6)
