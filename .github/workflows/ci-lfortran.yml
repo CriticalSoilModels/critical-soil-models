@@ -10,7 +10,6 @@ jobs:
   test-lfortran:
     name: lfortran (experimental)
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
