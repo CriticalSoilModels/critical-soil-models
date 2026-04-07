@@ -3,6 +3,14 @@
 [![CI](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci.yml)
 [![Docs](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/docs.yml/badge.svg)](https://criticalsoilmodels.github.io/critical-soil-models/)
 
+## Compiler Support
+
+| Compiler | Version(s) | Status | Notes |
+|----------|-----------|--------|-------|
+| GFortran | 12, 13, 14 | ✅ Passing | Primary target |
+| Intel ifx | 2024.2 | ✅ Passing | |
+| LFortran | latest | ⚠️ Experimental | Compiler segfaults on some files |
+
 Modern fortran library of common geotechnical constitutive models. This library is being made:
 - [x] Interface with  - For testing, calibrating, and debugging their constitutive model.
 
