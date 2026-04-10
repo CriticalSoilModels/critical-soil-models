@@ -33,14 +33,8 @@ jobs:
           restore-keys: |
             fpm-deps-lfortran-
 
-      - name: Build
-        run: fpm @lfortran
-
       - name: Test
         run: fpm @lfortran_test
-
-      - name: Build (release)
-        run: fpm @lfortran_release
 
       - name: Test (release)
         run: fpm @lfortran_release_test

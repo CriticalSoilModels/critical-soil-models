@@ -34,14 +34,8 @@ jobs:
           restore-keys: |
             fpm-deps-ifx-
 
-      - name: Build
-        run: fpm @ifx
-
       - name: Test
         run: fpm @ifx_test
-
-      - name: Build (release)
-        run: fpm @ifx_release
 
       - name: Test (release)
         run: fpm @ifx_release_test
