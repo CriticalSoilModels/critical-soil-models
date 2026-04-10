@@ -46,7 +46,7 @@ contains
       expected = [5.0_wp, 5.0_wp, 5.0_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
       call euler_substep(model, sig, deps, &
-                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp))
+                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp, max_iters=100))
 
       call check_tensor_values(sig, expected, TOL, passed)
       call check(error, passed, .true., more="volumetric: sig /= D_e * deps")
@@ -70,7 +70,7 @@ contains
       expected = [0.0_wp, 0.0_wp, 0.0_wp, 1.0_wp, 0.0_wp, 0.0_wp]
 
       call euler_substep(model, sig, deps, &
-                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp))
+                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp, max_iters=100))
 
       call check_tensor_values(sig, expected, TOL, passed)
       call check(error, passed, .true., more="pure shear: sig /= D_e * deps")
@@ -95,7 +95,7 @@ contains
       expected = [3.0_wp, 1.0_wp, 1.0_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
       call euler_substep(model, sig, deps, &
-                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp))
+                         integrator_params_t(ftol=FTOL, stol=STOL, dt_min=1.0e-9_wp, max_iters=100))
 
       call check_tensor_values(sig, expected, TOL, passed)
       call check(error, passed, .true., more="uniaxial: sig /= D_e * deps")

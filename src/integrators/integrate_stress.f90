@@ -13,6 +13,7 @@ module mod_integrate_stress
    use mod_csm_kinds,     only: wp
    use mod_csm_model,     only: csm_model_t
    use mod_euler_substep, only: euler_substep, integrator_params_t, DEFAULT_INTEGRATOR_PARAMS
+   use mod_cprm,          only: cprm_step
    implicit none
    private
    public :: integrate_stress
@@ -44,7 +45,7 @@ contains
          call euler_substep(model, sig, deps, iparams)
 
       case(INTEGRATION_ORTIZ_SIMO)
-         error stop "integrate_stress: ortiz_simo not yet implemented"
+         call cprm_step(model, sig, deps, iparams)
 
       case default
          error stop "integrate_stress: unknown integration method"

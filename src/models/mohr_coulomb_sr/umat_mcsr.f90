@@ -164,7 +164,7 @@ contains
 
          call mdl%snapshot(state_saved)
          call euler_substep(mdl, sig_trial, dstran_trial, &
-                            iparams=integrator_params_t(ftol=ftol, stol=1.0e-4_wp, dt_min=1.0e-9_wp))
+                            iparams=integrator_params_t(ftol=ftol, stol=1.0e-4_wp, dt_min=1.0e-9_wp, max_iters=100))
          call mdl%restore(state_saved)
 
          sig33 = sig_trial(3)

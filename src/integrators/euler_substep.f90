@@ -11,14 +11,20 @@ module mod_euler_substep
    ! Integration control parameters — tolerances and step-size limits.
    ! Callers can override individual fields; defaults are used for omitted ones.
    ! ---------------------------------------------------------------------------
+   !! TODO: revisit integrator_params_t design — stol/dt_min are Euler-specific,
+   !!       max_iters is CPRM-specific. Consider splitting into per-integrator
+   !!       param types that share only ftol via a common base or select type.
    type :: integrator_params_t
-      real(wp) :: ftol    !! Yield surface tolerance [stress units]
-      real(wp) :: stol    !! Relative stress error tolerance for substepping [-]
-      real(wp) :: dt_min  !! Minimum pseudo-time sub-step (prevents infinite loop)
+      real(wp) :: ftol      !! Yield surface tolerance [stress units]
+      real(wp) :: stol      !! Relative stress error tolerance for substepping [-]
+      real(wp) :: dt_min    !! Minimum pseudo-time sub-step (prevents infinite loop)
+      integer  :: max_iters !! Maximum Newton iterations (CPRM only)
    end type integrator_params_t
 
+   !! Single source of default values. All integrator_params_t constructors must
+   !! supply every field explicitly; defaults live here and nowhere else.
    type(integrator_params_t), parameter :: DEFAULT_INTEGRATOR_PARAMS = &
-      integrator_params_t(ftol=1.0e-8_wp, stol=1.0e-4_wp, dt_min=1.0e-9_wp)
+      integrator_params_t(ftol=1.0e-8_wp, stol=1.0e-4_wp, dt_min=1.0e-9_wp, max_iters=100)
 
    public :: integrator_params_t, DEFAULT_INTEGRATOR_PARAMS
 
