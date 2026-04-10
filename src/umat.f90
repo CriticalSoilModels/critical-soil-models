@@ -36,6 +36,7 @@ subroutine UMAT(STRESS, STATEV, DDSDDE,          &
    use mod_cmname_parser,       only: material_name
    use mod_umat_linear_elastic, only: umat_linear
    use mod_umat_mcss,           only: umat_mcss
+   use mod_umat_mcsr,           only: umat_mcsr
    use mod_csm_kinds,           only: wp
 
    implicit none
@@ -68,6 +69,19 @@ subroutine UMAT(STRESS, STATEV, DDSDDE,          &
 
    case("MCSS")
       call umat_mcss(STRESS, STATEV, DDSDDE,          &
+                     SSE, SPD, SCD,                   &
+                     RPL, DDSDDT, DRPLDE, DRPLDT,    &
+                     STRAN, DSTRAN,                   &
+                     TIME, DTIME, TEMP, DTEMP,        &
+                     PREDEF, DPRED, CMNAME,           &
+                     NDI, NSHR, NTENS, NSTATEV,       &
+                     PROPS, NPROPS,                   &
+                     COORDS, DROT, PNEWDT, CELENT,    &
+                     DFGRD0, DFGRD1,                  &
+                     NOEL, NPT, LAYER, KSPT, KSTEP, KINC)
+
+   case("MCSR")
+      call umat_mcsr(STRESS, STATEV, DDSDDE,          &
                      SSE, SPD, SCD,                   &
                      RPL, DDSDDT, DRPLDE, DRPLDT,    &
                      STRAN, DSTRAN,                   &
