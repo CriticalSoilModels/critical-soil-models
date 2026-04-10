@@ -2,6 +2,38 @@
 
 [![Docs](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/docs.yml/badge.svg)](https://criticalsoilmodels.github.io/critical-soil-models/)
 
+## Building and Testing
+
+This project uses [fpm](https://fpm.fortran-lang.org/) with a `fpm.rsp` response file for named build configurations. Invoke a configuration with `fpm @<tag>`.
+
+### Response file tags
+
+| Tag | Action | Flags |
+|-----|--------|-------|
+| `@ifx` | build | default |
+| `@ifx_test` | test | default |
+| `@ifx_debug` | test | `-g -traceback -check all -fpe0 -warn all` |
+| `@ifx_release` | build | `-O3 -xHost` |
+| `@ifx_release_test` | test | `-O3 -xHost` |
+| `@flang` | build | default |
+| `@flang_test` | test | default |
+| `@flang_debug` | test | `-g -fdebug-info-for-profiling -fcheck=bounds` |
+| `@flang_release` | build | `-O3 -march=native -funroll-loops` |
+| `@flang_release_test` | test | `-O3 -march=native -funroll-loops` |
+| `@lfortran` | build | default |
+| `@lfortran_test` | test | default |
+| `@lfortran_debug` | test | `-g` |
+| `@lfortran_release` | build | `-O3` |
+| `@lfortran_release_test` | test | `-O3` |
+
+### Naming convention
+
+- `@<compiler>` — build only, default flags
+- `@<compiler>_test` — run tests, default flags
+- `@<compiler>_debug` — run tests with debug/bounds-checking flags
+- `@<compiler>_release` — build only with release optimisation flags
+- `@<compiler>_release_test` — run tests with release optimisation flags
+
 ## Compiler Support
 
 | Compiler | Version(s) | Status | Notes |

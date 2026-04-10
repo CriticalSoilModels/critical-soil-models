@@ -34,7 +34,13 @@ jobs:
             fpm-deps-lfortran-
 
       - name: Build
-        run: fpm build
+        run: fpm @lfortran
 
       - name: Test
-        run: fpm test
+        run: fpm @lfortran_test
+
+      - name: Build (release)
+        run: fpm @lfortran_release
+
+      - name: Test (release)
+        run: fpm @lfortran_release_test

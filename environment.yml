@@ -5,35 +5,28 @@ channels:
 dependencies:
   # Fortran compilers
   - gfortran
-  # - ifx_linux-64
-  # - ifx_win-64
-  # - intel-fortran-rt
-  # - flang
+  - flang
+  - libflang-rt           # required flang runtime (separate from the compiler package)
   - lfortran
+
+  # Intel ifx (Linux only — comment out on other platforms)
+  - ifx_linux-64
+  - intel-cmplr-lib-rt   # Intel compiler runtime libraries (libimf.so etc.)
+  - intel-cmplr-lic-rt
+
+  # C compiler (needed by fpm --c-compiler gcc)
+  - gcc
 
   # Build tools
   - fpm
-  # - cmake
-  # - ninja
-  # - meson
 
-  # Visualization
-  # - pyvista
-  # - paraview
-  # - gmsh
-  # - freecad
-
-  # Formatting and linting
+  # Language server
   - fortls
-  # - fprettify
-  # - findent
 
   # Documentation
-  # - ford
-  # - graphviz
+  - ford
+  - graphviz              # ford dependency for call graphs
+  - python-graphviz
 
   # Version control
   - git
-  - pip
-  - pip:
-    - git+https://github.com/Fortran-FOSS-Programmers/ford.git

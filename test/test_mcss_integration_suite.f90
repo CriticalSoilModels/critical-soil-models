@@ -91,7 +91,7 @@ contains
       deps = 1.0e-5_wp * [1.0_wp, 1.0_wp, 1.0_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
       call euler_substep(model, sig, deps, &
-                         integrator_params_t(ftol=YIELD_TOL, stol=1.0e-4_wp, dt_min=1.0e-9_wp))
+                         integrator_params_t(ftol=YIELD_TOL, stol=1.0e-4_wp, dt_min=1.0e-9_wp, max_iters=100))
 
       call check(error, all(model%state%eps_p == 0.0_wp), .true., &
                  more="elastic step: plastic strain should remain zero")
@@ -127,7 +127,7 @@ contains
       deps = [1.0e-3_wp, 0.0_wp, -1.0e-3_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
       call euler_substep(model, sig, deps, &
-                         integrator_params_t(ftol=YIELD_TOL, stol=1.0e-4_wp, dt_min=1.0e-9_wp))
+                         integrator_params_t(ftol=YIELD_TOL, stol=1.0e-4_wp, dt_min=1.0e-9_wp, max_iters=100))
 
       ! Slightly looser than ftol to allow for drift-correction residual
       call check(error, model%yield_fn(sig) <= 1.0e-6_wp, .true., &
@@ -170,7 +170,7 @@ contains
       do i = 1, 30
          call mcss_load_state(model, statev)
          call euler_substep(model, sig, deps, &
-                            integrator_params_t(ftol=YIELD_TOL, stol=1.0e-4_wp, dt_min=1.0e-9_wp))
+                            integrator_params_t(ftol=YIELD_TOL, stol=1.0e-4_wp, dt_min=1.0e-9_wp, max_iters=100))
          call mcss_save_state(model, statev)
       end do
 

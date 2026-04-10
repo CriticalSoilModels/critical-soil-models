@@ -36,8 +36,8 @@ fpm clean --all
 
 ### Environment Setup
 ```bash
-conda env create -f environment.yml
-conda activate fpm
+conda env create --file environment.yml
+conda activate csm
 ```
 Requires: gfortran, fpm (Fortran Package Manager), fortls, ford. `stdlib` is fetched
 automatically as a git dependency on first build and cached in `build/dependencies/`.
