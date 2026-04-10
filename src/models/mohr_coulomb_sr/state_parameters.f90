@@ -6,43 +6,9 @@
 
 module mod_state_params
    use mod_csm_kinds, only: wp
-   use mod_yield_function, only: calc_dF_by_dsig
-   use mod_voigt_utils, only: calc_two_norm_tensor, calc_tensor_inner_product
    implicit none
 
 contains
-   pure subroutine Check_Unloading(M_tc, eta_y, eta_yu, dI, Sig, dSig, LTOL, IsUnloading)
-      !*********************************************************************
-      ! Returns true if stress path is viscoplastic unloading              *
-      !																	 *
-      !*********************************************************************
-      
-      !input
-      implicit none
-      real(wp), intent(in):: M_tc, eta_y, eta_yu, dI, Sig(6), dSig(6), LTOL
-      logical, intent(out):: IsUnloading
-
-      !local variables
-      real(wp):: deta, n_vec(6), n_norm, Sig_norm, dSIg_inner_n, beta, phi
-      
-      ! Init the unloading to false
-      IsUnloading=.false.
-
-      deta=eta_yu-eta_y!change in state parameter
-
-      call calc_dF_by_dsig(M_tc, eta_yu, Sig, n_vec)  ! Normal to surface
-      n_norm   = calc_two_norm_tensor(n_vec) !norm of n_vec
-      Sig_norm = calc_two_norm_tensor(dSig)  !norm of dSig
-      dSIg_inner_n = calc_tensor_inner_product(dSig, n_vec) !inner product
-
-      beta=acos(deta/(n_norm*Sig_norm))!conical aperture is a plane for inviscid mat.
-      
-      phi=acos(dSIg_inner_n/(n_norm*Sig_norm))!angle between stress rate and normal
-
-      if (phi-beta>LTOL) IsUnloading=.true. !condition for unloading
-
-   end subroutine Check_Unloading
-
    pure subroutine Get_I_coeff(D_part, G_s, p, eps_rate, I)
       !*********************************************************************
       ! Returns the inertial coefficient                                   *
