@@ -22,10 +22,11 @@ module mod_mcsr_functions
    use mod_csm_kinds,          only: wp
    use mod_mcsr_types,         only: mcsr_params_t, mcsr_state_t
    use mod_elastic_utils,      only: calc_stiffness_GK
-   use mod_stress_invariants,  only: calc_sig_inv
+   use mod_stress_invariants,  only: calc_sig_inv, calc_J2_inv, calc_J3_inv
+   use mod_stress_invar_deriv, only: calc_dp_by_dsig, calc_dq_by_dsig, &
+                                     calc_dJ3_by_dsig, calc_dlode_angle_by_dsig
+   use mod_voigt_utils,        only: calc_dev_stress
    use mod_strain_invariants,  only: calc_eps_vol_inv, calc_dev_strain, calc_eps_q_inv
-   use mod_yield_function,     only: calc_yield_function, calc_dF_by_dsig
-   use mod_plastic_potential,  only: calc_dg_plas_by_dsig
    use mod_state_params,       only: Get_I_coeff, check4crossing, Update_GK, &
                                      get_dilation, Get_M
    use mod_state_params_deriv, only: calc_ddil_by_deps_p
@@ -57,11 +58,11 @@ contains
       real(wp) :: p, q, lode
 
       call calc_sig_inv(sig, p, q, lode)
-      call calc_yield_function(q, p, state%eta_y, F)
+      F = q + state%eta_y * p
    end function mcsr_yield_fn
 
    ! ---------------------------------------------------------------------------
-   ! Flow rule: dF/dsig (normal to yield surface in stress space)
+   ! Flow rule: dF/dsig = eta_y * dp/dsig + dq/dsig + dF/dtheta * dtheta/dsig
    ! ---------------------------------------------------------------------------
    pure function mcsr_flow_rule(params, state, sig) result(dF_by_dsig)
       type(mcsr_params_t), intent(in) :: params
@@ -69,19 +70,43 @@ contains
       real(wp),            intent(in) :: sig(6)
       real(wp) :: dF_by_dsig(6)
 
-      call calc_dF_by_dsig(params%M_tc, state%eta_y, sig, dF_by_dsig)
+      real(wp) :: p, q, lode, J2, J3
+      real(wp) :: dev(6)
+      real(wp) :: dp_dsig(6), dq_dsig(6), dJ3_dsig(6), dlode_dsig(6)
+      real(wp) :: dF_by_dtheta
+
+      call calc_sig_inv(sig, p, q, lode)
+      dev      = calc_dev_stress(sig, p)
+      J2       = calc_J2_inv(dev)
+      J3       = calc_J3_inv(dev)
+
+      dp_dsig   = calc_dp_by_dsig()
+      dq_dsig   = calc_dq_by_dsig(dev, q)
+      dJ3_dsig  = calc_dJ3_by_dsig(dev)
+      dlode_dsig = calc_dlode_angle_by_dsig(dJ3_dsig, dev, J3, J2, lode)
+
+      ! dF/dtheta from Lode-dependent M: M = M_tc*(1 + 0.25*cos(1.5*theta + 0.25*pi)^1.2)
+      dF_by_dtheta = 0.45_wp * p * params%M_tc &
+                     * cos(1.5_wp * lode + 0.25_wp * PI)**0.2_wp &
+                     * sin(1.5_wp * lode + 0.25_wp * PI)
+
+      dF_by_dsig = state%eta_y * dp_dsig + dq_dsig + dF_by_dtheta * dlode_dsig
    end function mcsr_flow_rule
 
    ! ---------------------------------------------------------------------------
    ! Plastic potential: dG/dsig = -dilation * dp/dsig + dq/dsig
    ! ---------------------------------------------------------------------------
-   function mcsr_plastic_potential(params, state, sig) result(dG_by_dsig)
+   pure function mcsr_plastic_potential(params, state, sig) result(dG_by_dsig)
       type(mcsr_params_t), intent(in) :: params
       type(mcsr_state_t),  intent(in) :: state
       real(wp),            intent(in) :: sig(6)
       real(wp) :: dG_by_dsig(6)
 
-      call calc_dg_plas_by_dsig(state%dilation, sig, dG_by_dsig)
+      real(wp) :: p, q, lode, dev(6)
+
+      call calc_sig_inv(sig, p, q, lode)
+      dev        = calc_dev_stress(sig, p)
+      dG_by_dsig = -state%dilation * calc_dp_by_dsig() + calc_dq_by_dsig(dev, q)
    end function mcsr_plastic_potential
 
    ! ---------------------------------------------------------------------------
