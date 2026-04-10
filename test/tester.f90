@@ -14,6 +14,7 @@ program tester
     use mod_test_cmname_parser_suite,   only: collect_cmname_parser_suite
     use mod_test_mcss_functions_suite,      only: collect_mcss_functions_suite
     use mod_test_abbo_sloan_presets_suite,  only: collect_abbo_sloan_presets_suite
+    use mod_test_mcss_integration_suite,   only: collect_mcss_integration_suite
     implicit none
     integer :: stat, is
     
@@ -36,7 +37,8 @@ program tester
       new_testsuite("test_linear_elastic",   collect_linear_elastic_suite), &
       new_testsuite("test_cmname_parser",    collect_cmname_parser_suite),  &
       new_testsuite("test_mcss_functions",      collect_mcss_functions_suite),     &
-      new_testsuite("test_abbo_sloan_presets",  collect_abbo_sloan_presets_suite)  &
+      new_testsuite("test_abbo_sloan_presets",  collect_abbo_sloan_presets_suite), &
+      new_testsuite("test_mcss_integration",   collect_mcss_integration_suite)   &
       ]
     ! Make the output colorful
     call init_color_output(.True.)
