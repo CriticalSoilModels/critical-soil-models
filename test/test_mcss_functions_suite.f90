@@ -38,7 +38,8 @@ contains
          new_unittest("plastic_potential: no NaN",        test_plastic_potential_no_nan),  &
          new_unittest("hardening_modulus: H=0 at residual",  test_hmod_residual_zero),     &
          new_unittest("hardening_modulus: H>0 at peak",       test_hmod_peak_positive),    &
-         new_unittest("hardening_modulus: no NaN at J=0",     test_hmod_no_nan_hydrostatic) &
+         new_unittest("hardening_modulus: no NaN at J=0",     test_hmod_no_nan_hydrostatic), &
+         new_unittest("hardening_modulus: FD gradient check", test_hardening_modulus_fd)   &
       ]
    end subroutine collect_mcss_functions_suite
 
@@ -317,5 +318,65 @@ contains
       call check(error, .not. ieee_is_nan(H), .true., &
          more="hardening_modulus: NaN at hydrostatic (J=0) state")
    end subroutine test_hmod_no_nan_hydrostatic
+
+   subroutine test_hardening_modulus_fd(error)
+      !! Finite-difference gradient check for mcss_hardening_modulus.
+      !!
+      !! Verifies that the analytical H matches a forward-difference approximation:
+      !!   H_fd = -(F(sig, state_perturbed) - F(sig, state_0)) / h
+      !! where state_perturbed is obtained by calling mcss_update_hardening with
+      !! a plastic strain increment h * dg_by_dsig (one unit of plastic multiplier).
+      !!
+      !! Stress is placed on the yield surface at p = -200 kPa, lode = 0.
+      !! The FD perturbation h = 1e-7 gives relative truncation error < 1e-6 for
+      !! smooth exponential softening — well within the 1e-4 tolerance.
+      type(error_type), allocatable, intent(out) :: error
+
+      real(wp), parameter :: FD_STEP    = 1.0e-7_wp   !! Forward-difference step size
+      real(wp), parameter :: FD_TOL     = 1.0e-4_wp   !! Relative tolerance on H
+      real(wp), parameter :: FD_REF_MIN = 1.0_wp      !! Min reference magnitude for normalisation
+
+      type(mcss_params_t) :: params
+      type(mcss_state_t)  :: state_0, state_plus
+      real(wp) :: sig(6), dg_by_dsig(6)
+      real(wp) :: p_val, J_yield
+      real(wp) :: H_analytical, H_fd
+      real(wp) :: F_0, F_plus
+      real(wp) :: rel_err
+
+      params = make_params()
+      state_0 = make_peak_state()
+
+      ! Stress on yield surface at p = -200 kPa, lode = 0
+      p_val   = -200.0_wp
+      J_yield = C_PEAK * cos(PHI_PEAK) - p_val * sin(PHI_PEAK)
+      sig = [p_val + J_yield, p_val, p_val - J_yield, 0.0_wp, 0.0_wp, 0.0_wp]
+
+      ! Plastic potential gradient at this stress state
+      dg_by_dsig = mcss_plastic_potential(params, state_0, sig)
+
+      ! Analytical hardening modulus
+      H_analytical = mcss_hardening_modulus(params, state_0, sig, dg_by_dsig)
+
+      ! Yield function value before perturbation (should be ≈ 0 — on surface)
+      F_0 = mcss_yield_fn(params, state_0, sig)
+
+      ! Forward-difference: perturb plastic strain by FD_STEP * dg_by_dsig
+      ! (one unit of plastic multiplier scaled by FD_STEP), then evaluate F
+      state_plus = state_0
+      call mcss_update_hardening(params, state_plus, FD_STEP * dg_by_dsig)
+      F_plus = mcss_yield_fn(params, state_plus, sig)
+
+      ! H = ∂F/∂κ · dκ/dlambda = (F_plus - F_0) / FD_STEP
+      ! Sign convention: H > 0 for softening (yield surface shrinks → F_plus > F_0).
+      ! See euler_substep.f90: denominator = n·De·m - H
+      H_fd = (F_plus - F_0) / FD_STEP
+
+      ! Relative error normalised by max(|H|, FD_REF_MIN)
+      rel_err = abs(H_analytical - H_fd) / max(abs(H_analytical), FD_REF_MIN)
+
+      call check(error, rel_err < FD_TOL, .true., &
+         more="hardening_modulus FD: analytical and finite-difference H disagree")
+   end subroutine test_hardening_modulus_fd
 
 end module mod_test_mcss_functions_suite
