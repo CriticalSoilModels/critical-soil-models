@@ -25,6 +25,13 @@
 !! | 12    | H_0       | Hardening modulus intercept                   | —     |
 !! | 13    | H_y       | Hardening modulus slope                       | —     |
 !!
+!! Optional (indices 14–15; use defaults when omitted or ≤ 0):
+!!
+!! | Index | Symbol    | Description                                   | Units |
+!! |-------|-----------|-----------------------------------------------|-------|
+!! | 14    | ftol      | Yield surface tolerance (default 1e-8)        | —     |
+!! | 15    | max_iters | Max integrator substep iterations (default 500)| —    |
+!!
 !! ### STATEV layout (15 entries)
 !!
 !! | Index | Symbol        | Description                              | Units |

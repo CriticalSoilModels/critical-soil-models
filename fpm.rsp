@@ -13,6 +13,12 @@ option build --compiler ifx --c-compiler gcc --flag "-O3 -xHost"
 @ifx_release_test
 option test --compiler ifx --c-compiler gcc --flag "-O3 -xHost"
 
+@ifx_run
+option run --compiler ifx --c-compiler gcc
+
+@ifx_example
+option run --compiler ifx --c-compiler gcc --example
+
 @flang
 option build --compiler flang --c-compiler gcc
 

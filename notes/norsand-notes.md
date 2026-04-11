@@ -42,7 +42,7 @@ diagnostics. These are not part of the constitutive state and are excluded.
 
 ---
 
-## Base NorSand PROPS layout (13 entries)
+## Base NorSand PROPS layout (13 required + 2 optional entries)
 
 | Index | Symbol | Description | Units |
 |-------|--------|-------------|-------|
@@ -59,6 +59,8 @@ diagnostics. These are not part of the constitutive state and are excluded.
 | 11 | chi_tc | Dilatancy coefficient | — |
 | 12 | H_0 | Hardening modulus intercept | — |
 | 13 | H_y | Hardening modulus slope | — |
+| 14 | ftol | Yield surface tolerance (optional; default 1e-8) | — |
+| 15 | max_iters | Max integrator substep iterations (optional; default 500) | — |
 
 ## Base NorSand STATEV layout (15 entries)
 
@@ -80,6 +82,30 @@ Note: total 15 entries (9 scalars + 6 plastic strain components).
 Note: `p` is stored in STATEV so that `elastic_stiffness()` (which takes no stress
 argument in the abstract interface) can compute the pressure-dependent G = G_0*(p/p_ref)^nG.
 `p` is updated at the start of each stress integration step before the integrator is called.
+
+---
+
+## Integrator validation — open question
+
+The integration tests verify that both `euler_substep` and `cpa_step` return stress
+on the yield surface after a plastic increment. However, a sweep of deviatoric strain
+increments (see `example/demo.f90`) shows that the two integrators disagree by ~20–40%
+in stress norm at all overshoot levels — even 1% above the elastic limit. Both converge
+to F ≈ 0, but they land at different points on the yield surface.
+
+This is expected in principle: NorSand's yield surface moves during the step because
+p_i evolves with hardening (H_0=100 produces significant surface movement even for
+small overshoots). The two integrators take different paths and there is no reason they
+must agree.
+
+**What is needed:** an analytical or semi-analytical solution for a simple NorSand
+loading path — for example, undrained triaxial compression from an isotropic stress
+state — to check which integrator (if either) is tracking the correct stress-strain
+response. Jefferies & Been (2015) "Soil liquefaction: a critical state approach" gives
+closed-form CSL solutions that could serve as a reference.
+
+Until this validation is done, the integration tests only confirm yield surface
+consistency, not path accuracy.
 
 ---
 

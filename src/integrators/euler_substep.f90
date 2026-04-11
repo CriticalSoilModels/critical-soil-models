@@ -36,7 +36,7 @@ contains
       real(wp),                intent(in)    :: deps(6)   ! strain increment (internal convention)
       type(integrator_params_t), intent(in), optional :: iparams
 
-      type(integrator_params_t) :: p
+      type(integrator_params_t) :: params
       real(wp) :: stiff_e(6,6), stiff_e_2(6,6)
       real(wp) :: sig_tr(6), F
       real(wp) :: alpha_ep
@@ -47,9 +47,9 @@ contains
       logical  :: step_failed
 
       if (present(iparams)) then
-         p = iparams
+         params = iparams
       else
-         p = DEFAULT_INTEGRATOR_PARAMS
+         params = DEFAULT_INTEGRATOR_PARAMS
       end if
 
       ! -----------------------------------------------------------------------
@@ -63,7 +63,7 @@ contains
       ! 2. Check yield — purely elastic step
       ! -----------------------------------------------------------------------
       F = model%yield_fn(sig_tr)
-      if (F < p%ftol) then
+      if (F < params%ftol) then
          sig = sig_tr
          return
       end if
@@ -71,7 +71,7 @@ contains
       ! -----------------------------------------------------------------------
       ! 3. Find elastic/plastic split alpha_ep in [0,1]
       ! -----------------------------------------------------------------------
-      call find_yield_intersection(model, sig, deps, stiff_e, p%ftol, alpha_ep)
+      call find_yield_intersection(model, sig, deps, stiff_e, params%ftol, alpha_ep)
 
       sig     = sig + alpha_ep * matmul(stiff_e, deps)
       deps_ep = (1.0_wp - alpha_ep) * deps
@@ -106,18 +106,18 @@ contains
          err_rel = 0.5_wp * norm2(dsig_1 - dsig_2) &
                    / max(norm2(sig_t + 0.5_wp*(dsig_1 + dsig_2)), 1.0e-12_wp)
 
-         if (err_rel > p%stol) then
-            dt_sub      = max(0.9_wp * sqrt(p%stol/err_rel) * dt_sub, p%dt_min)
+         if (err_rel > params%stol) then
+            dt_sub      = max(0.9_wp * sqrt(params%stol/err_rel) * dt_sub, params%dt_min)
             step_failed = .true.
          else
             sig = sig_t + 0.5_wp * (dsig_1 + dsig_2)
             call model%update_hardening(0.5_wp * (deps_p1 + deps_p2))
 
             F = model%yield_fn(sig)
-            if (abs(F) > p%ftol) call correct_drift(model, sig, stiff_e, p%ftol)
+            if (abs(F) > params%ftol) call correct_drift(model, sig, stiff_e, params%ftol)
 
             t_sub  = t_sub + dt_sub
-            dt_sub = min(0.9_wp * sqrt(p%stol / max(err_rel, 1.0e-12_wp)) * dt_sub, &
+            dt_sub = min(0.9_wp * sqrt(params%stol / max(err_rel, 1.0e-12_wp)) * dt_sub, &
                          1.0_wp - t_sub)
             if (step_failed) then
                dt_sub      = min(dt_sub, 1.0_wp - t_sub)

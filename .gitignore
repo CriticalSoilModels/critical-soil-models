@@ -2,3 +2,4 @@ build/
 *.mod
 *.pdf
 *.png
+example/outputs/*.txt

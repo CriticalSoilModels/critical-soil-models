@@ -11,9 +11,11 @@
 !! 7. Pack model state back into STATEV
 !! 8. Return elastic tangent stiffness DDSDDE
 !!
-!! ### PROPS layout (13 entries)
+!! ### PROPS layout (13 required + 2 optional entries)
 !!
 !! See `norsand_model.f90` module doc for the full table.
+!! PROPS(14) = ftol (yield tolerance; default 1e-8 when absent or ≤ 0).
+!! PROPS(15) = max_iters (substep limit; default 500 when absent or ≤ 0).
 !!
 !! ### STATEV layout (15 entries)
 !!
@@ -88,10 +90,22 @@ subroutine umat_norsand(STRESS, STATEV, DDSDDE,       &
    model = norsand_from_props(PROPS)
    call norsand_load_state(model, STATEV)
 
-   iparams%ftol      = FTOL_DEFAULT
-   iparams%stol      = STOL_DEFAULT
-   iparams%dt_min    = DT_MIN_DEFAULT
-   iparams%max_iters = MAX_ITERS_DEFAULT
+   ! PROPS(14) = ftol      (optional; use default when absent or <= 0)
+   ! PROPS(15) = max_iters (optional; use default when absent or <= 0)
+   iparams%stol   = STOL_DEFAULT
+   iparams%dt_min = DT_MIN_DEFAULT
+
+   if (NPROPS >= 14 .and. PROPS(14) > 0.0_wp) then
+      iparams%ftol = PROPS(14)
+   else
+      iparams%ftol = FTOL_DEFAULT
+   end if
+
+   if (NPROPS >= 15 .and. PROPS(15) > 0.0_wp) then
+      iparams%max_iters = int(PROPS(15))
+   else
+      iparams%max_iters = MAX_ITERS_DEFAULT
+   end if
 
    ! -----------------------------------------------------------------------
    ! 2. Determine problem dimensionality
@@ -108,7 +122,7 @@ subroutine umat_norsand(STRESS, STATEV, DDSDDE,       &
    ! 5. Integrate — pre_step is called by the integrator each substep
    ! -----------------------------------------------------------------------
    if (ptype == PROBLEM_PLANE_STRESS) then
-      call enforce_plane_stress(model, sig6, dstran6)
+      call enforce_plane_stress(model, sig6, dstran6, iparams)
    else
       call integrate_stress(model, sig6, dstran6,             &
                             method=integrator_name(CMNAME),   &
@@ -137,9 +151,10 @@ contains
    ! Plane stress enforcement — Newton iteration to find eps_33 such that
    ! sig_33 = 0 after a full stress update.
    ! ==========================================================================
-   subroutine enforce_plane_stress(mdl, sig6_ps, dstran6_ps)
-      class(norsand_model_t), intent(inout) :: mdl
-      real(wp),               intent(inout) :: sig6_ps(6), dstran6_ps(6)
+   subroutine enforce_plane_stress(mdl, sig6_ps, dstran6_ps, ps_iparams)
+      class(norsand_model_t),    intent(inout) :: mdl
+      real(wp),                  intent(inout) :: sig6_ps(6), dstran6_ps(6)
+      type(integrator_params_t), intent(in)    :: ps_iparams
 
       integer,  parameter :: MAX_ITER = 20
       real(wp), parameter :: TOL = 1.0e-10_wp
@@ -158,11 +173,7 @@ contains
          dstran_trial = dstran6_ps
 
          call mdl%snapshot(state_saved)
-         call euler_substep(mdl, sig_trial, dstran_trial, &
-                            iparams=integrator_params_t(ftol=FTOL_DEFAULT,     &
-                                                        stol=STOL_DEFAULT,     &
-                                                        dt_min=DT_MIN_DEFAULT, &
-                                                        max_iters=100))
+         call euler_substep(mdl, sig_trial, dstran_trial, iparams=ps_iparams)
          call mdl%restore(state_saved)
 
          sig33 = sig_trial(3)

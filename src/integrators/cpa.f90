@@ -44,16 +44,16 @@ contains
       real(wp),                  intent(in)           :: deps(6)  !! strain increment
       type(integrator_params_t), intent(in), optional :: iparams
 
-      type(integrator_params_t) :: p
+      type(integrator_params_t) :: params
       real(wp) :: stiff_e(6,6), De_m(6)
       real(wp) :: dF_by_dsig(6), dg_by_dsig(6)
       real(wp) :: F, H, denominator, dlambda
       integer  :: iter
 
       if (present(iparams)) then
-         p = iparams
+         params = iparams
       else
-         p = DEFAULT_INTEGRATOR_PARAMS
+         params = DEFAULT_INTEGRATOR_PARAMS
       end if
 
       ! -----------------------------------------------------------------------
@@ -67,7 +67,7 @@ contains
       ! 2. Check yield — purely elastic step
       ! -----------------------------------------------------------------------
       F = model%yield_fn(sig)
-      if (F < p%ftol) return
+      if (F < params%ftol) return
 
       ! -----------------------------------------------------------------------
       ! 3. Cutting-plane Newton iterations
@@ -75,7 +75,7 @@ contains
       !    moves sig toward the yield surface. update_hardening evolves the
       !    model's internal state (eps_p and any derived quantities).
       ! -----------------------------------------------------------------------
-      do iter = 1, p%max_iters
+      do iter = 1, params%max_iters
 
          ! Update state and stiffness for the current stress — no-op for
          ! constant-modulus models; recomputes G(p) for pressure-dependent ones.
@@ -94,7 +94,7 @@ contains
          call model%update_hardening(dlambda * dg_by_dsig)
 
          F = model%yield_fn(sig)
-         if (abs(F) <= p%ftol) return
+         if (abs(F) <= params%ftol) return
 
       end do
 
