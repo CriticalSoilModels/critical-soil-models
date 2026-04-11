@@ -71,9 +71,10 @@ subroutine umat_mcsr(STRESS, STATEV, DDSDDE,          &
    model = mcsr_from_props(PROPS)
    call mcsr_load_state(model, STATEV)
 
-   iparams%ftol   = model%params%yield_tol
-   iparams%stol   = 1.0e-4_wp
-   iparams%dt_min = 1.0e-9_wp
+   iparams%ftol      = model%params%yield_tol
+   iparams%stol      = 1.0e-4_wp
+   iparams%dt_min    = 1.0e-9_wp
+   iparams%max_iters = model%params%max_iters
 
    ! -----------------------------------------------------------------------
    ! 2. Determine problem dimensionality
@@ -130,9 +131,9 @@ subroutine umat_mcsr(STRESS, STATEV, DDSDDE,          &
    call mcsr_save_state(model, STATEV)
 
    ! -----------------------------------------------------------------------
-   ! 10. Tangent stiffness: elastic tangent in 6-component space, deflated
+   ! 10. Tangent stiffness: consistent tangent for DDSDDE (defaults to D_e)
    ! -----------------------------------------------------------------------
-   D6 = model%elastic_stiffness()
+   D6 = model%consistent_tangent()
    DDSDDE(1:NTENS, 1:NTENS) = deflate_stiffness(D6, ptype)
 
 contains

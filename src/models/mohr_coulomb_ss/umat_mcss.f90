@@ -83,10 +83,11 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
    ! -----------------------------------------------------------------------
    ! 1. Build model from PROPS + STATEV
    ! -----------------------------------------------------------------------
-   model           = mcss_from_props(PROPS)
-   iparams%ftol    = model%yield_tol
-   iparams%stol    = 1.0e-4_wp
-   iparams%dt_min  = model%dt_min
+   model              = mcss_from_props(PROPS)
+   iparams%ftol      = model%yield_tol
+   iparams%stol      = 1.0e-4_wp
+   iparams%dt_min    = model%dt_min
+   iparams%max_iters = model%max_iters
    call mcss_load_state(model, STATEV)
 
    ! -----------------------------------------------------------------------
@@ -132,9 +133,9 @@ subroutine umat_mcss(STRESS, STATEV, DDSDDE,       &
    call mcss_save_state(model, STATEV)
 
    ! -----------------------------------------------------------------------
-   ! 9. Tangent stiffness: compute in 6-component space, deflate to NTENS x NTENS
+   ! 9. Tangent stiffness: consistent tangent for DDSDDE (defaults to D_e)
    ! -----------------------------------------------------------------------
-   D6 = model%elastic_stiffness()
+   D6 = model%consistent_tangent()
    DDSDDE(1:NTENS, 1:NTENS) = deflate_stiffness(D6, ptype)
 
 contains

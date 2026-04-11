@@ -76,8 +76,8 @@ contains
       ! 6. Deflate + reorder back to solver convention
       STRESS(1:NTENS) = from_internal(deflate(sig6, ptype), ANURA3D_ORDER(1:NTENS))
 
-      ! 7. Tangent stiffness
-      D6 = model%elastic_stiffness()
+      ! 7. Tangent stiffness: consistent tangent for DDSDDE (defaults to D_e)
+      D6 = model%consistent_tangent()
       DDSDDE(1:NTENS, 1:NTENS) = deflate_stiffness(D6, ptype)
 
    end subroutine umat_linear
