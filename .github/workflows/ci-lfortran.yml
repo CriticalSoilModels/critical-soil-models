@@ -1,0 +1,40 @@
+name: LFortran
+
+on:
+  push:
+    branches: [main, architecture-prototype]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-lfortran:
+    name: lfortran (experimental)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup lfortran
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: lfortran
+
+      - name: Setup fpm
+        uses: fortran-lang/setup-fpm@v7
+        with:
+          fpm-version: "latest"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache fpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/dependencies
+          key: fpm-deps-lfortran-${{ hashFiles('fpm.toml') }}
+          restore-keys: |
+            fpm-deps-lfortran-
+
+      - name: Test
+        run: fpm @lfortran_test
+
+      - name: Test (release)
+        run: fpm @lfortran_release_test

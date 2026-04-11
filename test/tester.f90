@@ -8,8 +8,17 @@ program tester
     use mod_test_stress_invar_deriv_suite, only: collect_stress_invar_deriv_suite
     use mod_test_strain_invariants_suite, only: collect_strain_invariants_suite
     use mod_test_strain_invar_deriv_suite, only: collect_strain_invar_deriv_suite
-    ! use mod_test_yield_function, only : collect_yield_function_suite
-    use mod_test_plastic_potential_suite, only: collect_plastic_potential_suite
+    use mod_test_linear_elastic_suite, only: collect_linear_elastic_suite
+    use mod_test_cmname_parser_suite,   only: collect_cmname_parser_suite
+    use mod_test_mcss_functions_suite,      only: collect_mcss_functions_suite
+    use mod_test_abbo_sloan_presets_suite,  only: collect_abbo_sloan_presets_suite
+    use mod_test_mcss_integration_suite,   only: collect_mcss_integration_suite
+    use mod_test_mcsr_integration_suite,   only: collect_mcsr_integration_suite
+    use mod_test_mcsr_umat_suite,          only: collect_mcsr_umat_suite
+    use mod_test_mcss_umat_suite,          only: collect_mcss_umat_suite
+    use mod_test_norsand_functions_suite,    only: collect_norsand_functions_suite
+    use mod_test_norsand_integration_suite, only: collect_norsand_integration_suite
+    use mod_test_norsand_umat_suite,        only: collect_norsand_umat_suite
     implicit none
     integer :: stat, is
     
@@ -27,8 +36,17 @@ program tester
       new_testsuite("test_stress_invar_deriv_suite", collect_stress_invar_deriv_suite), &
       new_testsuite("test_strain_invar_suite", collect_strain_invariants_suite),&
       new_testsuite("test_strain_invar_deriv_suite", collect_strain_invar_deriv_suite), &
-      ! new_testsuite("test_yield_function", collect_yield_function_suite), &
-      new_testsuite("test_plastic_potential", collect_plastic_potential_suite) &
+      new_testsuite("test_linear_elastic",   collect_linear_elastic_suite), &
+      new_testsuite("test_cmname_parser",    collect_cmname_parser_suite),  &
+      new_testsuite("test_mcss_functions",      collect_mcss_functions_suite),     &
+      new_testsuite("test_abbo_sloan_presets",  collect_abbo_sloan_presets_suite), &
+      new_testsuite("test_mcss_integration",   collect_mcss_integration_suite),   &
+      new_testsuite("test_mcsr_integration",   collect_mcsr_integration_suite),   &
+      new_testsuite("test_mcsr_umat",          collect_mcsr_umat_suite),           &
+      new_testsuite("test_mcss_umat",          collect_mcss_umat_suite),           &
+      new_testsuite("test_norsand_functions",    collect_norsand_functions_suite),    &
+      new_testsuite("test_norsand_integration", collect_norsand_integration_suite), &
+      new_testsuite("test_norsand_umat",        collect_norsand_umat_suite)         &
       ]
     ! Make the output colorful
     call init_color_output(.True.)

@@ -1,8 +1,14 @@
+!! Top-level library module — exports model types for programmatic use.
+!!
+!! Re-exports the public API for consumers who embed the library directly
+!! rather than linking against the Abaqus UMAT interface. UMATs are accessed
+!! through the single `UMAT` entry point in `src/umat.f90`.
 module critical_soil_models
-   use mod_mcss_esm, only: umat_mc_strain_softening => UMAT_MohrCoulombStrainSoftening
-   use mod_lin_elastic, only: umat_linear => UMAT
-   use mod_bingham, only: umat_bingham => umat
-   use mod_mc_strain_rate, only: umat_mc_strain_rate
+   use mod_le_functions,         only: le_params_t, le_state_t, &
+                                        le_yield_fn, le_flow_rule, le_plastic_potential, &
+                                        le_update_hardening, le_elastic_stiffness
+   use mod_linear_elastic_model, only: linear_elastic_model_t, le_from_props
+   use mod_mcss_model,           only: mcss_model_t
    implicit none
 
 contains

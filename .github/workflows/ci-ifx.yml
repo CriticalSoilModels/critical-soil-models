@@ -1,0 +1,41 @@
+name: Intel ifx
+
+on:
+  push:
+    branches: [main, architecture-prototype]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-ifx:
+    name: ifx (Intel oneAPI)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup ifx
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: intel
+          version: "2024.2"
+
+      - name: Setup fpm
+        uses: fortran-lang/setup-fpm@v7
+        with:
+          fpm-version: "latest"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache fpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/dependencies
+          key: fpm-deps-ifx-${{ hashFiles('fpm.toml') }}
+          restore-keys: |
+            fpm-deps-ifx-
+
+      - name: Test
+        run: fpm @ifx_test
+
+      - name: Test (release)
+        run: fpm @ifx_release_test

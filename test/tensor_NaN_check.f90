@@ -1,5 +1,5 @@
 module mod_check_NaN_and_tensor_value
-   use stdlib_kinds, only: dp, sp
+   use mod_csm_kinds, only: wp, sp
    use ieee_arithmetic, only: ieee_is_nan
    use mod_tensor_value_checker, only: check_tensor_values
    implicit none
@@ -32,11 +32,11 @@ contains
       end if
    end subroutine check_NaN_and_tensor_value_sp_1d
 
-   ! For double precision (real(kind = dp)) 1D array
+   ! For double precision (real(kind=wp)) 1D array
    subroutine check_NaN_and_tensor_value_dp_1d(actual, expected, tol, passed)
-      real(kind = dp), intent(in) :: actual(:)
-      real(kind = dp), intent(in) :: expected(:)
-      real(kind = dp), intent(in) :: tol
+      real(kind=wp), intent(in) :: actual(:)
+      real(kind=wp), intent(in) :: expected(:)
+      real(kind=wp), intent(in) :: tol
       logical, intent(out) :: passed
 
       if (all(ieee_is_nan(actual) .eqv. .false.)) then
@@ -64,11 +64,11 @@ contains
       end if
    end subroutine check_NaN_and_tensor_value_sp_2d
 
-   ! For double precision (real(kind = dp)) 2D array
+   ! For double precision (real(kind=wp)) 2D array
    subroutine check_NaN_and_tensor_value_dp_2d(actual, expected, tol, passed)
-      real(kind = dp), intent(in) :: actual(:,:)
-      real(kind = dp), intent(in) :: expected(:,:)
-      real(kind = dp), intent(in) :: tol
+      real(kind=wp), intent(in) :: actual(:,:)
+      real(kind=wp), intent(in) :: expected(:,:)
+      real(kind=wp), intent(in) :: tol
       logical, intent(out) :: passed
 
       if (all(ieee_is_nan(actual) .eqv. .false.)) then
@@ -96,11 +96,11 @@ contains
       end if
    end subroutine check_NaN_and_tensor_value_sp_actual
 
-   ! For double precision (real(kind = dp)) actual
+   ! For double precision (real(kind=wp)) actual
    subroutine check_NaN_and_tensor_value_dp_actual(actual, expected, tol, passed)
-      real(kind = dp), intent(in) :: actual
-      real(kind = dp), intent(in) :: expected
-      real(kind = dp), intent(in) :: tol
+      real(kind=wp), intent(in) :: actual
+      real(kind=wp), intent(in) :: expected
+      real(kind=wp), intent(in) :: tol
       logical, intent(out) :: passed
 
       if (.not. ieee_is_nan(actual)) then

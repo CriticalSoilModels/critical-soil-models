@@ -1,0 +1,302 @@
+!! **Legacy** — UMAT entry point for the Mohr-Coulomb with Strain Rate (MCSR) model.
+!!
+!! Implements the non-associative Mohr-Coulomb model with strain softening and
+!! strain rate effects, as presented in:
+!!
+!! > Constitutive modelling of non-cohesive soils under high-strain rates.
+!! > DOI: [10.1680/jgeot.21.00192](https://doi.org/10.1680/jgeot.21.00192)
+!!
+!! The current implementation uses the Ortiz-Simo yield surface correction.
+!! This module pre-dates the new architecture and is not refactored to extend
+!! `csm_model_t`.
+!!
+!! ### PROPS layout (18 entries)
+!!
+!! | Index | Symbol              | Description                              |
+!! |-------|---------------------|------------------------------------------|
+!! | 1     | G_0                 | Initial shear modulus [kPa]              |
+!! | 2     | ν                   | Poisson's ratio [-]                      |
+!! | 3     | M_tc                | Critical stress ratio (triaxial compr.)  |
+!! | 4     | N                   | Nova's volumetric coupling coefficient   |
+!! | 5     | D_min               | Minimum dilation [-]                     |
+!! | 6     | h                   | Hardening parameter [-]                  |
+!! | 7     | α_G                 | Shear modulus viscosity factor [-]       |
+!! | 8     | α_K                 | Bulk modulus viscosity factor [-]        |
+!! | 9     | α_D                 | Dilation viscosity factor [-]            |
+!! | 10    | D_part              | Particle diameter [mm]                   |
+!! | 11    | G_s                 | Specific gravity [-]                     |
+!! | 12    | RefERate            | Reference strain rate [1/s]              |
+!! | 13    | switch_smooth       | Activate strain rate smoothing (0/1)     |
+!! | 14    | N_S                 | Degree of smoothing [-]                  |
+!! | 15    | switch_original     | 1=Wang, 0=Olzak-Perzyna consistency      |
+!! | 16    | FTOL                | Yield surface tolerance [-]              |
+!! | 17    | max_stress_iters    | Maximum stress integration iterations   |
+!! | 18    | switch_plastic_integration | Integration scheme (0=Euler, 1=Ortiz-Simo) |
+!!
+!! ### STATEV layout (14 entries)
+!!
+!! | Index | Symbol       | Description                         |
+!! |-------|--------------|-------------------------------------|
+!! | 1     | G            | Current shear modulus [kPa]         |
+!! | 2     | K            | Current bulk modulus [kPa]          |
+!! | 3     | η_y          | Current friction ratio [-]          |
+!! | 4     | ψ            | Current dilation [-]                |
+!! | 5     | I_coeff      | Current inertial coefficient [-]    |
+!! | 6     | switch_yield | Yielding flag (0.0/1.0)             |
+!! | 7–12  | ε_p          | Accumulated plastic strain (Voigt)  |
+!! | 13    | N_i          | Current number of strain rate sums  |
+!! | 14    | SUM_rate     | Current strain rate sum             |
+module mod_mc_strain_rate
+
+   use mod_csm_kinds, only: wp
+   use mod_bool_helper, only: dbltobool, logic2dbl
+   use mod_SRMC, only: SRMC_HSR
+   use mod_array_helper, only: reorder_real_array
+
+   ! implicit none
+
+   private ! Makes all function private to this module (No other modules can get access)
+   public umat_mc_strain_rate ! Overides private status for specific subroutine
+contains
+
+
+   Subroutine umat_mc_strain_rate(STRESS, STATEV, DDSDDE, SSE, SPD, SCD, RPL, DDSDDT, DRPLDE, &
+      DRPLDT, STRAN, DSTRAN, TIME, DTIME, TEMP, DTEMP, PREDEF, DPRED,&
+      CMNAME, NDI, NSHR, NTENS, NSTATEV, PROPS, NPROPS, COORDS, &
+      drot, PNEWDT, CELENT, DFGRD0, DFGRD1, NOEL, NPT, &
+      LAYER, KSPT, KSTEP, KINC)
+
+      !Defining inputs
+      ! Arguments:
+      !          I/O  Type
+      !  PROPS    I   R()  : List with model parameters
+      !  DSTRAN   I   R()  : Strain increment
+      !  DTIME    I   R()  : Time increment
+      !  DDSDDE   O   R(,) : Material stiffness matrix
+      !  STRESS  I/O  R()  : stresses
+      !  STATEV  I/O  R()  : state variables
+      !
+
+      integer, intent(in) :: NSTATEV, NPROPS, NPT
+      integer :: NTENS
+      integer, intent(in) :: NOEL
+      real (dp), dimension(NTENS), intent(inout) :: STRESS
+      real(wp), dimension(NSTATEV), intent(inout) :: STATEV
+      real(wp), dimension(NTENS, NTENS), intent(inout) :: DDSDDE
+      real(wp), intent(in) :: sse, spd, scd ! specific elastic strain energy, plastic dissipation, creep dissipation
+      real(wp), intent(in) :: rpl ! only for fully coupled thermal analysis: volumetric heat generation
+      real(wp), dimension(NTENS), intent(in) :: DDSDDT
+      real(wp), dimension(NTENS), intent(in) :: DRPLDE
+      real(wp)                               :: DRPLDT
+      real(wp), dimension(NTENS), intent(in) :: STRAN
+      real(wp), dimension(NTENS), intent(inout) :: DSTRAN ! TODO: Change this back to intent(in) - 
+                                                                 ! Making it intent(inout) to reorder it for incremental driver
+      real(wp), dimension(2), intent(in) :: TIME
+      real(wp), dimension(1), intent(in) :: PREDEF
+      real(wp), dimension(1), intent(in) :: DPRED
+      real(wp), dimension(NPROPS), intent(in) :: PROPS
+      real(wp), dimension(3), intent(in) :: COORDS
+      real(wp), dimension(3,3), intent(in) :: DFGRD0
+      real(wp), dimension(3,3), intent(in) :: DFGRD1, drot
+      real(wp), intent(in) :: PNEWDT,  TEMP, DTEMP, CELENT
+      real(wp), intent(in) :: DTIME
+      character(len = 80), intent(in):: CMNAME
+      integer, intent(in) :: NDI, NSHR, LAYER, KSPT, KSTEP, KINC
+
+      ! Local variables:
+      !
+      !  DE        : Linear Elastic constitutive matrix
+      !  dSig	     : Stress increment vector
+      !  Sig	     : Stress vector
+      !  dEpsE     : Elastic strain increment vector
+      !  dEpsP     : Plastic strain increment vector
+      !  dEps      : Total strain increment vector
+      !  EpsE      : Elastic strain vector
+      !  EpsP      : Plastic strain vector
+      !  Eps       : Total strain vector
+      !  EpsRate	 : Total strain rate tensor
+      !
+      integer :: N_S, N_i
+      real(wp), dimension(6,6) :: DE
+      real(wp), dimension(6)   :: Sig
+      real(wp), dimension(6)   :: dEpsP
+      real(wp), dimension(6)   :: EpsP, ERate
+      real(wp), dimension(6) :: dEpsE, EpsE, dEps, Eps
+      logical :: switch_smooth, switch_original, switch_yield
+      real(wp) :: G_0, enu, eM_tc, eN, D_min, eh, alpha_G, alpha_K, alpha_D, D_part, G_s, RefERate !SSMC props local variables, (props)
+      real(wp) :: G, bk, eta_y, dilation, eI_coeff, Sum_rate  !SSMC state variables (statv)
+      real(wp) :: Error_yield_1, Error_yield_2, Error_Euler_max, Error_Yield_last, Error_Yield_max
+      real(wp) :: F1, F2, bK_0, FTOL
+      integer :: i, max_stress_iters
+      integer :: switch_plastic_integration
+      integer, parameter :: A3D_voigt_order(6) = [1, 2, 3, 4, 6, 5]
+
+      ! Viscoplastic NAMC model with smoothed outer surface in pi plane
+      !
+      ! Contents of PROPS(10) NAMC with HSR
+      !  1 : G_0				shear modulus
+      !  2 : enu				Poisson's ratio
+      !  3 : eM_tc            Critical stress ratio for triaxial compression
+      !  4 : eN               Nova's vol coupling coefficient
+      !  5 : D_min			Minimum dilation
+      !  6 : eh				hardening parameter
+      !  7 : alpha_G			Shear modulus viscosity factor
+      !  8 : alpha_K			Bulk modulus viscosity factor
+      !  9 : alpha_D			dilation viscosity
+      ! 10 : D_part			Particle diameter
+      ! 11 : G_s				Specific gravity
+      ! 12 : RefERate			Reference strain rate
+      ! 13 : Switch_smooth	Boolean switch for activating strain rate smoothing
+      ! 14 : N_S				Degree of smoothening
+      ! 15 : switch_original	Changes from Wang's to Olzak&Perzyna consistency
+      ! 16 : FTOL             Yield surface tolerance
+      ! 17 : max_stress_iters Maximum stress integration iterations
+      ! 18 : switch_plastic_integration: Switch that controls which integration scheme is used to split the elastic and plastic portions for the strain increment
+
+      G_0         = PROPS(1)         ! shear modulus
+      enu         = PROPS(2)         ! Poisson's ratio
+      eM_tc       = PROPS(3)         ! Critical stress ratio
+      eN          = PROPS(4)         ! Nova's vol coupling coefficient
+      D_min       = PROPS(5)         ! Minimum dilation
+      eh          = PROPS(6)         ! hardening parameter
+      alpha_G     = PROPS(7)         ! Shear modulus viscosity factor
+      alpha_K     = PROPS(8)         ! Bulk modulus viscosity factor
+
+      alpha_D     = PROPS(9)         ! dilation angle viscosity
+      
+      D_part      = PROPS(10)        ! Associated particle diameter, value in mm
+      G_s         = PROPS(11)        ! Specific gravity
+      RefERate    = PROPS(12)        ! reference strain rate
+      
+      call dbltobool(PROPS(13), switch_smooth)  ! switch for activating strain rate smoothening
+      
+      N_S        = int(PROPS(14))    ! Degree of smoothening
+      
+      call dbltobool(PROPS(15), switch_original)! (1 for Wang, 0 for Olzak&Perzyna)
+      
+      FTOL = PROPS(16)
+      max_stress_iters = int(PROPS(17))
+      switch_plastic_integration = int(PROPS(18))
+
+      if (RefERate==0.0d0) then
+         RefERate=2.5e-5
+      endif
+      
+      if ((alpha_D==0.0d0).and.(alpha_G>0.0d0)) then ! in case user uses 0 it will be computed from nu
+         alpha_D= alpha_G
+      endif
+      
+      if ((alpha_K==0.0d0).and.(alpha_G>0.0d0)) then ! in case user uses 0 it will be computed from nu
+         alpha_K= 2.5*alpha_G
+      endif
+      
+      !TODO max this an error
+      if (FTOL<= 1e-10) then
+         print *, "A FTOL of 1e-10 is too small"
+      end if
+
+      if(max_stress_iters ==0) then
+         print *, "max stress iters is zero"
+      end if
+
+      G            = STATEV(1)               ! shear modulus
+      bK           = STATEV(2)               ! bulk modulus
+      eta_y        = STATEV(3)               ! friction ratio
+      dilation     = STATEV(4)               ! Dilation
+      eI_coeff     = STATEV(5)               ! Inertial coefficient
+      call dbltobool(STATEV(6),switch_yield) ! Point is yielding
+      do i=1,6
+         EpsP(i)   = STATEV(6+i)            ! Plastic strain
+      end do
+      N_i          = STATEV(13)            ! Current number of strain rate sums
+      SUM_rate     = STATEV(14)            ! Current sum of strain rates
+
+      !_____Error control state parameters__________________________________________________
+      Error_yield_1=0.0d0                                                                   !
+      Error_yield_2=0.0d0                                                                   !
+      Error_Euler_max=0.0d0															      !
+      Error_Yield_last=0.0d0															      !
+      Error_Yield_max=0.0d0																  !
+      !							                                                          !
+      !_____________________________________________________________________________________!
+      if (DTIME==0.0d0) then
+         ERate= 0.0d0    ! Current strain rate
+      else
+         ERate= (1/DTIME)*DSTRAN ! Current strain rate
+      end if
+
+      bK_0= 2*G_0*(1+ENU)/(3*(1-2*ENU))
+
+      !***********************************************************************************
+      !Call the refined modified Euler algorithm
+
+      ! Change the order of the Strain and Stress vectors to follow the conventiion of Anura3D
+      ! I want to make sure that there's something fishy going on there
+      ! I'm pretty sure the order program was written in was for incremental driver but I want to make sure
+
+      ! Convert to A3D order
+      ! Sig    = reorder_real_array(Sig, A3D_voigt_order)
+      ! Stress = reorder_real_array(Stress, A3D_voigt_order)
+      ! DSTRAN = reorder_real_array(DSTRAN, A3D_voigt_order)
+      ! EpsP   = reorder_real_array(EpsP, A3D_voigt_order)
+      ! Erate  = reorder_real_array(Erate, A3D_voigt_order)
+
+      call SRMC_HSR(NOEL, G_0, enu, eM_tc, eN, D_min, eh, alpha_G, alpha_K, alpha_D, D_part, G_s,&
+         switch_smooth, RefERate, N_S, switch_original,&
+         G, bK, eta_y, dilation, EpsP, eI_coeff, switch_yield, N_i, SUM_rate,&
+         DSTRAN, STRESS, Sig, Erate, DTIME,&
+         Error_yield_1, Error_yield_2, Error_Euler_max, Error_Yield_last, &
+         Error_Yield_max, FTOL, max_stress_iters, switch_plastic_integration)
+      !************************************************************************************
+      !************************************************************************************
+      
+      ! Convert back to incremental driver order
+      ! Sig    = reorder_real_array(Sig, A3D_voigt_order)
+      ! Stress = reorder_real_array(Stress, A3D_voigt_order)
+      ! DSTRAN = reorder_real_array(DSTRAN, A3D_voigt_order)
+      ! EpsP   = reorder_real_array(EpsP, A3D_voigt_order)
+      ! Erate  = reorder_real_array(Erate, A3D_voigt_order)
+
+      !Stress and state variables updating
+      Do i=1,NTENS
+         STRESS(i) = Sig(i)
+      End Do
+      STATEV(1) = G
+      STATEV(2) = bK
+      STATEV(3) = eta_y
+      STATEV(4) = dilation
+      STATEV(5) =	eI_coeff
+      STATEV(6) = logic2dbl(switch_yield)
+      do i=1,6
+         STATEV(6+i) = EpsP(i)
+      end do
+      STATEV(13)=N_i
+      STATEV(14)=SUM_rate
+
+      !_____Error control state parameters__________________________________________________
+      !     Comment if not wanted                                                           !
+      !_____________________________________________________________________________________!
+      ! STATEV(28)=Error_yield_1
+      ! STATEV(29)=Error_yield_2
+      ! STATEV(30)=Error_Euler_max
+      ! STATEV(31)=Error_Yield_last
+      ! STATEV(32)=Error_Yield_max
+
+      !************************************************************************************
+      !************************************************************************************
+      !Tangent stiffness matrix to be returned done by elastic stiffness
+      F1  = bK+(4*G/3)
+      F2  = bK-(2*G/3)
+      DDSDDE = 0.0
+      DDSDDE(1:3,1:3) = F2
+      DDSDDE(1,1) = F1
+      DDSDDE(2,2) = F1
+      DDSDDE(3,3) = F1
+      DDSDDE(4,4) = G
+      DDSDDE(5,5) = G
+      DDSDDE(6,6) = G
+      !*************************************************************************************
+
+   end subroutine umat_mc_strain_rate
+
+end module mod_mc_strain_rate
