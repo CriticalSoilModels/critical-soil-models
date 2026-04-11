@@ -16,7 +16,9 @@
 !! | `LINEAR_ELASTIC_INTEG_EULER` | Linear elastic, Euler substepping |
 !! | `MCSS`                     | Mohr-Coulomb SS (default integrator)|
 !! | `MCSS_INTEG_EULER`         | Mohr-Coulomb SS, Euler substepping  |
-!! | `MCSS_INTEG_ORTIZ_SIMO`    | Mohr-Coulomb SS, Ortiz-Simo         |
+!! | `MCSS_INTEG_CPA`           | Mohr-Coulomb SS, cutting-plane alg. |
+!! | `MCSR`                     | Mohr-Coulomb SR (default integrator)|
+!! | `NORSAND`                  | NorSand critical state model        |
 !!
 !! Abaqus uppercases `CMNAME` before passing it; model names are matched in
 !! uppercase. The integrator suffix is parsed in lowercase inside each model UMAT.
@@ -37,6 +39,7 @@ subroutine UMAT(STRESS, STATEV, DDSDDE,          &
    use mod_umat_linear_elastic, only: umat_linear
    use mod_umat_mcss,           only: umat_mcss
    use mod_umat_mcsr,           only: umat_mcsr
+   use mod_umat_norsand,        only: umat_norsand
    use mod_csm_kinds,           only: wp
 
    implicit none
@@ -92,6 +95,19 @@ subroutine UMAT(STRESS, STATEV, DDSDDE,          &
                      COORDS, DROT, PNEWDT, CELENT,    &
                      DFGRD0, DFGRD1,                  &
                      NOEL, NPT, LAYER, KSPT, KSTEP, KINC)
+
+   case("NORSAND")
+      call umat_norsand(STRESS, STATEV, DDSDDE,          &
+                        SSE, SPD, SCD,                   &
+                        RPL, DDSDDT, DRPLDE, DRPLDT,    &
+                        STRAN, DSTRAN,                   &
+                        TIME, DTIME, TEMP, DTEMP,        &
+                        PREDEF, DPRED, CMNAME,           &
+                        NDI, NSHR, NTENS, NSTATEV,       &
+                        PROPS, NPROPS,                   &
+                        COORDS, DROT, PNEWDT, CELENT,    &
+                        DFGRD0, DFGRD1,                  &
+                        NOEL, NPT, LAYER, KSPT, KSTEP, KINC)
 
    case default
       error stop "UMAT: unknown material name in CMNAME"

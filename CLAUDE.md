@@ -43,6 +43,32 @@ Requires: gfortran, fpm (Fortran Package Manager), fortls, ford. `stdlib` is fet
 automatically as a git dependency on first build and cached in `build/dependencies/`.
 Use `fpm clean` (not `fpm clean --all`) to avoid re-downloading it.
 
+## Critical Rules
+
+### Always use the invariants library — never re-implement
+
+`src/invariants/` contains canonical implementations of all stress and strain
+invariants and their derivatives. **Always import from these modules** when you
+need an invariant or gradient. Never compute them inline or write a local helper.
+
+| Need | Use |
+|------|-----|
+| p, q, lode | `calc_sig_inv` from `mod_stress_invariants` |
+| J2 | `calc_J2_inv` from `mod_stress_invariants` |
+| J3 | `calc_J3_inv` from `mod_stress_invariants` |
+| ∂p/∂σ | `calc_dp_by_dsig` from `mod_stress_invar_deriv` |
+| ∂q/∂σ | `calc_dq_by_dsig` from `mod_stress_invar_deriv` |
+| ∂J2/∂σ | `calc_dJ2_by_dsig` from `mod_stress_invar_deriv` |
+| ∂J3/∂σ | `calc_dJ3_by_dsig` from `mod_stress_invar_deriv` |
+| ∂θ/∂σ | `calc_dlode_angle_by_dsig` from `mod_stress_invar_deriv` |
+| εvol, dev(ε), εq | `calc_eps_vol_inv`, `calc_dev_strain`, `calc_eps_q_inv` from `mod_strain_invariants` |
+
+Before writing any invariant-related code, grep `src/invariants/` to check if
+it already exists. If it does, use it. If something genuinely is missing,
+add it to the invariants library rather than implementing it locally in a model.
+
+---
+
 ## Architecture
 
 See `ARCHITECTURE.md` for full design notes. Summary:
