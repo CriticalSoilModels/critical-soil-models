@@ -24,15 +24,33 @@ module mod_csm_model
       !!
       !! Concrete models extend this type and implement every deferred procedure.
       !! The integrator interacts exclusively through this interface.
+      !!
+      !! ### Stiffness procedures
+      !!
+      !! `elastic_stiffness` — deferred; returns D_e, used by the integrator for
+      !! the elastic predictor and plastic correction. Every model must implement it.
+      !!
+      !! `consistent_tangent` — non-deferred; returns the stiffness tensor passed
+      !! back to the FEA solver as DDSDDE. Defaults to `elastic_stiffness`.
+      !! Override in models that implement the consistent elastoplastic tangent for
+      !! faster FEA convergence.
+      !!
+      !! `pre_step` — non-deferred; called by the integrator at the start of every
+      !! substep, before `elastic_stiffness` is evaluated. Default is a no-op.
+      !! Override to update any state that depends on the current stress — for example,
+      !! pressure-dependent elastic moduli or rate state. Receiving `sig` at substep
+      !! resolution matters for large increments (e.g. implicit MPM time stepping).
    contains
       procedure(yield_fn_iface),    deferred :: yield_fn
       procedure(flow_rule_iface),   deferred :: flow_rule
       procedure(plastic_pot_iface), deferred :: plastic_potential
       procedure(harden_iface),      deferred :: update_hardening
       procedure(stiffness_iface),   deferred :: elastic_stiffness
-      procedure(snapshot_iface),     deferred :: snapshot
-      procedure(restore_iface),      deferred :: restore
-      procedure(harden_mod_iface),   deferred :: hardening_modulus
+      procedure(snapshot_iface),    deferred :: snapshot
+      procedure(restore_iface),     deferred :: restore
+      procedure(harden_mod_iface),  deferred :: hardening_modulus
+      procedure :: consistent_tangent => default_consistent_tangent
+      procedure :: pre_step          => default_pre_step
    end type csm_model_t
 
    ! ---------------------------------------------------------------------------
@@ -132,5 +150,29 @@ module mod_csm_model
       end function harden_mod_iface
 
    end interface
+
+contains
+
+   subroutine default_pre_step(self, sig)
+      !! Default pre-step hook: no-op.
+      !!
+      !! Override in models whose state depends on the current stress — for
+      !! example, to recompute pressure-dependent elastic moduli before each
+      !! substep. Called by the integrator before `elastic_stiffness`.
+      class(csm_model_t), intent(inout) :: self
+      real(wp),           intent(in)    :: sig(6)
+   end subroutine default_pre_step
+
+   function default_consistent_tangent(self) result(stiff)
+      !! Default consistent tangent: returns the elastic stiffness D_e.
+      !!
+      !! UMAT wrappers pass this to DDSDDE. For most models the elastic tangent
+      !! is a safe, conservative choice — FEA convergence is slower but correct.
+      !! Override this procedure in models that implement the full consistent
+      !! elastoplastic tangent.
+      class(csm_model_t), intent(in) :: self
+      real(wp) :: stiff(6,6)
+      stiff = self%elastic_stiffness()
+   end function default_consistent_tangent
 
 end module mod_csm_model
