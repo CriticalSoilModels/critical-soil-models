@@ -5,7 +5,7 @@
 ! Examples:
 !   "LINEAR_ELASTIC"              → material="LINEAR_ELASTIC", integrator="euler" (default)
 !   "MCSS_INTEG_EULER"            → material="MCSS",           integrator="euler"
-!   "MCSS_INTEG_ORTIZ_SIMO"       → material="MCSS",           integrator="ortiz_simo"
+!   "MCSS_INTEG_CPA"              → material="MCSS",           integrator="cpa"
 !
 ! Abaqus always uppercases CMNAME before passing it.
 ! material_name returns the uppercase prefix as-is.

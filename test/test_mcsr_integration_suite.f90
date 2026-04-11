@@ -1,4 +1,4 @@
-!! Integration tests for the MCSR model comparing euler_substep and cprm_step.
+!! Integration tests for the MCSR model comparing euler_substep and cpa_step.
 !!
 !! Both integrators operate through the same csm_model_t interface; these tests
 !! verify that:
@@ -20,7 +20,7 @@ module mod_test_mcsr_integration_suite
    use mod_csm_kinds,   only: wp
    use mod_mcsr_model,  only: mcsr_model_t, mcsr_from_props, mcsr_load_state
    use mod_euler_substep, only: euler_substep, integrator_params_t
-   use mod_cprm,          only: cprm_step
+   use mod_cpa,          only: cpa_step
    use testdrive,         only: new_unittest, unittest_type, error_type, check
    implicit none
    private
@@ -50,10 +50,10 @@ contains
    subroutine collect_mcsr_integration_suite(testsuite)
       type(unittest_type), allocatable, intent(out) :: testsuite(:)
       testsuite = [ &
-         new_unittest("elastic step: euler and cprm identical",     test_elastic_agreement),    &
+         new_unittest("elastic step: euler and cpa identical",     test_elastic_agreement),    &
          new_unittest("plastic step: euler on yield surface",        test_euler_on_surface),     &
-         new_unittest("plastic step: cprm on yield surface",         test_cprm_on_surface),      &
-         new_unittest("small plastic step: euler and cprm agree",    test_stress_comparison)     &
+         new_unittest("plastic step: cpa on yield surface",         test_cpa_on_surface),      &
+         new_unittest("small plastic step: euler and cpa agree",    test_stress_comparison)     &
       ]
    end subroutine collect_mcsr_integration_suite
 
@@ -115,10 +115,10 @@ contains
       deps  = 1.0e-5_wp * [1.0_wp, 1.0_wp, 1.0_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
       call euler_substep(model_e, sig_e, deps, iparams)
-      call cprm_step(model_c, sig_c, deps, iparams)
+      call cpa_step(model_c, sig_c, deps, iparams)
 
       call check(error, norm2(sig_e - sig_c) < 1.0e-10_wp, .true., &
-                 more="elastic step: euler and cprm must give identical stress")
+                 more="elastic step: euler and cpa must give identical stress")
    end subroutine test_elastic_agreement
 
    ! ---------------------------------------------------------------------------
@@ -148,9 +148,9 @@ contains
    end subroutine test_euler_on_surface
 
    ! ---------------------------------------------------------------------------
-   ! Test 3: large plastic step — cprm returns stress on yield surface.
+   ! Test 3: large plastic step — cpa returns stress on yield surface.
    ! ---------------------------------------------------------------------------
-   subroutine test_cprm_on_surface(error)
+   subroutine test_cpa_on_surface(error)
       type(error_type), allocatable, intent(out) :: error
 
       type(mcsr_model_t) :: model
@@ -163,18 +163,18 @@ contains
       sig  = SIG_INIT
       deps = [6.0e-3_wp, 0.0_wp, -6.0e-3_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
-      call cprm_step(model, sig, deps, iparams)
+      call cpa_step(model, sig, deps, iparams)
 
       call check(error, model%yield_fn(sig) <= 10.0_wp * YIELD_TOL, .true., &
-                 more="cprm: stress should be on/inside yield surface after plastic step")
+                 more="cpa: stress should be on/inside yield surface after plastic step")
       if (allocated(error)) return
 
       call check(error, any(model%state%eps_p /= 0.0_wp), .true., &
-                 more="cprm: plastic strain should be non-zero")
-   end subroutine test_cprm_on_surface
+                 more="cpa: plastic strain should be non-zero")
+   end subroutine test_cpa_on_surface
 
    ! ---------------------------------------------------------------------------
-   ! Test 4: small plastic overshoot — euler and cprm agree within 1%.
+   ! Test 4: small plastic overshoot — euler and cpa agree within 1%.
    ! Both methods are consistent for small increments near the yield surface.
    ! Increment is ~15% above the elastic limit so both methods are clearly
    ! plastic but the nonlinearity is small enough that they agree closely.
@@ -197,12 +197,12 @@ contains
       deps = [4.0e-3_wp, 0.0_wp, -4.0e-3_wp, 0.0_wp, 0.0_wp, 0.0_wp]
 
       call euler_substep(model_e, sig_e, deps, iparams)
-      call cprm_step(model_c, sig_c, deps, iparams)
+      call cpa_step(model_c, sig_c, deps, iparams)
 
       rel_diff = norm2(sig_e - sig_c) / max(norm2(sig_e), 1.0e-12_wp)
 
       call check(error, rel_diff < 0.01_wp, .true., &
-                 more="small plastic step: euler and cprm stress should agree within 1%")
+                 more="small plastic step: euler and cpa stress should agree within 1%")
    end subroutine test_stress_comparison
 
 end module mod_test_mcsr_integration_suite

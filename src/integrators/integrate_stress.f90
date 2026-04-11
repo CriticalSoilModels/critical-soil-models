@@ -6,22 +6,22 @@
 ! without recompilation.
 !
 ! Named constants (use these — do not write bare string literals):
-!   INTEGRATION_EULER       = "euler"
-!   INTEGRATION_ORTIZ_SIMO  = "ortiz_simo"
+!   INTEGRATION_EULER = "euler"
+!   INTEGRATION_CPA   = "cpa"
 
 module mod_integrate_stress
    use mod_csm_kinds,     only: wp
    use mod_csm_model,     only: csm_model_t
    use mod_euler_substep, only: euler_substep, integrator_params_t, DEFAULT_INTEGRATOR_PARAMS
-   use mod_cprm,          only: cprm_step
+   use mod_cpa,           only: cpa_step
    implicit none
    private
    public :: integrate_stress
    public :: integrator_params_t, DEFAULT_INTEGRATOR_PARAMS
-   public :: INTEGRATION_EULER, INTEGRATION_ORTIZ_SIMO
+   public :: INTEGRATION_EULER, INTEGRATION_CPA
 
-   character(len=*), parameter :: INTEGRATION_EULER      = "euler"
-   character(len=*), parameter :: INTEGRATION_ORTIZ_SIMO = "ortiz_simo"
+   character(len=*), parameter :: INTEGRATION_EULER = "euler"
+   character(len=*), parameter :: INTEGRATION_CPA   = "cpa"
 
 contains
 
@@ -44,8 +44,8 @@ contains
       case(INTEGRATION_EULER)
          call euler_substep(model, sig, deps, iparams)
 
-      case(INTEGRATION_ORTIZ_SIMO)
-         call cprm_step(model, sig, deps, iparams)
+      case(INTEGRATION_CPA)
+         call cpa_step(model, sig, deps, iparams)
 
       case default
          error stop "integrate_stress: unknown integration method"
