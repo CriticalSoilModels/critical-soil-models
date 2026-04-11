@@ -47,20 +47,19 @@ Legacy implementation only. Not yet integrated into the new architecture or unit
 
 ### Prerequisites
 
-- [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or Anaconda
+- [pixi](https://pixi.sh/latest/#installation)
 - Git
 
 ### Create the environment
 
 ```bash
-conda env create --file environment.yml
-conda activate csm
+pixi install
+pixi shell
 ```
 
-This installs gfortran, flang, ifx, lfortran, fpm, fortls, ford, and graphviz.
-
-> **Linux only:** the `ifx_linux-64` and Intel runtime packages in `environment.yml` are
-> Linux-specific. Comment them out on macOS or Windows.
+This installs gfortran, lfortran, fpm, fortls, ford, and graphviz on all platforms.
+On Linux it also installs ifx and flang. Platform differences are handled automatically
+by `pixi.toml` — no manual edits needed.
 
 ## Building and Testing
 

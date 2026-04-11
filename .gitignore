@@ -1,4 +1,5 @@
 build/
+.pixi/
 *.mod
 *.pdf
 *.png

@@ -1,0 +1,45 @@
+[workspace]
+name = "critical-soil-models"
+version = "0.1.0"
+description = "Modern Fortran library of geotechnical constitutive models"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64"]
+
+# ---------------------------------------------------------------------------
+# Common dependencies — available on all supported platforms
+# ---------------------------------------------------------------------------
+[dependencies]
+gfortran   = "*"
+gcc        = "*"
+lfortran   = "*"
+fpm        = "*"
+fortls     = "*"
+ford       = "*"
+graphviz   = "*"
+python-graphviz = "*"
+git        = "*"
+
+# ---------------------------------------------------------------------------
+# Linux-64 extras: Intel ifx and LLVM flang
+# ifx is Linux-only (no macOS support from Intel).
+# The Intel runtime libs provide libimf.so; pixi sets LD_LIBRARY_PATH so
+# the compiler-linked executables find them without any manual setup.
+# ---------------------------------------------------------------------------
+[target.linux-64.dependencies]
+ifx_linux-64        = "*"
+intel-cmplr-lib-rt  = "*"
+intel-cmplr-lic-rt  = "*"
+flang               = "*"
+libflang-rt         = "*"
+
+[target.linux-64.activation.env]
+LD_LIBRARY_PATH = "$CONDA_PREFIX/lib"
+
+# ---------------------------------------------------------------------------
+# fpm task — wraps the fpm binary via the shell so that response-file
+# invocations (e.g. `pixi run fpm @ifx_test`) work correctly.
+# Pixi executes string tasks via `sh -c` on Unix / `cmd /c` on Windows,
+# which lets fpm parse the @ argument the same way it does from a terminal.
+# ---------------------------------------------------------------------------
+[tasks]
+fpm = "sh -c 'fpm \"$@\"' --"

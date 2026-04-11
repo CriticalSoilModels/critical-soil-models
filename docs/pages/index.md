@@ -13,7 +13,8 @@ decoupled from any PDE solver so models can be tested and validated independentl
 ### Building
 
 ```bash
-conda activate fpm
+pixi install
+pixi shell
 fpm build
 fpm test
 ```

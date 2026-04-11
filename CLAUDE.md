@@ -36,11 +36,12 @@ fpm clean --all
 
 ### Environment Setup
 ```bash
-conda env create --file environment.yml
-conda activate csm
+pixi install
+pixi shell
 ```
-Requires: gfortran, fpm (Fortran Package Manager), fortls, ford. `stdlib` is fetched
-automatically as a git dependency on first build and cached in `build/dependencies/`.
+Requires [pixi](https://pixi.sh). Installs gfortran, fpm, fortls, ford, and (on Linux)
+ifx and flang. `stdlib` is fetched automatically as a git dependency on first build
+and cached in `build/dependencies/`.
 Use `fpm clean` (not `fpm clean --all`) to avoid re-downloading it.
 
 ## Critical Rules
