@@ -37,7 +37,7 @@ contains
       type(integrator_params_t), intent(in), optional :: iparams
 
       type(integrator_params_t) :: p
-      real(wp) :: stiff_e(6,6)
+      real(wp) :: stiff_e(6,6), stiff_e_2(6,6)
       real(wp) :: sig_tr(6), F
       real(wp) :: alpha_ep
       real(wp) :: t_sub, dt_sub, err_rel
@@ -55,6 +55,7 @@ contains
       ! -----------------------------------------------------------------------
       ! 1. Elastic predictor
       ! -----------------------------------------------------------------------
+      call model%pre_step(sig)
       stiff_e = model%elastic_stiffness()
       sig_tr  = sig + matmul(stiff_e, deps)
 
@@ -86,11 +87,20 @@ contains
 
          sig_t = sig
 
+         ! Pre-step at current stress: updates any state that depends on sig
+         ! (e.g. pressure-dependent elastic moduli). No-op for most models.
+         call model%pre_step(sig_t)
+         stiff_e = model%elastic_stiffness()
+
          call euler_step(model, sig_t, deps_ep*dt_sub, stiff_e, dsig_1, deps_p1)
 
          call model%snapshot(saved)
          call model%update_hardening(deps_p1)
-         call euler_step(model, sig_t + dsig_1, deps_ep*dt_sub, stiff_e, dsig_2, deps_p2)
+         ! Pre-step at trial stress for second estimate — captures stiffness change
+         ! across the substep. Snapshot/restore rolls back any state changes.
+         call model%pre_step(sig_t + dsig_1)
+         stiff_e_2 = model%elastic_stiffness()
+         call euler_step(model, sig_t + dsig_1, deps_ep*dt_sub, stiff_e_2, dsig_2, deps_p2)
          call model%restore(saved)
 
          err_rel = 0.5_wp * norm2(dsig_1 - dsig_2) &
