@@ -2,11 +2,96 @@
 
 [![Docs](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/docs.yml/badge.svg)](https://criticalsoilmodels.github.io/critical-soil-models/)
 
+A Modern Fortran library of geotechnical constitutive models, implemented as UMAT subroutines compatible with FEA solvers like Abaqus and decoupled from any PDE solver for independent testing and validation.
+
+Geotechnical engineers spend too much time reimplementing and debugging constitutive relations that already exist. This library aims to collect, abstract, and accelerate constitutive model development by providing a framework that is independent of any one PDE solver. Decoupling the constitutive model from the solver makes it easier to isolate bugs, cross-validate implementations, and share models across projects.
+
+## Compiler Support
+
+| Compiler | Version(s) | Status |
+|----------|-----------|--------|
+| GFortran | 12, 13, 14 | [![GFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml) |
+| Intel ifx | 2024.2 | [![Intel ifx](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml) |
+| LFortran | latest | [![LFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml) |
+
+> **Note:** GFortran 15 has a known runtime crash when running the MCSR integration tests.
+> GFortran 12–14 are unaffected.
+
+## Implemented Models
+
+### Linear Elastic
+Standard isotropic linear elasticity. Fully integrated into the `csm_model_t` architecture.
+Unit tested and validated through the generic Euler substepping integrator.
+
+### Bingham Viscoplastic
+Ported from Anura3D. Stable implementation, not yet integrated into the new architecture or unit tested.
+
+### Mohr-Coulomb Strain Softening (MCSS)
+Associative or non-associative MC model with exponential softening of cohesion and friction
+angle from peak to residual. Both legacy and new-architecture implementations exist.
+Function-level and integration-level unit tests pass. Hardening modulus derivatives are
+pending a finite-difference verification before production use.
+
+### Mohr-Coulomb with Strain Rate (MCSR)
+MC model with rate-dependent elastic moduli and yield parameters via an inertial coefficient.
+Based on [Martinelli et al. (2022)](https://doi.org/10.1680/jgeot.21.00192). Both legacy and
+new-architecture implementations exist. Integration tests cover elastic steps, plastic return
+mapping, and agreement between the Euler and cutting-plane (CPRM) integrators.
+
+### NorSand
+Legacy implementation only. Not yet integrated into the new architecture or unit tested.
+
+---
+
+## Setup
+
+### Prerequisites
+
+- [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or Anaconda
+- Git
+
+### Create the environment
+
+```bash
+conda env create --file environment.yml
+conda activate csm
+```
+
+This installs gfortran, flang, ifx, lfortran, fpm, fortls, ford, and graphviz.
+
+> **Linux only:** the `ifx_linux-64` and Intel runtime packages in `environment.yml` are
+> Linux-specific. Comment them out on macOS or Windows.
+
 ## Building and Testing
 
-This project uses [fpm](https://fpm.fortran-lang.org/) with a `fpm.rsp` response file for named build configurations. Invoke a configuration with `fpm @<tag>`.
+This project uses [fpm](https://fpm.fortran-lang.org/) with a `fpm.rsp` response file for
+named build configurations. Invoke a configuration with `fpm @<tag>`.
 
-### Response file tags
+```bash
+# Run tests (default flags)
+fpm @ifx_test
+fpm @flang_test
+fpm @lfortran_test
+
+# Run tests with release optimisations
+fpm @ifx_release_test
+fpm @flang_release_test
+fpm @lfortran_release_test
+
+# Run a specific test suite
+fpm @ifx_test -- test_mcss_integration
+
+# Run a specific test within a suite
+fpm @ifx_test -- test_mcss_integration "plastic step: stress on yield surface"
+
+# Generate documentation (requires ford)
+ford fpm.toml
+
+# Clean build artifacts (preserves cached dependencies)
+fpm clean
+```
+
+### Response file tag reference
 
 | Tag | Action | Flags |
 |-----|--------|-------|
@@ -26,129 +111,20 @@ This project uses [fpm](https://fpm.fortran-lang.org/) with a `fpm.rsp` response
 | `@lfortran_release` | build | `-O3` |
 | `@lfortran_release_test` | test | `-O3` |
 
-### Naming convention
-
+**Naming convention:**
 - `@<compiler>` — build only, default flags
 - `@<compiler>_test` — run tests, default flags
 - `@<compiler>_debug` — run tests with debug/bounds-checking flags
 - `@<compiler>_release` — build only with release optimisation flags
 - `@<compiler>_release_test` — run tests with release optimisation flags
 
-## Compiler Support
-
-| Compiler | Version(s) | Status | Notes |
-|----------|-----------|--------|-------|
-| GFortran | 12, 13, 14 | [![GFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml) | Primary target |
-| Intel ifx | 2024.2 | [![Intel ifx](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml) | |
-| LFortran | latest | [![LFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml) | Experimental |
-
-Modern fortran library of common geotechnical constitutive models. This library is being made:
-- [x] Interface with  - For testing, calibrating, and debugging their constitutive model.
-
-- [ ] Expose an api that let's users develop and test there consitutive models extremely quickly. Users should be able to use predifined types and through that solvers to quickly test test and modifiy there constitutive relations.
-
-- [ ] Have an interface that is usable from:
-  - [ ] abaqus 
-  - [ ] Other common numerical solvers (Open an issue and suggest an interface)
-
-- [ ] Be able to integrate with other constitutive model libraries
-
-*Warning*: This library is just starting and we'll have to see how the progress comes along. The API is subject to change and this code has not been tested.
-
-## Design Philosophy
-Geotechnical engineers spend way too much time looking for, reimplementing, testing, debugging, constitutive relations that already exist. This sucks time away from running the larger simulation, actually getting results, sleeping/graduating/etc.
-
-Hence, there are two overarching goals for this repo. The first is to collect, abstract and accelerate the development of constitutive models. The second, is to provide a library disconnected from any one PDE solver. 
-
-As pointed out in (*Kayenta Paper Add Here*) it is extremly difficult to figure out if a bug is caused by your constitutive model or the numerical technique, when the constitutive strongly embeded in the PDE solver. A split framework allows the constitutive relations to crows source testing and validation to a much higher degree. 
-
-## Soil Models that we aim to include:
-(Assme the model is in 3D unless otherwise specified)
-- [x] **Linear Elastic**
-  - [ ] Paper
-  - [ ] Unit Tested
-  - [ ] Abstracted
-
-- [x] **Bingham**
-  - [ ] Paper: Taken from Anura3D
-  - [ ] Unit Tested
-  - [ ] Abstracted
-
-- [ ] **Modified Cam Clay - Standard version**
-  - [ ] Paper: 
-  - [ ] Unit Tested
-  - [ ] Abstracted
-
-- [x] **Mohr-coulomb strain softening**
-  * This model can act as an associative (yield and plastic surface are the same) or non-associate model (yield and plastic surface are independent) depending on the input parameters.
-  - [ ] Paper: The repo was originally written by A. Yerro-Colom (use [Yerro (2015)](https://upcommons.upc.edu/handle/2117/102412) )
-  - [ ] Unit Tested
-  - [ ] Abstracted
-
-- [x] **Mohr-Coulomb with strain rate effects**
-  - [x] Paper: [Constitutive modelling of non-cohesive soils under high-strain rates: a consistency approach](https://doi.org/10.1680/jgeot.21.00192)
-  - [ ] Unit Tested
-  - [ ] Abstracted
-  
-- [ ] **NorSand**
-  - [ ] Paper: 
-  - [ ] Unit Tested
-  - [ ] Abstracted
-  
-- [ ] **PM4Sand (2D - Plain Strain)**
-  - [ ] Paper: 
-  - [ ] Unit Tested
-  - [ ] Abstracted
-
-- [ ] **Drucker-Prager**
-  - [ ] Paper: 
-  - [ ] Unit Tested
-  - [ ] Abstracted
-
-Soil models that are lower on the list:
-- [ ] **Original Cam-Clay**
-  - [ ] Paper: 
-  - [ ] Unit Tested
-  - [ ] Abstracted
-  
-- [ ] **Mohr-Coulomb with Cap**
-  - [ ] Paper: 
-  - [ ] Unit Tested
-  - [ ] Abstracted
-  
-- [ ] **Hypoplastic models**
-  - [ ] Paper: 
-  - [ ] Unit Tested
-  - [ ] Abstracted
-
-## The general plan:
-- [x] Integrate them with [incremental-driver](https://github.com/CriticalSoilModels/Incremental_Driver)
-  * Allows to constitutive models to be tested and calibrated in a single element framework
-  * Turns out the first steps of this were really easy thanks to ```fpm```
-- [ ] Collect repos that already exist
-- [ ] Put them into a unified framework
-- [ ] Build unit tests for them
-- [ ] Implement the ones that don't exist
-- [ ] Steamline the process for future users to implement there own models
-  - [ ] Expose an api for extending the abstract model (?) class so that users can use the same solver functions but be able to model there own things.
-- [ ] Users should be able to generate, run, and analyze data all in fortran. Why? Fortran is goated :sunglasses:
-- [ ] Use the tensor types from ttb to ease calculations
-- [ ] Add interface for C++/C/python/Julia to be able to be able to call the constitutive relations
-
-## Citations
-
-If you use this repo in your research or a publish manuscript please cite this library and the paper the implementation of the soil model was taken from.
-
-Please refer to the Citation.cff file for the citation inforamtion for this repo.
+---
 
 ## License
 
-The critical-soil-models source code and related files and documentation are distributed under the [GNU GENERAL PUBLIC LICENSE](https://github.com/CriticalSoilModels/critical-soil-models/blob/main/LICENSE).
+Distributed under the [GNU General Public License v3.0](LICENSE).
 
-## Other Notes
-There are other libraries of constitutive models out there. The ones that I've come across are:
-* (Write list here)
+## Citations
 
-The plan is to include, licenses and time permitting, as many of the implementations in this library.
-
-Soil consitutive models are generally based on a specific set of stress and strain invariants. Currently, the implementation of the invariants are included in this library. In the future, they'll be moved to there own repo (maybe?) and given a python interface. The values should be compared to the Julia library that implements them with automatic differentiation (Fortran not having built in AD is not elite. Hey you, yeah you, drop out of geotech and go implement Automatic differention in the Lfortran compiler. Yeah that's a good idea.) This way users won't have to implement the invariants again inevitablly making a mistake. Instead we all have the same errors together. Yay!.
+If you use this library in research or a published manuscript, please cite it and the paper
+the model implementation was taken from. See `CITATION.cff` for citation details.
