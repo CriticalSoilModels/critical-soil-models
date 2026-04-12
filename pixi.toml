@@ -35,6 +35,11 @@ libflang-rt         = "*"
 [target.linux-64.activation.env]
 LD_LIBRARY_PATH = "$CONDA_PREFIX/lib"
 
+[target.win-64.dependencies]
+ifx_win-64         = "*"
+intel-cmplr-lib-rt = "*"
+intel-cmplr-lic-rt = "*"
+
 # ---------------------------------------------------------------------------
 # fpm task — wraps the fpm binary via the shell so that response-file
 # invocations (e.g. `pixi run fpm @ifx_test`) work correctly.
