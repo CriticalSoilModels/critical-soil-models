@@ -3,7 +3,7 @@ name = "critical-soil-models"
 version = "0.1.0"
 description = "Modern Fortran library of geotechnical constitutive models"
 channels = ["conda-forge"]
-platforms = ["linux-64", "osx-arm64", "osx-64"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 
 # ---------------------------------------------------------------------------
 # Common dependencies — available on all supported platforms
@@ -38,8 +38,11 @@ LD_LIBRARY_PATH = "$CONDA_PREFIX/lib"
 # ---------------------------------------------------------------------------
 # fpm task — wraps the fpm binary via the shell so that response-file
 # invocations (e.g. `pixi run fpm @ifx_test`) work correctly.
-# Pixi executes string tasks via `sh -c` on Unix / `cmd /c` on Windows,
-# which lets fpm parse the @ argument the same way it does from a terminal.
+# Pixi passes @ arguments directly to the binary without shell expansion,
+# so we route through the platform shell to restore normal fpm behaviour.
 # ---------------------------------------------------------------------------
 [tasks]
 fpm = "sh -c 'fpm \"$@\"' --"
+
+[target.win-64.tasks]
+fpm = "cmd /c fpm"
