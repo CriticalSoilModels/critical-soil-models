@@ -8,11 +8,12 @@ Geotechnical engineers spend too much time reimplementing and debugging constitu
 
 ## Compiler Support
 
-| Compiler | Version(s) | Status |
-|----------|-----------|--------|
-| GFortran | 12, 13, 14 | [![GFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml) |
-| Intel ifx | 2024.2 | [![Intel ifx](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml) |
-| LFortran | latest | [![LFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml) |
+| Compiler | Platform | Version(s) | Status |
+|----------|----------|-----------|--------|
+| GFortran | Linux | 12, 13, 14 | [![GFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml) |
+| Intel ifx | Linux | 2024.2 | [![Intel ifx](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml) |
+| Intel ifx | Windows | 2024.2 | [![Intel ifx (Windows)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml) |
+| LFortran | Linux | latest | [![LFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml) |
 
 > **Note:** GFortran 15 has a known runtime crash when running the MCSR integration tests.
 > GFortran 12–14 are unaffected.

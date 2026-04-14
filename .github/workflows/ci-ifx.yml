@@ -2,7 +2,7 @@ name: Intel ifx
 
 on:
   push:
-    branches: [main, architecture-prototype]
+    branches: [main]
   pull_request:
     branches: [main]
 

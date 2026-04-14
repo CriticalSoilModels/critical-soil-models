@@ -1,4 +1,4 @@
-name: GFortran
+name: Intel ifx (Windows)
 
 on:
   push:
@@ -7,22 +7,18 @@ on:
     branches: [main]
 
 jobs:
-  test-gcc:
-    name: gfortran ${{ matrix.gcc-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        gcc-version: [12, 13, 14]
+  test-ifx-windows:
+    name: ifx (Windows)
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup gfortran
+      - name: Setup ifx
         uses: fortran-lang/setup-fortran@v1
         with:
-          compiler: gcc
-          version: ${{ matrix.gcc-version }}
+          compiler: intel
+          version: "2024.2"
 
       - name: Setup fpm
         uses: fortran-lang/setup-fpm@v7
@@ -34,12 +30,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build/dependencies
-          key: fpm-deps-gcc${{ matrix.gcc-version }}-${{ hashFiles('fpm.toml') }}
+          key: fpm-deps-ifx-windows-${{ hashFiles('fpm.toml') }}
           restore-keys: |
-            fpm-deps-gcc${{ matrix.gcc-version }}-
-
-      - name: Build
-        run: fpm build
+            fpm-deps-ifx-windows-
 
       - name: Test
-        run: fpm test
+        shell: bash
+        run: fpm @ifx_test
+
+      - name: Test (release)
+        shell: bash
+        run: fpm @ifx_release_test
