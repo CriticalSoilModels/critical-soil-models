@@ -37,8 +37,9 @@ jobs:
 
       - name: Install ford and graphviz
         run: |
-          pip install ford
+          pip install ford==7.0.6
           sudo apt-get install -y graphviz
+          mkdir -p build/doc
 
       - name: Cache fpm dependencies
         uses: actions/cache@v4

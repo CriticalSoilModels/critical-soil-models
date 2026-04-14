@@ -36,16 +36,20 @@ jobs:
 
       # Git for Windows puts a Unix `link` binary in usr/bin that shadows
       # MSVC's link.exe.  ifx calls link as a subprocess, so it must find
-      # the MSVC linker first.  Strip Git usr/bin from PATH before building.
-      - name: Remove Git usr/bin from PATH
+      # the MSVC linker first.  mingw64/bin carries ar.exe which produces
+      # GNU-format archives that MSVC link.exe cannot read; strip both
+      # directories so fpm uses the Intel/MSVC toolchain exclusively.
+      - name: Remove Git usr/bin and mingw64/bin from PATH
         shell: pwsh
         run: |
-          $paths = $env:PATH -split ';' | Where-Object { $_ -notmatch 'Git\\usr\\bin' }
+          $paths = $env:PATH -split ';' | Where-Object {
+            $_ -notmatch 'Git\\usr\\bin' -and $_ -notmatch 'mingw64\\bin'
+          }
           "PATH=$($paths -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Test
         shell: cmd
-        run: fpm @ifx_test
+        run: fpm @ifx_test --verbose
 
       - name: Test (release)
         shell: cmd
