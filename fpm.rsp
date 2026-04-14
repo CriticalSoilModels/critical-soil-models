@@ -1,9 +1,7 @@
 @ifx
-option build --compiler ifx --c-compiler gcc
-
+option build --compiler ifx
 @ifx_test
-option test --compiler ifx --c-compiler gcc
-
+option test --compiler ifx
 @ifx_debug
 option test --compiler ifx --c-compiler gcc --flag "-g -traceback -check all -fpe0 -warn all"
 
@@ -14,17 +12,14 @@ option build --compiler ifx --c-compiler gcc --flag "-O3 -xHost"
 option test --compiler ifx --c-compiler gcc --flag "-O3 -xHost"
 
 @ifx_run
-option run --compiler ifx --c-compiler gcc
-
+option run --compiler ifx
 @ifx_example
 option run --compiler ifx --c-compiler gcc --example
 
 @flang
-option build --compiler flang --c-compiler gcc
-
+option build --compiler flang
 @flang_test
-option test --compiler flang --c-compiler gcc
-
+option test --compiler flang
 @flang_debug
 option test --compiler flang --c-compiler gcc --flag "-g -fdebug-info-for-profiling -fcheck=bounds"
 
@@ -35,11 +30,9 @@ option build --compiler flang --c-compiler gcc --flag "-O3 -march=native -funrol
 option test --compiler flang --c-compiler gcc --flag "-O3 -march=native -funroll-loops"
 
 @lfortran
-option build --compiler lfortran --c-compiler gcc
-
+option build --compiler lfortran
 @lfortran_test
-option test --compiler lfortran --c-compiler gcc
-
+option test --compiler lfortran
 @lfortran_debug
 option test --compiler lfortran --c-compiler gcc --flag "-g"
 

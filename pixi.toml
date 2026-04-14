@@ -34,11 +34,23 @@ libflang-rt         = "*"
 
 [target.linux-64.activation.env]
 LD_LIBRARY_PATH = "$CONDA_PREFIX/lib"
+FPM_CC = "gcc"
+
+[target.osx-64.activation.env]
+FPM_CC = "gcc"
+
+[target.osx-arm64.activation.env]
+FPM_CC = "gcc"
 
 [target.win-64.dependencies]
 ifx_win-64         = "*"
 intel-cmplr-lib-rt = "*"
 intel-cmplr-lic-rt = "*"
+clang              = "*"
+
+[target.win-64.activation.env]
+FPM_FC = "ifx"
+FPM_CC = "clang"
 
 # ---------------------------------------------------------------------------
 # fpm task — wraps the fpm binary via the shell so that response-file

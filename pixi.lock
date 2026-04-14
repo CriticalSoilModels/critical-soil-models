@@ -453,6 +453,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/bzip2-1.0.8-h0ad9c76_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-h4c7d964_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/cairo-1.18.4-h5782bbf_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/clang-19-19.1.7-default_hec7ea82_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/clang-19.1.7-default_hec7ea82_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/commonmark-0.9.1-py_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/win-64/conda-gcc-specs-15.2.0-hd546029_18.conda
@@ -1030,6 +1032,20 @@ packages:
   license_family: Apache
   size: 28508
   timestamp: 1775793191718
+- conda: https://conda.anaconda.org/conda-forge/win-64/clang-19.1.7-default_hec7ea82_1.conda
+  sha256: 0695ccc884fbd3f14141deac0392d8b8f25a74da699c7a3268b1cca4435c0915
+  md5: 1cd9d2137de8388eb8bf323652df18c1
+  depends:
+  - clang-19 19.1.7 default_hec7ea82_1
+  - libzlib >=1.3.1,<2.0a0
+  - ucrt >=10.0.20348.0
+  - vc >=14.2,<15
+  - vc14_runtime >=14.29.30139
+  - zstd >=1.5.6,<1.6.0a0
+  license: Apache-2.0 WITH LLVM-exception
+  license_family: Apache
+  size: 102371217
+  timestamp: 1737786691610
 - conda: https://conda.anaconda.org/conda-forge/osx-64/clang-19-19.1.7-default_hc369343_5.conda
   sha256: 2631c79a027ee8b9c2d4d0a458f0588e8fe03fe1dfb3e3bcd47e7b0f4d0d2175
   md5: b37d33a750251c79214c812eca726241
@@ -1042,6 +1058,19 @@ packages:
   license_family: Apache
   size: 765727
   timestamp: 1759436729883
+- conda: https://conda.anaconda.org/conda-forge/win-64/clang-19-19.1.7-default_hec7ea82_1.conda
+  sha256: 9b98d0183f4242eb0eb73597c95742bc0dbd18a1b7eb5c6c7cfe7810f682e7db
+  md5: e8659125a0143ac495cfd54ff39363aa
+  depends:
+  - libzlib >=1.3.1,<2.0a0
+  - ucrt >=10.0.20348.0
+  - vc >=14.2,<15
+  - vc14_runtime >=14.29.30139
+  - zstd >=1.5.6,<1.6.0a0
+  license: Apache-2.0 WITH LLVM-exception
+  license_family: Apache
+  size: 34834667
+  timestamp: 1737786458646
 - conda: https://conda.anaconda.org/conda-forge/linux-64/clang-22-22.1.3-default_h99862b1_0.conda
   sha256: a7c1ef5671c2360e3f9a84ce357a5804b04aa7c1b06083ab7fd6a3bdac3f14d0
   md5: e624d130d58b2fe8b0f5e940397c94fd
