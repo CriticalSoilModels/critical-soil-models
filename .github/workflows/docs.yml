@@ -33,6 +33,7 @@ jobs:
         uses: fortran-lang/setup-fpm@v7
         with:
           fpm-version: "latest"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install ford and graphviz
         run: |
