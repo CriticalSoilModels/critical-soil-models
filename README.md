@@ -149,7 +149,7 @@ fpm clean
 |----------|----------|--------|
 | GFortran 12–14 | Linux | [![GFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml) |
 | Intel ifx 2024.2 | Linux | [![Intel ifx](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml) |
-| Intel ifx 2024.2 | Windows | [![Intel ifx (Windows)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml) |
+| Intel ifx 2025.2 | Windows | [![Intel ifx (Windows)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml) |
 | LFortran latest | Linux | [![LFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml) |
 
 ---
