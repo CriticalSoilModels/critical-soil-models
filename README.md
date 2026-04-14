@@ -1,6 +1,10 @@
 # critical-soil-models
 
 [![Docs](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/docs.yml/badge.svg)](https://criticalsoilmodels.github.io/critical-soil-models/)
+[![GFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml)
+[![Intel ifx](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml)
+[![Intel ifx (Windows)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml)
+[![LFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml)
 
 A Modern Fortran library of geotechnical constitutive models, implemented as UMAT subroutines compatible with FEA solvers like Abaqus and decoupled from any PDE solver for independent testing and validation.
 
@@ -140,17 +144,6 @@ fpm clean
 | `@lfortran_debug` | test | `-g` |
 | `@lfortran_release` | build | `-O3` |
 | `@lfortran_release_test` | test | `-O3` |
-
----
-
-## CI Status
-
-| Compiler | Platform | Status |
-|----------|----------|--------|
-| GFortran 12–14 | Linux | [![GFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-gcc.yml) |
-| Intel ifx 2024.2 | Linux | [![Intel ifx](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx.yml) |
-| Intel ifx 2025.2 | Windows | [![Intel ifx (Windows)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-ifx-windows.yml) |
-| LFortran latest | Linux | [![LFortran](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml/badge.svg)](https://github.com/CriticalSoilModels/critical-soil-models/actions/workflows/ci-lfortran.yml) |
 
 ---
 
