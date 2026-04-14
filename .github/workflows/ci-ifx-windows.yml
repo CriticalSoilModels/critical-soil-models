@@ -35,9 +35,9 @@ jobs:
             fpm-deps-ifx-windows-
 
       - name: Test
-        shell: bash
+        shell: cmd
         run: fpm @ifx_test
 
       - name: Test (release)
-        shell: bash
+        shell: cmd
         run: fpm @ifx_release_test
