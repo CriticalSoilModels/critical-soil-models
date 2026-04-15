@@ -49,8 +49,8 @@ jobs:
 
       - name: Test
         shell: cmd
-        run: fpm @ifx_test --archiver lib
+        run: fpm @ifx_test --archiver llvm-ar
 
       - name: Test (release)
         shell: cmd
-        run: fpm @ifx_release_test --archiver lib
+        run: fpm @ifx_release_test --archiver llvm-ar
