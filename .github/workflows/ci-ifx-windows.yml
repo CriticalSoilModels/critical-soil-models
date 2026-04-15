@@ -39,18 +39,26 @@ jobs:
       # the MSVC linker first.  mingw64/bin carries ar.exe which produces
       # GNU-format archives that MSVC link.exe cannot read; strip both
       # directories so fpm uses the Intel/MSVC toolchain exclusively.
-      - name: Remove Git usr/bin and mingw64/bin from PATH
+      #
+      # fpm only uses a response file when the archiver is named exactly
+      # "ar".  Strawberry Perl's ar.exe (C:\Strawberry\c\bin) creates
+      # GNU-format archives that MSVC link.exe cannot read.  Fix: copy
+      # llvm-ar.exe into RUNNER_TEMP as "ar.exe".  RUNNER_TEMP is already
+      # first on PATH (setup-fpm placed fpm.exe there), so fpm finds our
+      # COFF-capable ar before Strawberry's GNU ar.
+      - name: Remove Git usr/bin and mingw64/bin from PATH; inject llvm-ar as ar
         shell: pwsh
         run: |
           $paths = $env:PATH -split ';' | Where-Object {
             $_ -notmatch 'Git\\usr\\bin' -and $_ -notmatch 'mingw64\\bin'
           }
           "PATH=$($paths -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Copy-Item "C:\Program Files\LLVM\bin\llvm-ar.exe" "$env:RUNNER_TEMP\ar.exe"
 
       - name: Test
         shell: cmd
-        run: fpm @ifx_test --archiver llvm-ar
+        run: fpm @ifx_test
 
       - name: Test (release)
         shell: cmd
-        run: fpm @ifx_release_test --archiver llvm-ar
+        run: fpm @ifx_release_test
