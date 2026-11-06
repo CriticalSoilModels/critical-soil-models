@@ -31,7 +31,7 @@ Geotechnical engineers spend too much time reimplementing and debugging constitu
 
 ### Mohr-Coulomb with Strain Rate (MCSR)
 - MC model with rate-dependent elastic moduli and yield parameters via an inertial coefficient
-- Based on [Martinelli et al. (2022)](https://doi.org/10.1680/jgeot.21.00192)
+- Based on [Zambrano-Cruzatty et al. (2024)](https://doi.org/10.1680/jgeot.21.00192)
 - Both legacy and new-architecture implementations exist
 - Integration tests cover elastic steps, plastic return mapping, and agreement between the Euler and cutting-plane integrators
 
